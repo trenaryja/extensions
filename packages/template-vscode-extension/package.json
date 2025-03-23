@@ -1,14 +1,19 @@
 {
   "name": "template-vscode-extension",
-  "description": "template-vscode-extension VSCode Extension",
+  "displayName": "Template VSCode Extension",
+  "description": "Template VSCode Extension VSCode Extension",
   "version": "0.0.1",
   "publisher": "trenaryja",
-  "repository": "https://github.com/Microsoft/vscode-extension-samples/helloworld-minimal-sample",
-  "engines": {
-    "vscode": "^1.74.0"
-  },
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "tsc -p ./",
+    "dev": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/vscode": "^1.73.0"
+  },
   "contributes": {
     "commands": [
       {
@@ -17,13 +22,7 @@
       }
     ]
   },
-  "scripts": {},
-  "devDependencies": {
-    "@eslint/js": "^9.13.0",
-    "@stylistic/eslint-plugin": "^2.9.0",
-    "@types/vscode": "^1.73.0",
-    "eslint": "^9.13.0",
-    "typescript-eslint": "^8.26.0"
-  },
-  "displayName": "template-vscode-extension"
+  "engines": {
+    "vscode": "^1.98.0"
+  }
 }

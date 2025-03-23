@@ -2,13 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "template-vscode-extension Extension",
+      "name": "Ext: template-vscode-extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"
-      ]
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"]
     }
   ]
 }
