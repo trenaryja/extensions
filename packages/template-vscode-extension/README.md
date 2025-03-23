@@ -1,21 +1,40 @@
-# Hello World Minimal Sample
+# Template VS Code Extension
 
-This is a minimal version of the [Hello World Sample](../helloworld-sample).
+## Development Workflow
 
-It does not use TypeScript and only includes the `vscode` devDependency needed for extension development.
+1.  Start the extension in watch mode:
 
-## VS Code API
+    ```bash
+    pnpm dev
+    ```
 
-### `vscode` module
+2.  Launch the extension in debug mode: In VS Code, press `F5` to start debugging the extension (This launches an Extension Development Host window).
 
-- [`commands.registerCommand`](https://code.visualstudio.com/api/references/vscode-api#commands.registerCommand)
-- [`window.showInformationMessage`](https://code.visualstudio.com/api/references/vscode-api#window.showInformationMessage)
+3.  **Important:** For changes to take effect, you **MUST** reload the Extension Development Host window (`Ctrl+R` or `Cmd+R`) after making changes.
 
-### Contribution Points
+## Key Configuration
 
-- [`contributes.commands`](https://code.visualstudio.com/api/references/contribution-points#contributes.commands)
+- **Command Matching**: Ensure the `command` value in `package.json`'s `contributes.commands` array matches exactly the string passed to `vscode.commands.registerCommand` in your `extension.ts` file.
 
-## Running the Sample
+  ```json
+  // package.json
+  "contributes": {
+      "commands": [{
+          "command": "extension.yourCommand",
+          "title": "Your Command"
+      }]
+  }
+  ```
 
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View.
+  ```typescript
+  // extension.ts
+  vscode.commands.registerCommand('extension.yourCommand', () => {
+    vscode.window.showInformationMessage('Command executed!')
+  })
+  ```
+
+## Useful Resources
+
+- [VS Code Extension API Documentation](https://code.visualstudio.com/api/references/vscode-api)
+- [VS Code Extension Guide](https://code.visualstudio.com/api)
+- [VS Code Debugging](https://code.visualstudio.com/docs/editor/debugging)
