@@ -7,6 +7,13 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"]
+    },
+    {
+      "name": "Ext: Multi Cursor Magic",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/multi-cursor-magic"]
     }
   ]
 }
