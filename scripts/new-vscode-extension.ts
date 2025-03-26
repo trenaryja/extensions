@@ -2,56 +2,10 @@ import { confirm, input } from '@inquirer/prompts'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as prettier from 'prettier'
 import * as R from 'remeda'
-
-// Format a file with prettier
-const formatFile = async (filePath: string): Promise<void> => {
-  try {
-    // Read the file
-    const content = fs.readFileSync(filePath, 'utf8')
-
-    // Read the package.json to get the prettier config
-    const rootPackageJsonPath = path.join(process.cwd(), 'package.json')
-    const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8'))
-    const prettierConfig = rootPackageJson.prettier || {}
-
-    // Format the content
-    const formatted = await prettier.format(content, {
-      ...prettierConfig,
-      filepath: filePath, // This helps prettier determine the parser based on file extension
-    })
-
-    // Write the formatted content back
-    fs.writeFileSync(filePath, formatted)
-  } catch (error) {
-    console.warn(`Warning: Could not format file ${filePath}: ${error.message}`)
-  }
-}
-
-const copyFiles = (source: string, destination: string) => {
-  const entries = fs.readdirSync(source, { withFileTypes: true })
-
-  for (const entry of entries) {
-    const srcPath = path.join(source, entry.name)
-    const destPath = path.join(destination, entry.name)
-
-    // Skip node_modules and git directories
-    if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') {
-      continue
-    }
-
-    if (entry.isDirectory()) {
-      fs.mkdirSync(destPath, { recursive: true })
-      copyFiles(srcPath, destPath)
-    } else {
-      fs.copyFileSync(srcPath, destPath)
-    }
-  }
-}
+import { copyFiles, formatFile } from './utils'
 
 async function main() {
-  // Prompt for extension name in Title Case
   const extensionNameTitleCase = await input({
     message: 'What is the name of your extension? (Title Case, e.g., "My Extension")',
     validate: (input: string) => {

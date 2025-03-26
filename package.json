@@ -5,9 +5,10 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts",
-    "check-types": "turbo run check-types"
+    "format": "prettier --write . \"!pnpm-lock.yaml\"",
+    "check-up": "pnpm run format && pnpm run lint && pnpm build",
+    "get-latest": "pnpm up -L -i -r",
+    "new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.4.0",
@@ -24,5 +25,5 @@
     "semi": false,
     "printWidth": 120
   },
-  "packageManager": "pnpm@10.6.5"
+  "packageManager": "pnpm@10.7.0"
 }
