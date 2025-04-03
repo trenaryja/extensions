@@ -8,22 +8,46 @@
   "scripts": {
     "build": "tsc -p ./",
     "dev": "tsc -watch -p ./",
-    "lint": "eslint . --max-warnings 0"
+    "lint": "eslint . --max-warnings 0",
+    "contribute-commands": "pnpm dlx tsx ./scripts/contribute-commands.ts"
   },
   "dependencies": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "remeda": "^2.21.2"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
+    "@types/module-alias": "^2.0.4",
     "@types/vscode": "^1.73.0",
-    "eslint": "^9.23.0"
+    "eslint": "^9.23.0",
+    "module-alias": "^2.2.3"
   },
   "activationEvents": [],
   "contributes": {
     "commands": [
       {
-        "command": "multiCursorMagic.formatMonths",
-        "title": "MCM: Format Months"
+        "title": "Multi-Cursor Magic: Format Months",
+        "command": "multiCursorMagic.formatMonths"
+      },
+      {
+        "title": "Multi-Cursor Magic: Format Days of Week",
+        "command": "multiCursorMagic.formatDaysOfWeek"
+      },
+      {
+        "title": "Multi-Cursor Magic: Format Numbers",
+        "command": "multiCursorMagic.formatNumbers"
+      },
+      {
+        "title": "Multi-Cursor Magic: Eval (Direct)",
+        "command": "multiCursorMagic.evalDirect"
+      },
+      {
+        "title": "Multi-Cursor Magic: Eval (Input)",
+        "command": "multiCursorMagic.evalInput"
+      },
+      {
+        "title": "Multi-Cursor Magic: Pad Start",
+        "command": "multiCursorMagic.padStart"
       }
     ]
   },

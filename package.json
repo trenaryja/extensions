@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.4.0",
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.13.17",
     "prettier": "^3.5.3",
     "remeda": "^2.21.2",
     "tsx": "^4.19.3",
