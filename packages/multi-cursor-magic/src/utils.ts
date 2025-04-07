@@ -1,3 +1,4 @@
+import { Country, State } from 'country-state-city'
 import { format, isValid, parse } from 'date-fns'
 import * as vscode from 'vscode'
 
@@ -93,3 +94,24 @@ export const parseDayOfWeek = (input: string) => {
 
 export const getDayOfWeekExample = (formatStr: string) =>
   [...Array(7).keys()].map((x) => format(new Date(2000, 0, 2 + x), formatStr)).join(', ')
+
+const US_STATES = State.getStatesOfCountry('US')
+export const parseUsState = (input: string) => {
+  const normalizedInput = input.toLowerCase()
+  return (
+    US_STATES.find(
+      (state) => state.name?.toLowerCase() === normalizedInput || state.isoCode?.toLowerCase() === normalizedInput,
+    ) ?? null
+  )
+}
+
+const COUNTRIES = Country.getAllCountries()
+export const parseCountry = (input: string) => {
+  const normalizedInput = input.toLowerCase()
+  return (
+    COUNTRIES.find(
+      (country) =>
+        country.name?.toLowerCase() === normalizedInput || country.isoCode?.toLowerCase() === normalizedInput,
+    ) ?? null
+  )
+}

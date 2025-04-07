@@ -1,6 +1,14 @@
 import { format } from 'date-fns'
 import * as R from 'remeda'
-import { createCommand, getDayOfWeekExample, getMonthExample, parseDayOfWeek, parseMonth } from './utils'
+import {
+  createCommand,
+  getDayOfWeekExample,
+  getMonthExample,
+  parseCountry,
+  parseDayOfWeek,
+  parseMonth,
+  parseUsState,
+} from './utils'
 
 export const commands: Record<string, { command: string; callback: () => Promise<string | void> }> = {
   'Multi-Cursor Magic: Format Months': {
@@ -35,6 +43,30 @@ export const commands: Record<string, { command: string; callback: () => Promise
         { label: 'Full', description: 'EEEE', detail: getDayOfWeekExample('EEEE') },
       ] as const,
       transform: (date, _, option) => format(date, option.description),
+    }),
+  },
+
+  'Multi-Cursor Magic: Format US States': {
+    command: 'multiCursorMagic.formatUsStates',
+    callback: createCommand({
+      type: 'quick-pick',
+      parseFn: parseUsState,
+      parseError: 'One or more selections could not be parsed as a valid US State.',
+      prompt: 'Select a US State format',
+      quickPickItems: [{ label: 'Full' }, { label: '2-Letters' }] as const,
+      transform: (state, _, option) => (option.label === 'Full' ? state.name : state.isoCode),
+    }),
+  },
+
+  'Multi-Cursor Magic: Format Countries': {
+    command: 'multiCursorMagic.formatCountries',
+    callback: createCommand({
+      type: 'quick-pick',
+      parseFn: parseCountry,
+      parseError: 'One or more selections could not be parsed as a valid Country.',
+      prompt: 'Select a Country format',
+      quickPickItems: [{ label: 'Full' }, { label: '2-Letters' }] as const,
+      transform: (country, _, option) => (option.label === 'Full' ? country.name : country.isoCode),
     }),
   },
 
@@ -74,22 +106,12 @@ export const commands: Record<string, { command: string; callback: () => Promise
     }),
   },
 
-  'Multi-Cursor Magic: Eval (Direct)': {
+  'Multi-Cursor Magic: Eval': {
     command: 'multiCursorMagic.evalDirect',
     callback: createCommand({
       type: 'direct',
       parseFn: (x) => x,
       transform: (selection) => eval(selection),
-    }),
-  },
-
-  'Multi-Cursor Magic: Eval (Input)': {
-    command: 'multiCursorMagic.evalInput',
-    callback: createCommand({
-      type: 'input',
-      parseFn: (x) => x,
-      prompt: 'TODO: explain how eval works, including template literal replacement',
-      transform: (selection, _, input) => eval(selection + input),
     }),
   },
 

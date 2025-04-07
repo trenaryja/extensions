@@ -1,40 +1,60 @@
-# Template VS Code Extension
+# Multi Cursor Magic
 
-## Development Workflow
+Multi Cursor Magic enhances VS Code's multi-cursor capabilities with transformation tools for dates, numbers, geographic data, and more.
 
-1.  Start the extension in watch mode:
+## Features
 
-    ```bash
-    pnpm dev
-    ```
+- ### Months
 
-2.  Launch the extension in debug mode: In VS Code, press `F5` to start debugging the extension (This launches an Extension Development Host window).
+  Select month names or numbers and transform them into various formats
 
-3.  **Important:** For changes to take effect, you **MUST** reload the Extension Development Host window (`Ctrl+R` or `Cmd+R`) after making changes.
+- ### Days of Week
 
-## Key Configuration
+  Convert between full, abbreviated, and numeric day formats
 
-- **Command Matching**: Ensure the `command` value in `package.json`'s `contributes.commands` array matches exactly the string passed to `vscode.commands.registerCommand` in your `extension.ts` file.
+- ### US States
 
-  ```json
-  // package.json
-  "contributes": {
-      "commands": [{
-          "command": "extension.yourCommand",
-          "title": "Your Command"
-      }]
-  }
-  ```
+  Convert between full state names and two-letter codes
 
-  ```typescript
-  // extension.ts
-  vscode.commands.registerCommand('extension.yourCommand', () => {
-    vscode.window.showInformationMessage('Command executed!')
-  })
-  ```
+- ### Countries
 
-## Useful Resources
+  Transform between country names and ISO codes
 
-- [VS Code Extension API Documentation](https://code.visualstudio.com/api/references/vscode-api)
-- [VS Code Extension Guide](https://code.visualstudio.com/api)
-- [VS Code Debugging](https://code.visualstudio.com/docs/editor/debugging)
+- ### Number Operations
+
+  Apply various mathematical operations and formatting to numeric selections:
+
+  - Basic operations (+1, -1, double, square, etc.)
+  - Rounding (floor, ceiling, round, truncate)
+  - Format conversions (fixed decimal places, exponential, locale string)
+  - Base conversions (binary, octal, hexadecimal)
+  - And more!
+
+- ### JavaScript Evaluation
+
+  Evaluate JavaScript expressions directly
+
+- ### Text Padding
+
+  Pad selections to match the length of the longest selection
+
+## Usage
+
+1. Select multiple instances of text you want to transform
+2. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+3. Type "Multi-Cursor Magic" to see available commands
+4. Choose the transformation you want to apply
+
+## Release Notes
+
+### 0.0.1
+
+Initial release of Multi Cursor Magic with support for:
+
+- Month formatting
+- Day of week formatting
+- US State formatting
+- Country formatting
+- Number operations
+- JavaScript evaluation
+- Text padding

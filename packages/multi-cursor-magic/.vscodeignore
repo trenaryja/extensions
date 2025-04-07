@@ -1,0 +1,50 @@
+# Source files (since they're compiled to dist)
+src/**
+
+# Build and development files
+.turbo/**
+scripts/**
+eslint.config.mjs
+tsconfig.json
+
+# Git and version control
+.git/**
+.gitignore
+.gitattributes
+
+# Package management
+node_modules/**
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# CI/CD and configuration
+.github/**
+.vscode/**
+.vscode-test/**
+
+# Already packaged extension
+*.vsix
+
+# Temporary and log files
+*.log
+.DS_Store
+Thumbs.db
+
+# Test files
+test/**
+**/*.test.ts
+**/*.spec.ts
+coverage/**
+
+# Documentation that's not needed in the extension
+docs/**
+CONTRIBUTING.md
+CHANGELOG.md
+.npmignore
+
+# Keep these files
+!dist/**
+!images/**
+!LICENSE
+!README.md

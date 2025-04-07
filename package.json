@@ -25,5 +25,5 @@
     "semi": false,
     "printWidth": 120
   },
-  "packageManager": "pnpm@10.7.0"
+  "packageManager": "pnpm@10.8.0"
 }

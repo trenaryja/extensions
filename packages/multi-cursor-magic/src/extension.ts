@@ -7,8 +7,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   R.pipe(
     commands,
-    R.entries(),
-    R.forEach(([_, { command, callback }]) => {
+    R.values(),
+    R.forEach(({ command, callback }) => {
       context.subscriptions.push(vscode.commands.registerCommand(command, callback))
     }),
   )
