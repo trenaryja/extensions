@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
-    "@types/vscode": "^1.73.0"
+    "@types/vscode": "^1.99.0"
   },
   "activationEvents": [],
   "contributes": {

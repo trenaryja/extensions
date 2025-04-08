@@ -1,6 +1,7 @@
-import { Country, State } from 'country-state-city'
 import { format, isValid, parse } from 'date-fns'
 import * as vscode from 'vscode'
+import COUNTRIES from '../lib/countries.json'
+import US_STATES from '../lib/states.json'
 
 export type Command<TParsed, TOption extends vscode.QuickPickItem> = {
   parseFn: (selection: string) => TParsed | null
@@ -95,7 +96,6 @@ export const parseDayOfWeek = (input: string) => {
 export const getDayOfWeekExample = (formatStr: string) =>
   [...Array(7).keys()].map((x) => format(new Date(2000, 0, 2 + x), formatStr)).join(', ')
 
-const US_STATES = State.getStatesOfCountry('US')
 export const parseUsState = (input: string) => {
   const normalizedInput = input.toLowerCase()
   return (
@@ -105,7 +105,6 @@ export const parseUsState = (input: string) => {
   )
 }
 
-const COUNTRIES = Country.getAllCountries()
 export const parseCountry = (input: string) => {
   const normalizedInput = input.toLowerCase()
   return (

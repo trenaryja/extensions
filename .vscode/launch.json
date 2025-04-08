@@ -9,7 +9,7 @@
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"]
     },
     {
-      "name": "Ext: Multi Cursor Magic",
+      "name": "Ext: Multi-Cursor Magic",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",

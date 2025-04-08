@@ -1,6 +1,6 @@
-# Multi Cursor Magic
+# Multi-Cursor Magic
 
-Multi Cursor Magic enhances VS Code's multi-cursor capabilities with transformation tools for dates, numbers, geographic data, and more.
+Multi-Cursor Magic enhances VS Code's multi-cursor capabilities with transformation tools for dates, numbers, geographic data, and more.
 
 ## Features
 
@@ -44,17 +44,3 @@ Multi Cursor Magic enhances VS Code's multi-cursor capabilities with transformat
 2. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
 3. Type "Multi-Cursor Magic" to see available commands
 4. Choose the transformation you want to apply
-
-## Release Notes
-
-### 0.0.1
-
-Initial release of Multi Cursor Magic with support for:
-
-- Month formatting
-- Day of week formatting
-- US State formatting
-- Country formatting
-- Number operations
-- JavaScript evaluation
-- Text padding

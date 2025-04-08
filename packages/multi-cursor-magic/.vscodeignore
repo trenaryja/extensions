@@ -1,50 +1,18 @@
-# Source files (since they're compiled to dist)
-src/**
-
-# Build and development files
 .turbo/**
 scripts/**
+src/**
+lib/**
+node_modules/**
+.gitignore
+.git/**
 eslint.config.mjs
 tsconfig.json
-
-# Git and version control
-.git/**
-.gitignore
-.gitattributes
-
-# Package management
-node_modules/**
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# CI/CD and configuration
-.github/**
-.vscode/**
-.vscode-test/**
-
-# Already packaged extension
+esbuild.ts
 *.vsix
+types.d.ts
 
-# Temporary and log files
-*.log
-.DS_Store
-Thumbs.db
-
-# Test files
-test/**
-**/*.test.ts
-**/*.spec.ts
-coverage/**
-
-# Documentation that's not needed in the extension
-docs/**
-CONTRIBUTING.md
-CHANGELOG.md
-.npmignore
-
-# Keep these files
-!dist/**
-!images/**
-!LICENSE
+# Don't ignore these important files
 !README.md
+!LICENSE
+!images/**
+!package.json

@@ -11,13 +11,13 @@
     "new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
   },
   "devDependencies": {
-    "@inquirer/prompts": "^7.4.0",
-    "@types/node": "^22.13.17",
+    "@inquirer/prompts": "^7.4.1",
+    "@types/node": "^22.14.0",
     "prettier": "^3.5.3",
     "remeda": "^2.21.2",
     "tsx": "^4.19.3",
-    "turbo": "^2.4.4",
-    "typescript": "5.8.2"
+    "turbo": "^2.5.0",
+    "typescript": "5.8.3"
   },
   "prettier": {
     "singleQuote": true,
