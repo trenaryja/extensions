@@ -1,12 +1,9 @@
 packages:
   - apps/*
   - packages/*
+
 onlyBuiltDependencies:
   - '@vscode/vsce-sign'
-  - core-js
-  - core-js-pure
   - esbuild
   - keytar
-  - sharp
-  - spawn-sync
-  - yo
+  - unrs-resolver

@@ -1,4 +1,3 @@
-import { config } from '@repo/config/eslint/base.js'
+import config from '@repo/config/eslint.config.mjs'
 
-/** @type {import("eslint").Linter.Config} */
 export default config

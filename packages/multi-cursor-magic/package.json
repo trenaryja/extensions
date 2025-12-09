@@ -1,87 +1,87 @@
 {
-  "name": "multi-cursor-magic",
-  "displayName": "Multi-Cursor Magic",
-  "description": "Multi-Cursor Magic VSCode Extension",
-  "version": "0.0.2",
-  "publisher": "trenaryja",
-  "license": "MIT",
-  "icon": "images/icon.png",
-  "main": "./dist/extension.js",
-  "scripts": {
-    "build": "pnpm dlx tsx ./scripts/build.ts",
-    "build:analyze": "pnpm dlx tsx ./scripts/build.ts --analyze",
-    "dev": "pnpm dlx tsx ./scripts/build.ts --watch",
-    "lint": "eslint . --max-warnings 0",
-    "contribute-commands": "pnpm dlx tsx ./scripts/contribute-commands.ts",
-    "vsce:login": "vsce login trenaryja",
-    "vsce:package": "vsce package --no-dependencies --allow-missing-repository",
-    "vsce:publish": "vsce publish --no-dependencies --allow-missing-repository",
-    "vscode:prepublish": "pnpm build"
-  },
-  "dependencies": {
-    "date-fns": "^4.1.0",
-    "remeda": "^2.21.2"
-  },
-  "devDependencies": {
-    "@repo/config": "workspace:*",
-    "@types/module-alias": "^2.0.4",
-    "@types/vscode": "^1.99.0",
-    "@vscode/vsce": "^3.3.2",
-    "esbuild": "^0.25.2",
-    "eslint": "^9.24.0",
-    "module-alias": "^2.2.3"
-  },
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "engines": {
-    "vscode": "^1.99.0"
-  },
-  "categories": [
-    "Formatters",
-    "Other"
-  ],
-  "keywords": [
-    "multi-cursor",
-    "formatting",
-    "transform",
-    "dates",
-    "numbers",
-    "states",
-    "countries",
-    "eval",
-    "productivity"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "title": "Multi-Cursor Magic: Format Months",
-        "command": "multiCursorMagic.formatMonths"
-      },
-      {
-        "title": "Multi-Cursor Magic: Format Days of Week",
-        "command": "multiCursorMagic.formatDaysOfWeek"
-      },
-      {
-        "title": "Multi-Cursor Magic: Format US States",
-        "command": "multiCursorMagic.formatUsStates"
-      },
-      {
-        "title": "Multi-Cursor Magic: Format Countries",
-        "command": "multiCursorMagic.formatCountries"
-      },
-      {
-        "title": "Multi-Cursor Magic: Format Numbers",
-        "command": "multiCursorMagic.formatNumbers"
-      },
-      {
-        "title": "Multi-Cursor Magic: Eval",
-        "command": "multiCursorMagic.evalDirect"
-      },
-      {
-        "title": "Multi-Cursor Magic: Pad Start",
-        "command": "multiCursorMagic.padStart"
-      }
-    ]
-  }
+	"name": "multi-cursor-magic",
+	"displayName": "Multi-Cursor Magic",
+	"description": "Multi-Cursor Magic VSCode Extension",
+	"version": "0.0.2",
+	"publisher": "trenaryja",
+	"license": "MIT",
+	"icon": "images/icon.png",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "pnpm dlx tsx ./scripts/build.ts",
+		"build:analyze": "pnpm dlx tsx ./scripts/build.ts --analyze",
+		"dev": "pnpm dlx tsx ./scripts/build.ts --watch",
+		"lint": "eslint . --max-warnings 0",
+		"contribute-commands": "pnpm dlx tsx ./scripts/contribute-commands.ts",
+		"vsce:login": "vsce login trenaryja",
+		"vsce:package": "vsce package --no-dependencies --allow-missing-repository",
+		"vsce:publish": "vsce publish --no-dependencies --allow-missing-repository",
+		"vscode:prepublish": "pnpm build"
+	},
+	"dependencies": {
+		"date-fns": "^4.1.0",
+		"remeda": "^2.32.0"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/module-alias": "^2.0.4",
+		"@types/vscode": "^1.106.1",
+		"@vscode/vsce": "^3.7.1",
+		"esbuild": "^0.27.1",
+		"eslint": "^9.39.1",
+		"module-alias": "^2.2.3"
+	},
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"engines": {
+		"vscode": "^1.99.0"
+	},
+	"categories": [
+		"Formatters",
+		"Other"
+	],
+	"keywords": [
+		"multi-cursor",
+		"formatting",
+		"transform",
+		"dates",
+		"numbers",
+		"states",
+		"countries",
+		"eval",
+		"productivity"
+	],
+	"contributes": {
+		"commands": [
+			{
+				"title": "Multi-Cursor Magic: Format Months",
+				"command": "multiCursorMagic.formatMonths"
+			},
+			{
+				"title": "Multi-Cursor Magic: Format Days of Week",
+				"command": "multiCursorMagic.formatDaysOfWeek"
+			},
+			{
+				"title": "Multi-Cursor Magic: Format US States",
+				"command": "multiCursorMagic.formatUsStates"
+			},
+			{
+				"title": "Multi-Cursor Magic: Format Countries",
+				"command": "multiCursorMagic.formatCountries"
+			},
+			{
+				"title": "Multi-Cursor Magic: Format Numbers",
+				"command": "multiCursorMagic.formatNumbers"
+			},
+			{
+				"title": "Multi-Cursor Magic: Eval",
+				"command": "multiCursorMagic.evalDirect"
+			},
+			{
+				"title": "Multi-Cursor Magic: Pad Start",
+				"command": "multiCursorMagic.padStart"
+			}
+		]
+	}
 }

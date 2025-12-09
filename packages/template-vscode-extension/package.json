@@ -1,28 +1,28 @@
 {
-  "name": "template-vscode-extension",
-  "displayName": "Template VSCode Extension",
-  "description": "Template VSCode Extension VSCode Extension",
-  "version": "0.0.1",
-  "publisher": "trenaryja",
-  "main": "./dist/extension.js",
-  "scripts": {
-    "build": "tsc -p ./",
-    "dev": "tsc -watch -p ./"
-  },
-  "devDependencies": {
-    "@repo/config": "workspace:*",
-    "@types/vscode": "^1.99.0"
-  },
-  "activationEvents": [],
-  "contributes": {
-    "commands": [
-      {
-        "command": "extension.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
-  "engines": {
-    "vscode": "^1.98.0"
-  }
+	"name": "template-vscode-extension",
+	"displayName": "Template VSCode Extension",
+	"description": "Template VSCode Extension VSCode Extension",
+	"version": "0.0.1",
+	"publisher": "trenaryja",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "tsc -p ./",
+		"dev": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/vscode": "^1.106.1"
+	},
+	"activationEvents": [],
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.helloWorld",
+				"title": "Hello World"
+			}
+		]
+	},
+	"engines": {
+		"vscode": "^1.98.0"
+	}
 }

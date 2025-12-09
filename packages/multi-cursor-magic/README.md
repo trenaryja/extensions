@@ -23,7 +23,6 @@ Multi-Cursor Magic enhances VS Code's multi-cursor capabilities with transformat
 - ### Number Operations
 
   Apply various mathematical operations and formatting to numeric selections:
-
   - Basic operations (+1, -1, double, square, etc.)
   - Rounding (floor, ceiling, round, truncate)
   - Format conversions (fixed decimal places, exponential, locale string)

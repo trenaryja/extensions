@@ -1,29 +1,30 @@
 {
-  "name": "trenary",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write . \"!pnpm-lock.yaml\"",
-    "check-up": "pnpm run format && pnpm run lint && pnpm build",
-    "get-latest": "pnpm up -L -i -r",
-    "new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
-  },
-  "devDependencies": {
-    "@inquirer/prompts": "^7.4.1",
-    "@types/node": "^22.14.0",
-    "prettier": "^3.5.3",
-    "remeda": "^2.21.2",
-    "tsx": "^4.19.3",
-    "turbo": "^2.5.0",
-    "typescript": "5.8.3"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "jsxSingleQuote": true,
-    "semi": false,
-    "printWidth": 120
-  },
-  "packageManager": "pnpm@10.8.0"
+	"name": "trenary",
+	"private": true,
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "turbo run lint",
+		"format": "prettier --write . \"!pnpm-lock.yaml\"",
+		"check-up": "pnpm run format && pnpm run lint && pnpm build",
+		"get-latest": "pnpm up -L -i -r",
+		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
+	},
+	"devDependencies": {
+		"@inquirer/prompts": "^8.0.2",
+		"@types/node": "^24.10.2",
+		"prettier": "^3.7.4",
+		"remeda": "^2.32.0",
+		"tsx": "^4.21.0",
+		"turbo": "^2.6.3",
+		"typescript": "5.9.3"
+	},
+	"prettier": {
+		"singleQuote": true,
+		"jsxSingleQuote": true,
+		"semi": false,
+		"printWidth": 120,
+		"useTabs": true
+	},
+	"packageManager": "pnpm@10.24.0"
 }

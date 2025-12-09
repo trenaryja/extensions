@@ -1,266 +1,266 @@
 [
-  {
-    "name": "Alaska",
-    "isoCode": "AK"
-  },
-  {
-    "name": "Alabama",
-    "isoCode": "AL"
-  },
-  {
-    "name": "Arkansas",
-    "isoCode": "AR"
-  },
-  {
-    "name": "American Samoa",
-    "isoCode": "AS"
-  },
-  {
-    "name": "Arizona",
-    "isoCode": "AZ"
-  },
-  {
-    "name": "California",
-    "isoCode": "CA"
-  },
-  {
-    "name": "Colorado",
-    "isoCode": "CO"
-  },
-  {
-    "name": "Connecticut",
-    "isoCode": "CT"
-  },
-  {
-    "name": "District of Columbia",
-    "isoCode": "DC"
-  },
-  {
-    "name": "Delaware",
-    "isoCode": "DE"
-  },
-  {
-    "name": "Florida",
-    "isoCode": "FL"
-  },
-  {
-    "name": "Georgia",
-    "isoCode": "GA"
-  },
-  {
-    "name": "Guam",
-    "isoCode": "GU"
-  },
-  {
-    "name": "Hawaii",
-    "isoCode": "HI"
-  },
-  {
-    "name": "Iowa",
-    "isoCode": "IA"
-  },
-  {
-    "name": "Idaho",
-    "isoCode": "ID"
-  },
-  {
-    "name": "Illinois",
-    "isoCode": "IL"
-  },
-  {
-    "name": "Indiana",
-    "isoCode": "IN"
-  },
-  {
-    "name": "Kansas",
-    "isoCode": "KS"
-  },
-  {
-    "name": "Kentucky",
-    "isoCode": "KY"
-  },
-  {
-    "name": "Louisiana",
-    "isoCode": "LA"
-  },
-  {
-    "name": "Massachusetts",
-    "isoCode": "MA"
-  },
-  {
-    "name": "Maryland",
-    "isoCode": "MD"
-  },
-  {
-    "name": "Maine",
-    "isoCode": "ME"
-  },
-  {
-    "name": "Michigan",
-    "isoCode": "MI"
-  },
-  {
-    "name": "Minnesota",
-    "isoCode": "MN"
-  },
-  {
-    "name": "Missouri",
-    "isoCode": "MO"
-  },
-  {
-    "name": "Northern Mariana Islands",
-    "isoCode": "MP"
-  },
-  {
-    "name": "Mississippi",
-    "isoCode": "MS"
-  },
-  {
-    "name": "Montana",
-    "isoCode": "MT"
-  },
-  {
-    "name": "North Carolina",
-    "isoCode": "NC"
-  },
-  {
-    "name": "North Dakota",
-    "isoCode": "ND"
-  },
-  {
-    "name": "Nebraska",
-    "isoCode": "NE"
-  },
-  {
-    "name": "New Hampshire",
-    "isoCode": "NH"
-  },
-  {
-    "name": "New Jersey",
-    "isoCode": "NJ"
-  },
-  {
-    "name": "New Mexico",
-    "isoCode": "NM"
-  },
-  {
-    "name": "Nevada",
-    "isoCode": "NV"
-  },
-  {
-    "name": "New York",
-    "isoCode": "NY"
-  },
-  {
-    "name": "Ohio",
-    "isoCode": "OH"
-  },
-  {
-    "name": "Oklahoma",
-    "isoCode": "OK"
-  },
-  {
-    "name": "Oregon",
-    "isoCode": "OR"
-  },
-  {
-    "name": "Pennsylvania",
-    "isoCode": "PA"
-  },
-  {
-    "name": "Puerto Rico",
-    "isoCode": "PR"
-  },
-  {
-    "name": "Rhode Island",
-    "isoCode": "RI"
-  },
-  {
-    "name": "South Carolina",
-    "isoCode": "SC"
-  },
-  {
-    "name": "South Dakota",
-    "isoCode": "SD"
-  },
-  {
-    "name": "Tennessee",
-    "isoCode": "TN"
-  },
-  {
-    "name": "Texas",
-    "isoCode": "TX"
-  },
-  {
-    "name": "United States Minor Outlying Islands",
-    "isoCode": "UM"
-  },
-  {
-    "name": "Johnston Atoll",
-    "isoCode": "UM-67"
-  },
-  {
-    "name": "Midway Atoll",
-    "isoCode": "UM-71"
-  },
-  {
-    "name": "Navassa Island",
-    "isoCode": "UM-76"
-  },
-  {
-    "name": "Wake Island",
-    "isoCode": "UM-79"
-  },
-  {
-    "name": "Baker Island",
-    "isoCode": "UM-81"
-  },
-  {
-    "name": "Howland Island",
-    "isoCode": "UM-84"
-  },
-  {
-    "name": "Jarvis Island",
-    "isoCode": "UM-86"
-  },
-  {
-    "name": "Kingman Reef",
-    "isoCode": "UM-89"
-  },
-  {
-    "name": "Palmyra Atoll",
-    "isoCode": "UM-95"
-  },
-  {
-    "name": "Utah",
-    "isoCode": "UT"
-  },
-  {
-    "name": "Virginia",
-    "isoCode": "VA"
-  },
-  {
-    "name": "United States Virgin Islands",
-    "isoCode": "VI"
-  },
-  {
-    "name": "Vermont",
-    "isoCode": "VT"
-  },
-  {
-    "name": "Washington",
-    "isoCode": "WA"
-  },
-  {
-    "name": "Wisconsin",
-    "isoCode": "WI"
-  },
-  {
-    "name": "West Virginia",
-    "isoCode": "WV"
-  },
-  {
-    "name": "Wyoming",
-    "isoCode": "WY"
-  }
+	{
+		"name": "Alaska",
+		"isoCode": "AK"
+	},
+	{
+		"name": "Alabama",
+		"isoCode": "AL"
+	},
+	{
+		"name": "Arkansas",
+		"isoCode": "AR"
+	},
+	{
+		"name": "American Samoa",
+		"isoCode": "AS"
+	},
+	{
+		"name": "Arizona",
+		"isoCode": "AZ"
+	},
+	{
+		"name": "California",
+		"isoCode": "CA"
+	},
+	{
+		"name": "Colorado",
+		"isoCode": "CO"
+	},
+	{
+		"name": "Connecticut",
+		"isoCode": "CT"
+	},
+	{
+		"name": "District of Columbia",
+		"isoCode": "DC"
+	},
+	{
+		"name": "Delaware",
+		"isoCode": "DE"
+	},
+	{
+		"name": "Florida",
+		"isoCode": "FL"
+	},
+	{
+		"name": "Georgia",
+		"isoCode": "GA"
+	},
+	{
+		"name": "Guam",
+		"isoCode": "GU"
+	},
+	{
+		"name": "Hawaii",
+		"isoCode": "HI"
+	},
+	{
+		"name": "Iowa",
+		"isoCode": "IA"
+	},
+	{
+		"name": "Idaho",
+		"isoCode": "ID"
+	},
+	{
+		"name": "Illinois",
+		"isoCode": "IL"
+	},
+	{
+		"name": "Indiana",
+		"isoCode": "IN"
+	},
+	{
+		"name": "Kansas",
+		"isoCode": "KS"
+	},
+	{
+		"name": "Kentucky",
+		"isoCode": "KY"
+	},
+	{
+		"name": "Louisiana",
+		"isoCode": "LA"
+	},
+	{
+		"name": "Massachusetts",
+		"isoCode": "MA"
+	},
+	{
+		"name": "Maryland",
+		"isoCode": "MD"
+	},
+	{
+		"name": "Maine",
+		"isoCode": "ME"
+	},
+	{
+		"name": "Michigan",
+		"isoCode": "MI"
+	},
+	{
+		"name": "Minnesota",
+		"isoCode": "MN"
+	},
+	{
+		"name": "Missouri",
+		"isoCode": "MO"
+	},
+	{
+		"name": "Northern Mariana Islands",
+		"isoCode": "MP"
+	},
+	{
+		"name": "Mississippi",
+		"isoCode": "MS"
+	},
+	{
+		"name": "Montana",
+		"isoCode": "MT"
+	},
+	{
+		"name": "North Carolina",
+		"isoCode": "NC"
+	},
+	{
+		"name": "North Dakota",
+		"isoCode": "ND"
+	},
+	{
+		"name": "Nebraska",
+		"isoCode": "NE"
+	},
+	{
+		"name": "New Hampshire",
+		"isoCode": "NH"
+	},
+	{
+		"name": "New Jersey",
+		"isoCode": "NJ"
+	},
+	{
+		"name": "New Mexico",
+		"isoCode": "NM"
+	},
+	{
+		"name": "Nevada",
+		"isoCode": "NV"
+	},
+	{
+		"name": "New York",
+		"isoCode": "NY"
+	},
+	{
+		"name": "Ohio",
+		"isoCode": "OH"
+	},
+	{
+		"name": "Oklahoma",
+		"isoCode": "OK"
+	},
+	{
+		"name": "Oregon",
+		"isoCode": "OR"
+	},
+	{
+		"name": "Pennsylvania",
+		"isoCode": "PA"
+	},
+	{
+		"name": "Puerto Rico",
+		"isoCode": "PR"
+	},
+	{
+		"name": "Rhode Island",
+		"isoCode": "RI"
+	},
+	{
+		"name": "South Carolina",
+		"isoCode": "SC"
+	},
+	{
+		"name": "South Dakota",
+		"isoCode": "SD"
+	},
+	{
+		"name": "Tennessee",
+		"isoCode": "TN"
+	},
+	{
+		"name": "Texas",
+		"isoCode": "TX"
+	},
+	{
+		"name": "United States Minor Outlying Islands",
+		"isoCode": "UM"
+	},
+	{
+		"name": "Johnston Atoll",
+		"isoCode": "UM-67"
+	},
+	{
+		"name": "Midway Atoll",
+		"isoCode": "UM-71"
+	},
+	{
+		"name": "Navassa Island",
+		"isoCode": "UM-76"
+	},
+	{
+		"name": "Wake Island",
+		"isoCode": "UM-79"
+	},
+	{
+		"name": "Baker Island",
+		"isoCode": "UM-81"
+	},
+	{
+		"name": "Howland Island",
+		"isoCode": "UM-84"
+	},
+	{
+		"name": "Jarvis Island",
+		"isoCode": "UM-86"
+	},
+	{
+		"name": "Kingman Reef",
+		"isoCode": "UM-89"
+	},
+	{
+		"name": "Palmyra Atoll",
+		"isoCode": "UM-95"
+	},
+	{
+		"name": "Utah",
+		"isoCode": "UT"
+	},
+	{
+		"name": "Virginia",
+		"isoCode": "VA"
+	},
+	{
+		"name": "United States Virgin Islands",
+		"isoCode": "VI"
+	},
+	{
+		"name": "Vermont",
+		"isoCode": "VT"
+	},
+	{
+		"name": "Washington",
+		"isoCode": "WA"
+	},
+	{
+		"name": "Wisconsin",
+		"isoCode": "WI"
+	},
+	{
+		"name": "West Virginia",
+		"isoCode": "WV"
+	},
+	{
+		"name": "Wyoming",
+		"isoCode": "WY"
+	}
 ]

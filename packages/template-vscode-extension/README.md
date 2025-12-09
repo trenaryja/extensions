@@ -29,7 +29,7 @@
   ```typescript
   // extension.ts
   vscode.commands.registerCommand('extension.yourCommand', () => {
-    vscode.window.showInformationMessage('Command executed!')
+  	vscode.window.showInformationMessage('Command executed!')
   })
   ```
 
