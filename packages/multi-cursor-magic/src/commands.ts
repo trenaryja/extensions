@@ -1,3 +1,5 @@
+import { getClosestTailwindColor, isDark, palette } from '@trenaryja/ui'
+import chroma from 'chroma-js'
 import { format } from 'date-fns'
 import * as R from 'remeda'
 
@@ -125,6 +127,35 @@ export const commands: Record<string, { command: string; callback: () => Promise
 			prompt: 'What character would you like to pad with?',
 			transform: (selection, selections, input) =>
 				selection.padStart(R.firstBy(selections, [(s) => s?.length ?? 0, 'desc'])?.length ?? 0, input),
+		}),
+	},
+
+	'Multi-Cursor Magic: Format Colors': {
+		command: 'multiCursorMagic.formatColors',
+		callback: createCommand({
+			type: 'quick-pick',
+			parseFn: (selection: string) => {
+				const tw = R.find(palette, (c) => c.fullName === selection)
+				if (tw) return chroma(tw.oklch)
+				if (!chroma.valid(selection)) return null
+				return chroma(selection)
+			},
+			prompt: 'Select a color format',
+			quickPickItems: [
+				{ label: '#hex', fmt: (c: chroma.Color) => c.hex('rgb') },
+				{ label: '#hexa', fmt: (c: chroma.Color) => c.hex('rgba') },
+				{ label: 'hex', fmt: (c: chroma.Color) => c.hex('rgb').slice(1) },
+				{ label: 'hexa', fmt: (c: chroma.Color) => c.hex('rgba').slice(1) },
+				{ label: 'css rgb', fmt: (c: chroma.Color) => c.css('rgb') },
+				{ label: 'css hsl', fmt: (c: chroma.Color) => c.css('hsl') },
+				{ label: 'css lab', fmt: (c: chroma.Color) => c.css('lab') },
+				{ label: 'css lch', fmt: (c: chroma.Color) => c.css('lch') },
+				{ label: 'css oklab', fmt: (c: chroma.Color) => c.css('oklab') },
+				{ label: 'css oklch', fmt: (c: chroma.Color) => c.css('oklch') },
+				{ label: 'is dark?', fmt: (c: chroma.Color) => (isDark(c.hex()) ? 'true' : 'false') },
+				{ label: 'closest tailwind color', fmt: (c: chroma.Color) => getClosestTailwindColor(c.hex()).fullName },
+			] as const,
+			transform: (c, _selections, option) => option.fmt(c),
 		}),
 	},
 }

@@ -19,11 +19,14 @@
 		"vscode:prepublish": "pnpm build"
 	},
 	"dependencies": {
+		"@trenaryja/ui": "0.0.1-31",
+		"chroma-js": "^3.2.0",
 		"date-fns": "^4.1.0",
 		"remeda": "^2.32.0"
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
+		"@types/chroma-js": "^3.1.2",
 		"@types/module-alias": "^2.0.4",
 		"@types/vscode": "^1.106.1",
 		"@vscode/vsce": "^3.7.1",
@@ -81,6 +84,10 @@
 			{
 				"title": "Multi-Cursor Magic: Pad Start",
 				"command": "multiCursorMagic.padStart"
+			},
+			{
+				"title": "Multi-Cursor Magic: Format Colors",
+				"command": "multiCursorMagic.formatColors"
 			}
 		]
 	}
