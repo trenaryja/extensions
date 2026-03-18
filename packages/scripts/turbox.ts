@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
 
+import { intro, select } from '@clack/prompts'
+import chalk from 'chalk'
 import { Command } from 'commander'
 import { changelog } from '@/commands/changelog'
 import { release } from '@/commands/release'
-import { runCLI } from '@/lib/cli'
+import { handleCancel, runCLI } from '@/lib/cli'
 
 const program = new Command()
 	.name('turbox')
@@ -27,8 +29,35 @@ program
 	.option('-m, --model <name>', 'Ollama model override')
 	.action((options) => changelog(options))
 
+const interactive = async (): Promise<void> => {
+	intro(chalk.bold('turbox'))
+
+	const command = handleCancel(
+		await select({
+			message: 'What would you like to do?',
+			options: [
+				{ value: 'release' as const, label: 'Release', hint: 'version bump, changelog, tag, and stage' },
+				{ value: 'changelog' as const, label: 'Changelog', hint: 'generate changelogs or monorepo summary' },
+			],
+		}),
+	)
+
+	switch (command) {
+		case 'release':
+			return release({})
+		case 'changelog':
+			return changelog({})
+	}
+}
+
 const main = async () => {
-	await program.parseAsync(process.argv)
+	// If no subcommand provided, drop into interactive mode
+	const hasSubcommand = process.argv.length > 2 && !process.argv[2].startsWith('-')
+	if (hasSubcommand) {
+		await program.parseAsync(process.argv)
+	} else {
+		await interactive()
+	}
 }
 
 runCLI(main)
