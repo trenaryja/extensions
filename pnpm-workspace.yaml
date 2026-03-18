@@ -1,9 +1,0 @@
-packages:
-  - apps/*
-  - packages/*
-
-onlyBuiltDependencies:
-  - '@vscode/vsce-sign'
-  - esbuild
-  - keytar
-  - unrs-resolver
