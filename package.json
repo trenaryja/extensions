@@ -9,7 +9,8 @@
 		"format": "prettier --write . \"!bun.lock\"",
 		"check-up": "bun run format && bun run lint && bun run build",
 		"get-latest": "bun update --latest",
-		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
+		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts",
+		"turbox": "bun packages/scripts/turbox.ts"
 	},
 	"devDependencies": {
 		"@inquirer/prompts": "^8.1.0",
