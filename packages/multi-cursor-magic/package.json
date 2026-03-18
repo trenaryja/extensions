@@ -2,7 +2,7 @@
 	"name": "multi-cursor-magic",
 	"displayName": "Multi-Cursor Magic",
 	"description": "Multi-Cursor Magic VSCode Extension",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "trenaryja",
 	"license": "MIT",
 	"icon": "images/icon.png",
@@ -28,17 +28,17 @@
 		"@repo/config": "workspace:*",
 		"@types/chroma-js": "^3.1.2",
 		"@types/module-alias": "^2.0.4",
-		"@types/vscode": "^1.106.1",
+		"@types/vscode": "^1.107.0",
 		"@vscode/vsce": "^3.7.1",
-		"esbuild": "^0.27.1",
-		"eslint": "^9.39.1",
+		"esbuild": "^0.27.2",
+		"eslint": "^9.39.2",
 		"module-alias": "^2.2.3"
 	},
 	"activationEvents": [
 		"onStartupFinished"
 	],
 	"engines": {
-		"vscode": "^1.99.0"
+		"vscode": "^1.106.1"
 	},
 	"categories": [
 		"Formatters",
