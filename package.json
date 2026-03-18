@@ -1,13 +1,14 @@
 {
 	"name": "trenary",
 	"private": true,
+	"workspaces": ["apps/*", "packages/*"],
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
-		"format": "prettier --write . \"!pnpm-lock.yaml\"",
-		"check-up": "pnpm run format && pnpm run lint && pnpm build",
-		"get-latest": "pnpm up -L -i -r",
+		"format": "prettier --write . \"!bun.lock\"",
+		"check-up": "bun run format && bun run lint && bun run build",
+		"get-latest": "bun update --latest",
 		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
 	},
 	"devDependencies": {
@@ -26,5 +27,6 @@
 		"printWidth": 120,
 		"useTabs": true
 	},
-	"packageManager": "pnpm@10.24.0"
+	"trustedDependencies": ["@vscode/vsce-sign", "esbuild", "keytar", "unrs-resolver"],
+	"packageManager": "bun@1.3.11"
 }

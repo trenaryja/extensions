@@ -8,15 +8,15 @@
 	"icon": "images/icon.png",
 	"main": "./dist/extension.js",
 	"scripts": {
-		"build": "pnpm dlx tsx ./scripts/build.ts",
-		"build:analyze": "pnpm dlx tsx ./scripts/build.ts --analyze",
-		"dev": "pnpm dlx tsx ./scripts/build.ts --watch",
+		"build": "bunx tsx ./scripts/build.ts",
+		"build:analyze": "bunx tsx ./scripts/build.ts --analyze",
+		"dev": "bunx tsx ./scripts/build.ts --watch",
 		"lint": "eslint . --max-warnings 0",
-		"contribute-commands": "pnpm dlx tsx ./scripts/contribute-commands.ts",
+		"contribute-commands": "bunx tsx ./scripts/contribute-commands.ts",
 		"vsce:login": "vsce login trenaryja",
 		"vsce:package": "vsce package --no-dependencies --allow-missing-repository",
 		"vsce:publish": "vsce publish --no-dependencies --allow-missing-repository",
-		"vscode:prepublish": "pnpm build"
+		"vscode:prepublish": "bun run build"
 	},
 	"dependencies": {
 		"@trenaryja/ui": "0.0.1-31",

@@ -113,23 +113,23 @@ async function main() {
 			`✅ VSCode extension '${extensionNameTitleCase}' successfully created in packages/${extensionNameKebabCase}!`,
 		)
 
-		// Run pnpm install in the new extension directory
+		// Run bun install in the new extension directory
 		console.log(`📦 Installing dependencies...`)
 		try {
-			execSync('pnpm install', {
+			execSync('bun install', {
 				cwd: extensionDir,
 				stdio: 'inherit', // Show the output in the console
 			})
 			console.log(`✅ Dependencies installed successfully!`)
 		} catch (error) {
-			console.error(`⚠️ Failed to install dependencies. You may need to run 'pnpm install' manually.`)
+			console.error(`⚠️ Failed to install dependencies. You may need to run 'bun install' manually.`)
 			console.error(error)
 		}
 
 		// Final instructions
 		console.log(`\n🚀 Next steps:`)
 		console.log(`  1. cd packages/${extensionNameKebabCase}`)
-		console.log(`  2. pnpm dev`)
+		console.log(`  2. bun dev`)
 		console.log(`  3. Press F5 to start debugging your extension`)
 	} catch (error) {
 		console.error(`❌ Error creating extension: ${error.message}`)
