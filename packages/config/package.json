@@ -7,8 +7,8 @@
 		"**/*"
 	],
 	"devDependencies": {
-		"@fullstacksjs/eslint-config": "^13.11.2",
-		"eslint": "^9.39.1",
+		"@fullstacksjs/eslint-config": "^13.13.3",
+		"eslint": "^9.39.2",
 		"typescript": "^5.9.3"
 	}
 }
