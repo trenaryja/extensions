@@ -1,0 +1,76 @@
+{
+	"name": "markdown-live",
+	"displayName": "Markdown Live",
+	"description": "Obsidian-style live preview markdown editor for VS Code",
+	"version": "0.0.1",
+	"publisher": "trenaryja",
+	"license": "MIT",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "bunx tsx ./scripts/build.ts",
+		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"test": "bun test",
+		"vscode:prepublish": "bun run build"
+	},
+	"dependencies": {
+		"@tiptap/core": "^3.0.1",
+		"@tiptap/extension-image": "^3.0.1",
+		"@tiptap/pm": "^3.0.1",
+		"@tiptap/react": "^3.0.1",
+		"@tiptap/starter-kit": "^3.0.1",
+		"tiptap-markdown": "^0.9.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/react": "^19.1.6",
+		"@types/react-dom": "^19.1.5",
+		"@types/vscode": "^1.100.0",
+		"@vscode/vsce": "^3.7.1",
+		"bun-types": "latest",
+		"esbuild": "^0.27.2",
+		"tsx": "^4.21.0"
+	},
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"markdown",
+		"wysiwyg",
+		"live preview",
+		"editor"
+	],
+	"activationEvents": [],
+	"contributes": {
+		"customEditors": [
+			{
+				"viewType": "markdownLive.editor",
+				"displayName": "Markdown Live",
+				"selector": [
+					{
+						"filenamePattern": "*.md"
+					}
+				],
+				"priority": "default"
+			}
+		],
+		"commands": [
+			{
+				"command": "markdownLive.toggle",
+				"title": "Markdown Live: Toggle Raw/Preview"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "markdownLive.toggle",
+				"key": "ctrl+shift+m",
+				"mac": "cmd+shift+m",
+				"when": "resourceExtname == .md"
+			}
+		]
+	}
+}
