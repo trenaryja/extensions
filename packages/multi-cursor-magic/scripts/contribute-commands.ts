@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs'
-import moduleAlias from 'module-alias'
+import { addAlias } from 'module-alias'
 import * as path from 'path'
 
-moduleAlias.addAlias('vscode', path.join(__dirname, 'fake-vscode'))
+addAlias('vscode', path.join(__dirname, 'fake-vscode'))
 
 async function main() {
 	const { commands } = await import('../src/commands.js')
