@@ -8,8 +8,9 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
+		"fix": "prettier -w . && turbo run fix",
+		"check": "tsc -b && prettier -c . && turbo run check",
 		"lint": "turbo run lint",
-		"check": "tsc -b && bun run format -c && bun run lint",
 		"format": "prettier -w .",
 		"get-latest": "bun update --latest -i",
 		"reinstall": "rm -rf node_modules && rm bun.lock && bun install",

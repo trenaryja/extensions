@@ -1,5 +1,9 @@
 {
-	"references": [{ "path": "packages/multi-cursor-magic" }, { "path": "packages/template-vscode-extension" }],
+	"references": [
+		{ "path": "packages/markdown-live" },
+		{ "path": "packages/multi-cursor-magic" },
+		{ "path": "packages/template-vscode-extension" }
+	],
 	"files": [],
 	"exclude": ["node_modules"]
 }
