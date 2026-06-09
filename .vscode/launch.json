@@ -21,7 +21,7 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/markdown-live", "--disable-extensions"],
-			"preLaunchTask": "npm: build - markdown-live"
+			"preLaunchTask": "build: markdown-live"
 		}
 	]
 }
