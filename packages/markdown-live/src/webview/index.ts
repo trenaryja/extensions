@@ -24,7 +24,6 @@ type UpdateMessage = { type: 'update'; content: string }
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
 type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage
 
-
 let currentSettings: Settings = { mermaidRenderMode: 'inline' }
 let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
@@ -83,7 +82,11 @@ function applyExternalUpdate(content: string) {
 }
 
 window.addEventListener('error', (event) => {
-	vscode.postMessage({ type: 'webviewError', message: event.message, stack: (event.error as Error | null)?.stack ?? '' })
+	vscode.postMessage({
+		type: 'webviewError',
+		message: event.message,
+		stack: (event.error as Error | null)?.stack ?? '',
+	})
 })
 
 window.addEventListener('unhandledrejection', (event) => {
@@ -106,9 +109,13 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 				const container = document.getElementById('editor')
 				if (container) {
 					container.style.cssText = 'padding:2rem;color:#ff6464;font-family:monospace;white-space:pre-wrap'
-					container.textContent = `Editor init failed:\n${err instanceof Error ? err.stack ?? err.message : String(err)}`
+					container.textContent = `Editor init failed:\n${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
 				}
-				vscode.postMessage({ type: 'webviewError', message: String(err), stack: err instanceof Error ? (err.stack ?? '') : '' })
+				vscode.postMessage({
+					type: 'webviewError',
+					message: String(err),
+					stack: err instanceof Error ? (err.stack ?? '') : '',
+				})
 			}
 		}
 		return
