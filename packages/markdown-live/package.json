@@ -13,19 +13,17 @@
 		"vscode:prepublish": "bun run build"
 	},
 	"dependencies": {
-		"@tiptap/core": "^3.0.1",
-		"@tiptap/extension-image": "^3.0.1",
-		"@tiptap/pm": "^3.0.1",
-		"@tiptap/react": "^3.0.1",
-		"@tiptap/starter-kit": "^3.0.1",
-		"tiptap-markdown": "^0.9.0",
-		"react": "^19.1.0",
-		"react-dom": "^19.1.0"
+		"@codemirror/commands": "^6.8.1",
+		"@codemirror/lang-markdown": "^6.3.2",
+		"@codemirror/language": "^6.11.1",
+		"@codemirror/language-data": "^6.5.1",
+		"@codemirror/state": "^6.5.2",
+		"@codemirror/view": "^6.38.1",
+		"mermaid": "^11.4.1",
+		"shiki": "^4.2.0"
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
-		"@types/react": "^19.1.6",
-		"@types/react-dom": "^19.1.5",
 		"@types/vscode": "^1.100.0",
 		"@vscode/vsce": "^3.7.1",
 		"bun-types": "latest",
@@ -71,6 +69,17 @@
 				"mac": "cmd+shift+m",
 				"when": "resourceExtname == .md"
 			}
-		]
+		],
+		"configuration": {
+			"title": "Markdown Live",
+			"properties": {
+				"markdownLive.mermaidRenderMode": {
+					"type": "string",
+					"enum": ["inline", "below", "disabled"],
+					"default": "inline",
+					"description": "How Mermaid diagrams are rendered. 'inline' replaces the code block with the diagram, 'below' shows the diagram below the source, 'disabled' leaves the code block as-is."
+				}
+			}
+		}
 	}
 }

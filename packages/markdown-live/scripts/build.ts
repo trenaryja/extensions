@@ -21,7 +21,7 @@ const extensionConfig: esbuild.BuildOptions = {
 
 const webviewConfig: esbuild.BuildOptions = {
 	...sharedConfig,
-	entryPoints: ['./src/webview/index.tsx'],
+	entryPoints: ['./src/webview/index.ts'],
 	outfile: 'dist/webview.js',
 	format: 'iife',
 	platform: 'browser',

@@ -1,28 +1,104 @@
-# Heading 1
+---
+title: Markdown Live — Test Suite
+date: 2026-06-09
+tags: [test, markdown, vscode]
+---
 
-## Heading 2
+# Markdown Live Test Suite
 
-### Heading 3
+Feature-specific tests:
 
-This is a paragraph with **bold text**, _italic text_, and `inline code`.
+- [Callouts](test-callouts.md)
+- [Mermaid Diagrams](test-mermaid.md)
+- [Tables](test-tables.md)
 
-- Bullet item one
-- Bullet item two
-- Bullet item three
+---
 
-1. Ordered item one
-2. Ordered item two
-3. Ordered item three
+## Headings
 
-> This is a blockquote
+# H1 Heading
+## H2 Heading
+### H3 Heading
+#### H4 Heading
+##### H5 Heading
+###### H6 Heading
+
+---
+
+## Inline Formatting
+
+**bold** and __also bold__
+
+*italic* and _also italic_
+
+***bold italic***
+
+~~strikethrough~~
+
+`inline code`
+
+**bold with _nested italic_ inside**
+
+[Link to example](https://example.com)
+
+---
+
+## Lists
+
+### Unordered
+
+- Item one
+- Item two
+  - Nested A
+  - Nested B
+- Item three
+
+### Ordered
+
+1. First item
+2. Second item
+   1. Nested A
+   2. Nested B
+3. Third item
+
+### Task List
+
+- [x] Completed task
+- [ ] Incomplete task
+- [x] Another done
+- [ ] Another pending
+
+---
+
+## Blockquote
+
+> This is a blockquote.
+> It can span multiple lines.
+>
+> And multiple paragraphs.
+
+---
+
+## Code Blocks
 
 ```typescript
-const greeting = (name: string) => `Hello, ${name}!`
-console.log(greeting('world'))
+const greet = (name: string) => `Hello, ${name}!`
+console.log(greet('world'))
+```
+
+```json
+{
+  "name": "markdown-live",
+  "version": "0.0.1"
+}
+```
+
+```bash
+bun install && bun run build
 ```
 
 ---
 
-A [link to example](https://example.com) and an image:
+## Images
 
 ![VS Code Logo](https://code.visualstudio.com/assets/favicon.ico)

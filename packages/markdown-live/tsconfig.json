@@ -4,9 +4,7 @@
 		"composite": true,
 		"incremental": true,
 		"outDir": "dist",
-		"jsx": "react-jsx",
-		"noEmit": true,
-		"types": ["bun-types"]
+		"noEmit": true
 	},
 	"include": ["src", "scripts", "tests"],
 	"exclude": ["node_modules", "dist"]
