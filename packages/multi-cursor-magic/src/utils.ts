@@ -33,18 +33,21 @@ export const createCommand =
 		if (editor.selections.length === 0) return vscode.window.showInformationMessage('No selections found')
 
 		const parsedSelections = editor.selections.map((selection) => command.parseFn(editor.document.getText(selection)))
+
 		if (parsedSelections.some((selection) => selection === null)) {
 			const choice = await vscode.window.showErrorMessage(
 				command.parseError ?? 'Unable to parse one or more selection',
 				'Select Invalid',
 				'Select Valid',
 			)
+
 			if (choice === 'Select Valid' || choice === 'Select Invalid') {
 				editor.selections = editor.selections.filter((_, i) => {
 					const valid = parsedSelections[i] !== null
 					return choice === 'Select Valid' ? valid : !valid
 				})
 			}
+
 			return
 		}
 
@@ -75,10 +78,12 @@ export const createCommand =
 
 export const parseMonth = (input: string) => {
 	const now = new Date()
+
 	for (const formatStr of ['M', 'MM', 'MMM', 'MMMM'] as const) {
 		const parsedDate = parse(input, formatStr, now)
 		if (isValid(parsedDate)) return parsedDate
 	}
+
 	return null
 }
 
@@ -87,10 +92,12 @@ export const getMonthExample = (formatStr: string) =>
 
 export const parseDayOfWeek = (input: string) => {
 	const now = new Date()
+
 	for (const formatStr of ['EEE', 'EEEE', 'EEEEEE'] as const) {
 		const parsedDate = parse(input, formatStr, now)
 		if (isValid(parsedDate)) return parsedDate
 	}
+
 	return null
 }
 
