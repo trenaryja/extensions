@@ -12,9 +12,6 @@
 		"dev": {
 			"cache": false,
 			"persistent": true
-		},
-		"check-up": {
-			"dependsOn": ["^check-up"]
 		}
 	}
 }
