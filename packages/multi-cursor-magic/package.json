@@ -2,11 +2,12 @@
 	"name": "multi-cursor-magic",
 	"displayName": "Multi-Cursor Magic",
 	"description": "Multi-Cursor Magic VSCode Extension",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"publisher": "trenaryja",
 	"license": "MIT",
 	"icon": "images/icon.png",
 	"main": "./dist/extension.js",
+	"browser": "./dist/web/extension.js",
 	"scripts": {
 		"build": "bunx tsx ./scripts/build.ts",
 		"build:analyze": "bunx tsx ./scripts/build.ts --analyze",
