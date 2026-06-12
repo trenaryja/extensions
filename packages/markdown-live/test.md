@@ -17,21 +17,26 @@ Feature-specific tests:
 ## Headings
 
 # H1 Heading
+
 ## H2 Heading
+
 ### H3 Heading
+
 #### H4 Heading
+
 ##### H5 Heading
+
 ###### H6 Heading
 
 ---
 
 ## Inline Formatting
 
-**bold** and __also bold__
+**bold** and **also bold**
 
-*italic* and _also italic_
+_italic_ and _also italic_
 
-***bold italic***
+**_bold italic_**
 
 ~~strikethrough~~
 
@@ -88,8 +93,8 @@ console.log(greet('world'))
 
 ```json
 {
-  "name": "markdown-live",
-  "version": "0.0.1"
+	"name": "markdown-live",
+	"version": "0.0.1"
 }
 ```
 

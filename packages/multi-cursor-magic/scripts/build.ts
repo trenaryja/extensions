@@ -1,31 +1,27 @@
 import * as esbuild from 'esbuild'
 
+const shared = {
+	entryPoints: ['./src/extension.ts'],
+	bundle: true,
+	external: ['vscode'],
+	format: 'cjs',
+	treeShaking: true,
+	logOverride: { 'direct-eval': 'silent' },
+} satisfies esbuild.BuildOptions
+
 async function build() {
 	try {
-		const result = await esbuild.build({
-			entryPoints: ['./src/extension.ts'],
-			bundle: true,
-			outfile: 'dist/extension.js',
-			external: ['vscode'],
-			format: 'cjs',
-			platform: 'node',
-			sourcemap: false,
-			treeShaking: true,
-			minify: true,
-			metafile: true,
-			logOverride: {
-				'direct-eval': 'silent',
-			},
-		})
+		const [nodeResult] = await Promise.all([
+			esbuild.build({ ...shared, outfile: 'dist/extension.js', platform: 'node', sourcemap: false, minify: true, metafile: true }),
+			esbuild.build({ ...shared, outfile: 'dist/web/extension.js', platform: 'browser', sourcemap: false, minify: true }),
+		])
 
-		// Log bundle size information
-		if (result.metafile) {
-			const outfileSize = result.metafile.outputs['dist/extension.js']?.bytes ?? 0
+		if (nodeResult.metafile) {
+			const outfileSize = nodeResult.metafile.outputs['dist/extension.js']?.bytes ?? 0
 			console.log(`Bundle size: ${(outfileSize / 1024).toFixed(2)} KB`)
 
-			// Optionally analyze the bundle in detail
 			if (process.argv.includes('--analyze')) {
-				const analysis = await esbuild.analyzeMetafile(result.metafile)
+				const analysis = await esbuild.analyzeMetafile(nodeResult.metafile)
 				console.log(analysis)
 			}
 		}
