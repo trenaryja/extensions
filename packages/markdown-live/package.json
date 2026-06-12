@@ -26,6 +26,7 @@
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
+		"@repo/vscode-utils": "workspace:*",
 		"@types/vscode": "^1.100.0",
 		"@vscode/vsce": "^3.7.1",
 		"bun-types": "latest",

@@ -29,6 +29,7 @@
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
+		"@repo/vscode-utils": "workspace:*",
 		"@types/chroma-js": "^3.1.2",
 		"@types/module-alias": "^2.0.4",
 		"@types/vscode": "^1.107.0",
@@ -42,7 +43,7 @@
 		"onStartupFinished"
 	],
 	"engines": {
-		"vscode": "^1.106.1"
+		"vscode": "^1.107.0"
 	},
 	"categories": [
 		"Formatters",

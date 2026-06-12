@@ -2,9 +2,10 @@ import { extensionConfig, runBuilds, webExtensionConfig } from '@repo/vscode-uti
 
 const watch = process.argv.includes('--watch')
 const mode = watch ? 'development' : 'production'
-const analyze = process.argv.includes('--analyze')
 
-runBuilds([extensionConfig({ mode }), webExtensionConfig({ mode })], { watch, analyze }).catch((err: unknown) => {
+runBuilds([extensionConfig({ mode, entry: './extension.ts' }), webExtensionConfig({ mode, entry: './extension.ts' })], {
+	watch,
+}).catch((err: unknown) => {
 	console.error(err)
 	process.exit(1)
 })

@@ -5,13 +5,21 @@
 	"version": "0.0.1",
 	"publisher": "trenaryja",
 	"main": "./dist/extension.js",
+	"browser": "./dist/web/extension.js",
 	"scripts": {
-		"build": "tsc -p ./",
-		"dev": "tsc -watch -p ./"
+		"build": "bunx tsx ./scripts/build.ts",
+		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"fix": "prettier -w .",
+		"check": "tsc && bun run build",
+		"vscode:prepublish": "bun run build"
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
-		"@types/vscode": "^1.107.0"
+		"@repo/vscode-utils": "workspace:*",
+		"@types/vscode": "^1.107.0",
+		"bun-types": "^1.3.14",
+		"esbuild": "^0.27.0",
+		"tsx": "^4.22.4"
 	},
 	"activationEvents": [],
 	"contributes": {
@@ -23,6 +31,6 @@
 		]
 	},
 	"engines": {
-		"vscode": "^1.98.0"
+		"vscode": "^1.107.0"
 	}
 }
