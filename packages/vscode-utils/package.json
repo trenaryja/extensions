@@ -1,0 +1,23 @@
+{
+	"name": "@repo/vscode-utils",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"exports": {
+		".": "./src/index.ts",
+		"./build": "./src/build.ts"
+	},
+	"files": [
+		"src/**/*"
+	],
+	"scripts": {
+		"fix": "prettier -w .",
+		"check": "tsc"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/vscode": "^1.107.0",
+		"esbuild": "^0.27.0",
+		"prettier": "^3.8.3"
+	}
+}

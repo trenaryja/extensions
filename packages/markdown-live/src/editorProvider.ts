@@ -1,3 +1,4 @@
+import { createWebviewHtml } from '@repo/vscode-utils'
 import * as vscode from 'vscode'
 
 type WebviewMessage =
@@ -38,7 +39,6 @@ export class MarkdownLiveEditorProvider implements vscode.CustomTextEditorProvid
 		const localRoots = [
 			vscode.Uri.joinPath(this.context.extensionUri, 'dist'),
 			...(workspaceFolder ? [workspaceFolder.uri] : []),
-			// Also allow the document's directory for relative image paths
 			vscode.Uri.joinPath(document.uri, '..'),
 		]
 
@@ -112,47 +112,21 @@ export class MarkdownLiveEditorProvider implements vscode.CustomTextEditorProvid
 	}
 
 	private getHtml(webview: vscode.Webview): string {
-		const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js'))
-		const nonce = getNonce()
-
-		return /* html */ `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} vscode-resource: https: data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';" />
-  <title>Markdown Live</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+		return createWebviewHtml({
+			webview,
+			scriptUri: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js'),
+			title: 'Markdown Live',
+			headStyles: `    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
     body {
       background: var(--vscode-editor-background);
       color: var(--vscode-editor-foreground);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
     }
-    #editor {
-      height: 100vh;
-      overflow-y: auto;
-    }
-    .cm-editor {
-      height: 100%;
-    }
-    .cm-scroller {
-      overflow: auto;
-    }
-  </style>
-</head>
-<body>
-  <div id="editor"></div>
-  <script nonce="${nonce}" src="${webviewUri}"></script>
-</body>
-</html>`
+    #editor { height: 100vh; overflow-y: auto; }
+    .cm-editor { height: 100%; }
+    .cm-scroller { overflow: auto; }`,
+			bodyHtml: '<div id="editor"></div>',
+		})
 	}
-}
-
-function getNonce(): string {
-	let text = ''
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-	for (let i = 0; i < 32; i++) text += possible.charAt(Math.floor(Math.random() * possible.length))
-	return text
 }

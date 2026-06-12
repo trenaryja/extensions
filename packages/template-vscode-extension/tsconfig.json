@@ -2,9 +2,9 @@
 	"extends": "@repo/config/typescript/base.json",
 	"compilerOptions": {
 		"composite": true,
-		"incremental": true,
-		"outDir": "dist"
+		"noEmit": true,
+		"types": ["bun-types"]
 	},
-	"include": ["*.ts"],
+	"include": ["*.ts", "scripts"],
 	"exclude": ["node_modules", "dist"]
 }
