@@ -1,16 +1,20 @@
 {
 	"name": "markdown-live",
 	"displayName": "Markdown Live",
-	"description": "Obsidian-style live preview markdown editor for VS Code",
+	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
 	"version": "0.0.1",
 	"publisher": "trenaryja",
 	"license": "MIT",
+	"changelog": true,
 	"main": "./dist/extension.js",
+	"browser": "./dist/web/extension.js",
 	"scripts": {
 		"build": "bunx tsx ./scripts/build.ts",
 		"dev": "bunx tsx ./scripts/build.ts --watch",
-		"fix": "prettier -w .",
-		"check": "tsc && prettier -c . && bun run build",
+		"contribute": "bun ./scripts/contribute.ts",
+		"contribute:check": "bun ./scripts/contribute.ts --check",
+		"fix": "bun run contribute && prettier -w .",
+		"check": "bun run contribute:check && tsc && prettier -c . && bun run build",
 		"test": "bun test",
 		"vscode:prepublish": "bun run build"
 	},
@@ -22,15 +26,19 @@
 		"@codemirror/state": "^6.5.2",
 		"@codemirror/view": "^6.38.1",
 		"mermaid": "^11.4.1",
-		"shiki": "^4.2.0"
+		"shiki": "^4.2.0",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
 		"@repo/vscode-utils": "workspace:*",
+		"@tailwindcss/cli": "^4.3.3",
 		"@types/vscode": "^1.100.0",
 		"@vscode/vsce": "^3.7.1",
 		"bun-types": "latest",
+		"daisyui": "^5.6.18",
 		"esbuild": "^0.27.2",
+		"tailwindcss": "^4.3.3",
 		"tsx": "^4.21.0"
 	},
 	"engines": {
@@ -47,6 +55,31 @@
 	],
 	"activationEvents": [],
 	"contributes": {
+		"commands": [
+			{
+				"command": "markdownLive.toggle",
+				"title": "Toggle Raw/Preview",
+				"category": "Markdown Live",
+				"icon": "$(book)"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "markdownLive.toggle",
+				"key": "ctrl+shift+m",
+				"mac": "cmd+shift+m",
+				"when": "resourceExtname == .md"
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "markdownLive.toggle",
+					"group": "navigation",
+					"when": "resourceExtname == .md"
+				}
+			]
+		},
 		"customEditors": [
 			{
 				"viewType": "markdownLive.editor",
@@ -59,32 +92,24 @@
 				"priority": "default"
 			}
 		],
-		"commands": [
-			{
-				"command": "markdownLive.toggle",
-				"title": "Markdown Live: Toggle Raw/Preview"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "markdownLive.toggle",
-				"key": "ctrl+shift+m",
-				"mac": "cmd+shift+m",
-				"when": "resourceExtname == .md"
-			}
-		],
 		"configuration": {
 			"title": "Markdown Live",
 			"properties": {
 				"markdownLive.mermaidRenderMode": {
+					"default": "inline",
+					"markdownDescription": "How Mermaid diagrams are rendered. `inline` replaces the code block with the diagram, `below` shows the diagram beneath the source, `disabled` leaves the code block as-is.",
+					"enumDescriptions": [
+						"Replace the code block with the rendered diagram",
+						"Show the diagram below the source",
+						"Leave the code block as-is"
+					],
+					"scope": "window",
 					"type": "string",
 					"enum": [
 						"inline",
 						"below",
 						"disabled"
-					],
-					"default": "inline",
-					"description": "How Mermaid diagrams are rendered. 'inline' replaces the code block with the diagram, 'below' shows the diagram below the source, 'disabled' leaves the code block as-is."
+					]
 				}
 			}
 		}

@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+@source './**/*.{ts,tsx}';
+
+@plugin 'daisyui' {
+	themes: false;
+}
+
+/*
+ * The `vscode` daisyUI theme. Colors here are literal OKLCH *fallbacks* — they are overridden at
+ * runtime by the VS Code bridge below. The non-color design tokens (radius/size/border) are the
+ * real values, since VS Code exposes no equivalents.
+ */
+@plugin 'daisyui/theme' {
+	name: 'vscode';
+	default: true;
+	color-scheme: dark;
+	--color-base-100: oklch(20% 0 0);
+	--color-base-200: oklch(23% 0 0);
+	--color-base-300: oklch(26% 0 0);
+	--color-base-content: oklch(92% 0 0);
+	--color-primary: oklch(55% 0.2 250);
+	--color-primary-content: oklch(98% 0 0);
+	--color-secondary: oklch(50% 0.1 260);
+	--color-secondary-content: oklch(98% 0 0);
+	--color-accent: oklch(70% 0.15 230);
+	--color-accent-content: oklch(20% 0 0);
+	--color-neutral: oklch(40% 0 0);
+	--color-neutral-content: oklch(98% 0 0);
+	--color-info: oklch(70% 0.15 230);
+	--color-info-content: oklch(20% 0 0);
+	--color-success: oklch(70% 0.17 155);
+	--color-success-content: oklch(20% 0 0);
+	--color-warning: oklch(80% 0.16 85);
+	--color-warning-content: oklch(20% 0 0);
+	--color-error: oklch(65% 0.2 25);
+	--color-error-content: oklch(20% 0 0);
+	--radius-selector: 0.5rem;
+	--radius-field: 0.375rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+/*
+ * The VS Code bridge. Overrides daisyUI's color tokens with the live `--vscode-*` variables so
+ * every daisyUI component (badge, callout, table, …) follows the active editor theme and re-tints
+ * instantly when the user switches themes. Each color is paired with its `-content` from a matching
+ * VS Code fg/bg pair (daisyUI v5 removed automatic `-content` derivation), with an OKLCH fallback
+ * for themes that don't define a given variable.
+ */
+[data-theme='vscode'] {
+	--color-base-100: var(--vscode-editor-background, oklch(20% 0 0));
+	--color-base-200: var(--vscode-sideBar-background, var(--vscode-editor-background, oklch(23% 0 0)));
+	--color-base-300: var(--vscode-editorWidget-background, oklch(26% 0 0));
+	--color-base-content: var(--vscode-editor-foreground, oklch(92% 0 0));
+	--color-primary: var(--vscode-button-background, oklch(55% 0.2 250));
+	--color-primary-content: var(--vscode-button-foreground, oklch(98% 0 0));
+	--color-secondary: var(--vscode-button-secondaryBackground, oklch(50% 0.1 260));
+	--color-secondary-content: var(--vscode-button-secondaryForeground, oklch(98% 0 0));
+	--color-accent: var(--vscode-textLink-foreground, oklch(70% 0.15 230));
+	--color-accent-content: var(--vscode-editor-background, oklch(20% 0 0));
+	--color-neutral: var(--vscode-badge-background, oklch(40% 0 0));
+	--color-neutral-content: var(--vscode-badge-foreground, oklch(98% 0 0));
+	--color-info: var(--vscode-editorInfo-foreground, oklch(70% 0.15 230));
+	--color-info-content: var(--vscode-editor-background, oklch(20% 0 0));
+	--color-success: var(--vscode-charts-green, oklch(70% 0.17 155));
+	--color-success-content: var(--vscode-editor-background, oklch(20% 0 0));
+	--color-warning: var(--vscode-editorWarning-foreground, oklch(80% 0.16 85));
+	--color-warning-content: var(--vscode-editor-background, oklch(20% 0 0));
+	--color-error: var(--vscode-editorError-foreground, oklch(65% 0.2 25));
+	--color-error-content: var(--vscode-editor-background, oklch(20% 0 0));
+}
