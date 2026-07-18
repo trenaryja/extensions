@@ -97,10 +97,11 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 		const imgMatch = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(text)
 		if (imgMatch) {
 			const image = imageWidget({ alt: imgMatch[1] ?? '', src: imgMatch[2] ?? '' })
-			// While editing, keep the image rendered as a block just BELOW the editable `![...]` source, so the
-			// document height barely changes on reveal (no ~500px collapse → no jarring scroll jump), and you
-			// get a live preview. Otherwise, replace the line with the image.
-			if (active) entries.push(markDeco(line.to, line.to, Decoration.widget({ widget: image, side: 1, block: true })))
+			// While editing, keep the image rendered just BELOW the editable `![...]` source, so the document
+			// height barely changes on reveal (no ~500px collapse → no jarring scroll jump), and you get a live
+			// preview. It's an inline widget (block widgets aren't allowed from a plugin); `.md-img` is
+			// display:block, so it wraps to its own line under the source. Otherwise, replace the line with it.
+			if (active) entries.push(markDeco(line.to, line.to, Decoration.widget({ widget: image, side: 1 })))
 			else entries.push(markDeco(line.from, line.to, Decoration.replace({ widget: image })))
 			continue
 		}
