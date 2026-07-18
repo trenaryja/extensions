@@ -47,3 +47,14 @@
 | 1   |     | 3   |
 |     | 5   | 6   |
 | 7   | 8   |     |
+
+---
+
+## Inline Formatting in Cells
+
+| Feature       | Syntax               | Status        |
+| ------------- | -------------------- | ------------- |
+| Inline code   | `const x = 1`        | **shipped**   |
+| Bold & italic | **bold**, _italic_   | **shipped**   |
+| Strikethrough | ~~old approach~~     | _deprecated_  |
+| Link          | [example](https://example.com) | see [docs](test.md) |

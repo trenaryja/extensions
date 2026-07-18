@@ -195,6 +195,43 @@ export const markdownLiveTheme = EditorView.theme(
 		},
 
 		// Table widget
+		'.md-table-wrap': {
+			display: 'block',
+			position: 'relative',
+			overflowX: 'auto',
+		},
+		// Row/column tools, revealed on hover of the table (top-right).
+		'.md-table-tools': {
+			position: 'absolute',
+			top: '0.35rem',
+			right: '0.35rem',
+			display: 'flex',
+			gap: '0.3rem',
+			opacity: '0',
+			transition: 'opacity 0.12s',
+			pointerEvents: 'none',
+		},
+		'.md-table-wrap:hover .md-table-tools': {
+			opacity: '1',
+			pointerEvents: 'auto',
+		},
+		// Source revealed while editing — a monospace container like a code block, so the pipes line up.
+		'.md-table-src': {
+			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
+			fontSize: '0.9em',
+			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
+			padding: '0 1rem',
+		},
+		'.md-table-src-top': {
+			paddingTop: '0.4rem',
+			borderTopLeftRadius: '6px',
+			borderTopRightRadius: '6px',
+		},
+		'.md-table-src-bottom': {
+			paddingBottom: '0.4rem',
+			borderBottomLeftRadius: '6px',
+			borderBottomRightRadius: '6px',
+		},
 		'.md-table': {
 			borderCollapse: 'separate',
 			borderSpacing: '0',
