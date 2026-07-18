@@ -10,7 +10,7 @@ import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
 import { CURSOR } from '../snippets'
 import type { CalloutConfig } from '../callouts.data'
-import type { MermaidRenderMode } from './decorations/mermaid'
+import { type MermaidRenderMode, refreshMermaidTheme } from './decorations/mermaid'
 
 declare function acquireVsCodeApi(): {
 	postMessage: (msg: unknown) => void
@@ -31,7 +31,12 @@ window.addEventListener('blur', () => document.documentElement.classList.remove(
 // `data-vscode-theme-name` updates on the body for both committed themes AND live previews.
 const requestShikiTheme = () =>
 	vscode.postMessage({ type: 'requestShikiTheme', name: document.body.dataset.vscodeThemeName ?? '' })
-new MutationObserver(requestShikiTheme).observe(document.body, {
+// On any theme change, re-request the Shiki theme AND re-theme mermaid (which reads --vscode-* CSS vars directly).
+const onThemeChange = () => {
+	requestShikiTheme()
+	if (view) refreshMermaidTheme(view)
+}
+new MutationObserver(onThemeChange).observe(document.body, {
 	attributes: true,
 	attributeFilter: ['data-vscode-theme-name', 'data-vscode-theme-kind'],
 })

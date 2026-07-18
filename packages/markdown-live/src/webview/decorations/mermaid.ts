@@ -1,4 +1,4 @@
-import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
+import { type EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import mermaid from 'mermaid'
 import { defineWidget } from '../lib/widget'
@@ -6,13 +6,83 @@ import { docOrSelectionChanged, selectionTouches } from './active'
 
 export type MermaidRenderMode = 'inline' | 'below' | 'disabled'
 
+// Dispatched when the VS Code theme changes so the field rebuilds and diagrams re-render with new colors.
+const mermaidRefresh = StateEffect.define<null>()
+
+// Bridge the active VS Code theme into mermaid's `base` theme — the same idea as the Shiki bridge for code
+// blocks, but sourced from the `--vscode-*` CSS variables VS Code injects into the webview (no host round-trip
+// needed). The categorical series (pie slices, git branches, …) is driven off `--vscode-charts-*`, the palette
+// VS Code reserves for charts, so diagrams match your theme's chart colors.
+function buildMermaidTheme() {
+	const css = getComputedStyle(document.body)
+	const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback
+	const isDark = document.body.dataset.vscodeThemeKind?.includes('dark') ?? false
+
+	const bg = v('--vscode-editor-background', isDark ? '#1e1e1e' : '#ffffff')
+	const fg = v('--vscode-editor-foreground', isDark ? '#d4d4d4' : '#333333')
+	const surface = v('--vscode-editorWidget-background', bg)
+	const border = v('--vscode-widget-border', v('--vscode-editorWidget-border', isDark ? '#454545' : '#c8c8c8'))
+	const accent = v('--vscode-focusBorder', v('--vscode-button-background', '#4fc1ff'))
+	const lines = v('--vscode-charts-lines', border)
+
+	const series = [
+		v('--vscode-charts-blue', '#4c8bf5'),
+		v('--vscode-charts-green', '#53c578'),
+		v('--vscode-charts-orange', '#ffab40'),
+		v('--vscode-charts-purple', '#b478ff'),
+		v('--vscode-charts-red', '#ff6464'),
+		v('--vscode-charts-yellow', '#ffc83c'),
+	]
+	const pick = (index: number) => series[index % series.length]
+	// pie uses 1-based keys (pie1..pie12), git uses 0-based (git0..git7).
+	const pie = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, pick(i)]))
+	const git = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`git${i}`, pick(i)]))
+
+	return {
+		theme: 'base' as const,
+		themeVariables: {
+			darkMode: isDark,
+			fontFamily: v('--vscode-font-family', "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"),
+			fontSize: '14px',
+			background: bg,
+			primaryColor: surface,
+			primaryTextColor: fg,
+			primaryBorderColor: accent,
+			secondaryColor: surface,
+			tertiaryColor: bg,
+			lineColor: lines,
+			textColor: fg,
+			mainBkg: surface,
+			nodeBorder: accent,
+			clusterBkg: bg,
+			clusterBorder: border,
+			titleColor: fg,
+			edgeLabelBackground: bg,
+			// Pie
+			pieTitleTextColor: fg,
+			pieSectionTextColor: fg,
+			pieStrokeColor: bg,
+			pieOuterStrokeColor: border,
+			pieLegendTextColor: fg,
+			...pie,
+			// Git
+			commitLabelColor: fg,
+			commitLabelBackground: bg,
+			...git,
+		},
+	}
+}
+
+function initMermaid() {
+	mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', ...buildMermaidTheme() })
+}
+
 let mermaidInitialized = false
 
 function ensureMermaidInit() {
 	if (mermaidInitialized) return
 	mermaidInitialized = true
-	const isDark = document.body.dataset.vscodeThemeKind?.includes('dark') ?? false
-	mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' })
+	initMermaid()
 }
 
 let diagramCounter = 0
@@ -53,6 +123,15 @@ const mermaidWidget = defineWidget<{ code: string }>({
 		return wrapper
 	},
 })
+
+/** Re-theme mermaid to the current VS Code theme and re-render every diagram (called when the theme changes). */
+export function refreshMermaidTheme(view: EditorView) {
+	if (!mermaidInitialized) return // nothing rendered yet — the first render will pick up the current theme
+	initMermaid()
+	svgByCode.clear()
+	lastSvg = ''
+	view.dispatch({ effects: mermaidRefresh.of(null) })
+}
 
 type MermaidBlock = { startLine: number; endLine: number; code: string }
 
@@ -109,7 +188,8 @@ export function createMermaidPlugin(getMode: () => MermaidRenderMode) {
 			return buildMermaidDecorations(state, getMode())
 		},
 		update(decorations, transaction) {
-			if (!docOrSelectionChanged(transaction)) return decorations
+			const themed = transaction.effects.some((effect) => effect.is(mermaidRefresh))
+			if (!themed && !docOrSelectionChanged(transaction)) return decorations
 			return buildMermaidDecorations(transaction.state, getMode())
 		},
 		provide(field) {
