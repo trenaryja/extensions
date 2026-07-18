@@ -24,6 +24,16 @@ window.addEventListener('keydown', syncModifier)
 window.addEventListener('keyup', syncModifier)
 window.addEventListener('blur', () => document.documentElement.classList.remove('md-mod-held'))
 
+// Ask the host to resolve the active VS Code theme to a Shiki theme, and re-ask whenever it changes.
+// `data-vscode-theme-name` updates on the body for both committed themes AND live previews.
+const requestShikiTheme = () =>
+	vscode.postMessage({ type: 'requestShikiTheme', name: document.body.dataset.vscodeThemeName ?? '' })
+new MutationObserver(requestShikiTheme).observe(document.body, {
+	attributes: true,
+	attributeFilter: ['data-vscode-theme-name', 'data-vscode-theme-kind'],
+})
+requestShikiTheme()
+
 type Settings = {
 	mermaidRenderMode: MermaidRenderMode
 }

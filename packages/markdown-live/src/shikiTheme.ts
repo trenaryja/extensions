@@ -54,10 +54,7 @@ const resolveIncludes = async (uri: vscode.Uri, theme: ThemeJson, depth = 0): Pr
  * Returns null on any failure so the webview falls back to dark-plus/light-plus. Reads the theme's
  * TextMate token colors only — it does NOT capture `editor.tokenColorCustomizations` or semantic tokens.
  */
-export const resolveActiveShikiTheme = async (): Promise<ThemeJson | null> => {
-	const label = vscode.workspace.getConfiguration('workbench').get<string>('colorTheme')
-	if (!label) return null
-
+const resolveByLabel = async (label: string): Promise<ThemeJson | null> => {
 	for (const extension of vscode.extensions.all) {
 		const themes = extension.packageJSON?.contributes?.themes as
 			| Array<{ label?: string; id?: string; path: string }>
@@ -71,6 +68,22 @@ export const resolveActiveShikiTheme = async (): Promise<ThemeJson | null> => {
 		const resolved = await resolveIncludes(uri, theme)
 		resolved.name = label // stable name for Shiki to register/select
 		return resolved
+	}
+	return null
+}
+
+/**
+ * Resolve a Shiki theme, preferring the `name` the webview observed (its live `data-vscode-theme-name`,
+ * which tracks theme *previews* too) and falling back to the persisted `workbench.colorTheme` setting.
+ * Returns null on any failure, so the webview falls back to dark-plus/light-plus.
+ */
+export const resolveShikiThemeByName = async (name: string): Promise<ThemeJson | null> => {
+	const configName = vscode.workspace.getConfiguration('workbench').get<string>('colorTheme') ?? ''
+	for (const candidate of [name, configName]) {
+		if (candidate) {
+			const resolved = await resolveByLabel(candidate)
+			if (resolved) return resolved
+		}
 	}
 	return null
 }
