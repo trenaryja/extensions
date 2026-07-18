@@ -13,6 +13,16 @@ type WebviewMessage =
 
 const readSettings = () => ({ mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode') })
 
+// The most recently active Markdown Live editor — the target for insert commands, since custom editors
+// don't set vscode.window.activeTextEditor. It persists while a picker is open (which deactivates the webview).
+let activePanel: vscode.WebviewPanel | null = null
+
+export const insertIntoActiveEditor = (text: string) => {
+	const panel = activePanel
+	if (!panel) return void vscode.window.showWarningMessage('Markdown Live: open a markdown file to insert into.')
+	panel.webview.postMessage({ type: 'insert', text })
+}
+
 const headStyles = `    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
     body {
@@ -50,6 +60,7 @@ const resolveEditor = (
 		],
 	}
 	webviewPanel.webview.html = getHtml(context, webviewPanel.webview)
+	activePanel = webviewPanel
 
 	// True while we apply an edit that came from the webview — prevents echoing it back and resetting the cursor.
 	let pendingWebviewEdit = false
@@ -101,10 +112,15 @@ const resolveEditor = (
 	const themeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
 		if (e.affectsConfiguration('workbench.colorTheme')) sendShikiTheme('')
 	})
+	const viewStateDisposable = webviewPanel.onDidChangeViewState(() => {
+		if (webviewPanel.active) activePanel = webviewPanel
+	})
 	webviewPanel.onDidDispose(() => {
 		changeDisposable.dispose()
 		configDisposable.dispose()
 		themeDisposable.dispose()
+		viewStateDisposable.dispose()
+		if (activePanel === webviewPanel) activePanel = null
 	})
 }
 

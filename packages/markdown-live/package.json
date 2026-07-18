@@ -61,6 +61,21 @@
 				"title": "Toggle Raw/Preview",
 				"category": "Markdown Live",
 				"icon": "$(book)"
+			},
+			{
+				"command": "markdownLive.insertCodeBlock",
+				"title": "Insert Code Block",
+				"category": "Markdown Live"
+			},
+			{
+				"command": "markdownLive.insertCallout",
+				"title": "Insert Callout",
+				"category": "Markdown Live"
+			},
+			{
+				"command": "markdownLive.insertMermaid",
+				"title": "Insert Mermaid Diagram",
+				"category": "Markdown Live"
 			}
 		],
 		"keybindings": [
@@ -76,6 +91,20 @@
 				{
 					"command": "markdownLive.toggle",
 					"group": "navigation",
+					"when": "resourceExtname == .md"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "markdownLive.insertCodeBlock",
+					"when": "resourceExtname == .md"
+				},
+				{
+					"command": "markdownLive.insertCallout",
+					"when": "resourceExtname == .md"
+				},
+				{
+					"command": "markdownLive.insertMermaid",
 					"when": "resourceExtname == .md"
 				}
 			]

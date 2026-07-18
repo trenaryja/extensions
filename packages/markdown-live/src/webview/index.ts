@@ -7,6 +7,7 @@ import { syntaxTree } from '@codemirror/language'
 import { markdownLiveTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
+import { CURSOR } from '../snippets'
 import type { MermaidRenderMode } from './decorations/mermaid'
 
 declare function acquireVsCodeApi(): {
@@ -42,7 +43,8 @@ type InitMessage = { type: 'init'; content: string; settings: Settings }
 type UpdateMessage = { type: 'update'; content: string }
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
 type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | null }
-type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage
+type InsertMessage = { type: 'insert'; text: string }
+type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
 
 let currentSettings: Settings = { mermaidRenderMode: 'inline' }
 let view: EditorView | null = null
@@ -138,6 +140,22 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'shikiTheme') {
 		setShikiTheme(msg.theme)
+		return
+	}
+
+	if (msg.type === 'insert') {
+		if (view) {
+			const { from, to } = view.state.selection.main
+			const atLineStart = from === 0 || view.state.doc.sliceString(from - 1, from) === '\n'
+			const raw = (atLineStart ? '' : '\n') + msg.text
+			const marker = raw.indexOf(CURSOR)
+			const text = marker >= 0 ? raw.replace(CURSOR, '') : raw
+			view.dispatch({
+				changes: { from, to, insert: text },
+				selection: { anchor: from + (marker >= 0 ? marker : text.length) },
+			})
+			view.focus()
+		}
 		return
 	}
 
