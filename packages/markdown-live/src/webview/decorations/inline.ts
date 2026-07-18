@@ -1,103 +1,106 @@
-import { RangeSetBuilder } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 
-// Matches **bold**, __bold__
-const BOLD_RE = /(\*\*|__)(.+?)\1/g
-// Matches *italic*, _italic_ (not preceded/followed by same char to avoid bold)
-const ITALIC_RE = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g
-// Matches ~~strikethrough~~
+// Strikethrough isn't in the CommonMark tree (it's GFM), so it stays a lightweight regex pass.
 const STRIKE_RE = /~~(.+?)~~/g
-// Matches `inline code`
-const CODE_RE = /`([^`]+)`/g
-// Matches [text](url)
-const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g
 
-const marker = Decoration.mark({ class: 'md-marker' })
+// Hidden syntax collapses out of layout entirely (no line-height cost) and is atomic, so the cursor
+// skips over it — until the selection enters the span, at which point the raw markdown is revealed.
+const hide = Decoration.replace({})
 
-/**
- * True when a selection intersects (or touches) the range — the Obsidian "Live Preview" reveal test.
- * When active, we leave the raw markdown source visible so you can edit the syntax directly.
- */
+// Lezer node name → { style class, mark-child node name to hide }.
+const INLINE: Record<string, { cls: string; mark: string }> = {
+	StrongEmphasis: { cls: 'md-bold', mark: 'EmphasisMark' },
+	Emphasis: { cls: 'md-italic', mark: 'EmphasisMark' },
+	InlineCode: { cls: 'md-code-inline', mark: 'CodeMark' },
+}
+
+const styleCache: Record<string, Decoration> = {}
+const styleFor = (cls: string) => (styleCache[cls] ??= Decoration.mark({ class: cls }))
+
+/** The Obsidian "Live Preview" reveal test: is the selection touching this range? */
 const isActive = (view: EditorView, from: number, to: number) =>
 	view.state.selection.ranges.some((range) => range.from <= to && range.to >= from)
 
-function buildInlineDecorations(view: EditorView): DecorationSet {
-	const builder = new RangeSetBuilder<Decoration>()
+function buildInline(view: EditorView): DecorationSet {
+	const ranges: Array<{ from: number; to: number; deco: Decoration }> = []
+	const add = (from: number, to: number, deco: Decoration) => {
+		if (to > from) ranges.push({ from, to, deco })
+	}
+
+	const tree = syntaxTree(view.state)
+	for (const visible of view.visibleRanges) {
+		tree.iterate({
+			from: visible.from,
+			to: visible.to,
+			enter: (node) => {
+				const spec = INLINE[node.name]
+				if (spec) {
+					// getChildren returns only this node's own marks — nested emphasis is visited separately,
+					// so the syntax tree gives correct nesting for free (e.g. **bold with _italic_ inside**).
+					const marks = node.node.getChildren(spec.mark)
+					const first = marks[0]
+					const last = marks[marks.length - 1]
+					add(first ? first.to : node.from, last ? last.from : node.to, styleFor(spec.cls))
+					if (!isActive(view, node.from, node.to)) for (const mark of marks) add(mark.from, mark.to, hide)
+					return
+				}
+				if (node.name === 'Link') {
+					const marks = node.node.getChildren('LinkMark') // [ ] ( )
+					const open = marks[0]
+					const closeText = marks[1]
+					if (!open || !closeText) return
+					const urlNode = node.node.getChild('URL')
+					const url = urlNode ? view.state.sliceDoc(urlNode.from, urlNode.to) : ''
+					add(
+						open.to,
+						closeText.from,
+						Decoration.mark({ class: 'md-link-text', attributes: url ? { title: url } : {} }),
+					)
+					if (!isActive(view, node.from, node.to)) {
+						add(open.from, open.to, hide) // [
+						add(closeText.from, node.to, hide) // ](url)
+					}
+				}
+			},
+		})
+	}
+
 	const doc = view.state.doc
-	const collected: Array<{ from: number; to: number; deco: Decoration }> = []
-
-	const push = (from: number, to: number, deco: Decoration) => collected.push({ from, to, deco })
-
-	// Hide the marker + style the content, unless the cursor is inside the span (then reveal raw source).
-	const styleSpan = (lineFrom: number, matchIndex: number, matchLength: number, markerLen: number, cls: string) => {
-		const start = lineFrom + matchIndex
-		const end = start + matchLength
-		if (isActive(view, start, end)) return
-		const contentStart = start + markerLen
-		const contentEnd = end - markerLen
-		push(start, contentStart, marker)
-		push(contentStart, contentEnd, Decoration.mark({ class: cls }))
-		push(contentEnd, end, marker)
-	}
-
-	for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
-		const line = doc.line(lineNum)
-		const lineText = line.text
-
-		// Skip fenced code block lines — handled by the code-block plugin.
-		if (lineText.startsWith('```') || lineText.startsWith('    ')) continue
-
-		for (const match of lineText.matchAll(BOLD_RE))
-			styleSpan(line.from, match.index!, match[0].length, match[1]!.length, 'md-bold')
-
-		for (const match of lineText.matchAll(ITALIC_RE)) {
-			const content = match[1] ?? match[2]
-			if (content) styleSpan(line.from, match.index!, match[0].length, 1, 'md-italic')
-		}
-
-		for (const match of lineText.matchAll(STRIKE_RE))
-			styleSpan(line.from, match.index!, match[0].length, 2, 'md-strikethrough')
-
-		for (const match of lineText.matchAll(CODE_RE))
-			styleSpan(line.from, match.index!, match[0].length, 1, 'md-code-inline')
-
-		// Links — hide the [ ]( url ) chrome, show only the link text (unless the cursor is inside).
-		for (const match of lineText.matchAll(LINK_RE)) {
-			const start = line.from + match.index!
-			const end = start + match[0].length
-			if (isActive(view, start, end)) continue
-			const linkText = match[1]!
-			const url = match[2]!
-			const textStart = start + 1
-			const textEnd = textStart + linkText.length
-			push(start, textStart, marker)
-			push(textStart, textEnd, Decoration.mark({ class: 'md-link-text', attributes: { title: url } }))
-			push(textEnd, end, marker)
+	for (const visible of view.visibleRanges) {
+		const start = doc.lineAt(visible.from).number
+		const end = doc.lineAt(visible.to).number
+		for (let lineNum = start; lineNum <= end; lineNum++) {
+			const line = doc.line(lineNum)
+			if (line.text.startsWith('```')) continue
+			for (const match of line.text.matchAll(STRIKE_RE)) {
+				const from = line.from + match.index!
+				const to = from + match[0].length
+				add(from + 2, to - 2, styleFor('md-strikethrough'))
+				if (!isActive(view, from, to)) {
+					add(from, from + 2, hide)
+					add(to - 2, to, hide)
+				}
+			}
 		}
 	}
 
-	// RangeSetBuilder needs sorted, non-overlapping ranges.
-	collected.sort((a, b) => a.from - b.from || b.to - a.to)
-	let lastTo = -1
-	for (const { from, to, deco } of collected) {
-		if (from < lastTo) continue
-		builder.add(from, to, deco)
-		lastTo = to
-	}
-
-	return builder.finish()
+	return Decoration.set(
+		ranges.map(({ from, to, deco }) => deco.range(from, to)),
+		true,
+	)
 }
 
 export const inlineDecorationsPlugin = ViewPlugin.fromClass(
 	class {
 		decorations: DecorationSet
 		constructor(view: EditorView) {
-			this.decorations = buildInlineDecorations(view)
+			this.decorations = buildInline(view)
 		}
 		update(update: ViewUpdate) {
 			// Rebuild on selection change too, so markers reveal/hide as the cursor moves (Live Preview).
 			if (update.docChanged || update.viewportChanged || update.selectionSet)
-				this.decorations = buildInlineDecorations(update.view)
+				this.decorations = buildInline(update.view)
 		}
 	},
 	{ decorations: (plugin) => plugin.decorations },

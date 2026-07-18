@@ -91,14 +91,6 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-strikethrough': {
 			textDecoration: 'line-through',
 		},
-		// Hidden syntax markers: collapse to zero width instead of `display:none` so line-height stays
-		// stable and the markers reappear the instant the cursor enters the span (Live Preview reveal).
-		'.md-marker': {
-			display: 'inline-block',
-			maxWidth: '0',
-			overflow: 'hidden',
-			verticalAlign: 'text-bottom',
-		},
 		'.md-code-inline': {
 			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
 			fontSize: '0.88em',

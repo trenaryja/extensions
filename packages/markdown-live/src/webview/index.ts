@@ -3,6 +3,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
+import { syntaxTree } from '@codemirror/language'
 import { markdownLiveTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import type { MermaidRenderMode } from './decorations/mermaid'
@@ -32,6 +33,22 @@ function getMermaidMode(): MermaidRenderMode {
 	return currentSettings.mermaidRenderMode
 }
 
+// SyntaxNode type derived from syntaxTree so we don't need a direct @lezer/common dependency.
+type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
+
+// Walk up from a document position to the enclosing Link node and return its URL, if any.
+function linkUrlAt(editorView: EditorView, pos: number): string | null {
+	let node: MarkdownNode | null = syntaxTree(editorView.state).resolveInner(pos, 0)
+	while (node) {
+		if (node.name === 'Link') {
+			const urlNode = node.getChild('URL')
+			return urlNode ? editorView.state.sliceDoc(urlNode.from, urlNode.to) : null
+		}
+		node = node.parent
+	}
+	return null
+}
+
 function createEditor(content: string): EditorView {
 	const container = document.getElementById('editor')
 	if (!container) throw new Error('No #editor element')
@@ -46,13 +63,17 @@ function createEditor(content: string): EditorView {
 			markdownLiveTheme,
 			...createDecorationExtensions(getMermaidMode),
 			EditorView.domEventHandlers({
-				click(event) {
-					const target = event.target as HTMLElement
-					const linkEl = target.closest('.md-link-text') as HTMLElement | null
-					if (!linkEl) return
-					const url = linkEl.getAttribute('title') ?? ''
-					if (url) vscode.postMessage({ type: 'navigate', url })
+				// Cmd/Ctrl+click a link to follow it. A plain click just places the cursor (and reveals the
+				// raw source), so links stay editable — this works whether the link is rendered or revealed.
+				mousedown(event, editorView) {
+					if (!event.metaKey && !event.ctrlKey) return false
+					const pos = editorView.posAtCoords({ x: event.clientX, y: event.clientY })
+					if (pos == null) return false
+					const url = linkUrlAt(editorView, pos)
+					if (!url) return false
+					vscode.postMessage({ type: 'navigate', url })
 					event.preventDefault()
+					return true
 				},
 			}),
 			EditorView.updateListener.of((update) => {
