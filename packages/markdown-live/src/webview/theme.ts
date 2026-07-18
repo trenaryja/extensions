@@ -291,9 +291,11 @@ export const markdownLiveTheme = EditorView.theme(
 			paddingLeft: '0.85em',
 			paddingRight: '0.85em',
 		},
+		// NOTE: no margins here — margins are excluded from a line's offsetHeight, which desyncs CodeMirror's
+		// height model and makes clicks land off (worse further down). Use padding (measured) for spacing;
+		// the blank markdown lines between callouts provide the external separation.
 		'.md-callout-line-head': {
-			marginTop: '0.75em',
-			paddingTop: '0.4em',
+			paddingTop: '0.5em',
 			borderTop: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
 			borderTopLeftRadius: '6px',
 			borderTopRightRadius: '6px',
@@ -302,8 +304,7 @@ export const markdownLiveTheme = EditorView.theme(
 			color: 'var(--callout-color, inherit)',
 		},
 		'.md-callout-line-last': {
-			marginBottom: '0.75em',
-			paddingBottom: '0.4em',
+			paddingBottom: '0.5em',
 			borderBottom: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
 			borderBottomLeftRadius: '6px',
 			borderBottomRightRadius: '6px',
