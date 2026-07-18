@@ -1,3 +1,4 @@
+import { defineCommands } from '@repo/vscode-utils/registry'
 import { getClosestTailwindColor, isDark, palette } from '@trenaryja/ui'
 import chroma from 'chroma-js'
 import { format } from 'date-fns'
@@ -13,10 +14,11 @@ import {
 	parseUsState,
 } from './utils'
 
-export const commands: Record<string, { command: string; callback: () => Promise<string | undefined> }> = {
-	'Multi-Cursor Magic: Format Months': {
+export const commands = defineCommands([
+	{
 		command: 'multiCursorMagic.formatMonths',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format Months',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: parseMonth,
 			parseError: 'One or more selections could not be parsed as a valid month.',
@@ -32,9 +34,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Format Days of Week': {
+	{
 		command: 'multiCursorMagic.formatDaysOfWeek',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format Days of Week',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: parseDayOfWeek,
 			parseError: 'One or more selections could not be parsed as a valid day of the week.',
@@ -49,9 +52,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Format US States': {
+	{
 		command: 'multiCursorMagic.formatUsStates',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format US States',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: parseUsState,
 			parseError: 'One or more selections could not be parsed as a valid US State.',
@@ -61,9 +65,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Format Countries': {
+	{
 		command: 'multiCursorMagic.formatCountries',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format Countries',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: parseCountry,
 			parseError: 'One or more selections could not be parsed as a valid Country.',
@@ -73,9 +78,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Format Numbers': {
+	{
 		command: 'multiCursorMagic.formatNumbers',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format Numbers',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: (selection: string) => {
 				const num = Number(selection)
@@ -109,9 +115,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Eval': {
+	{
 		command: 'multiCursorMagic.evalDirect',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Eval',
+		handler: createCommand({
 			type: 'direct',
 			parseFn: (x) => x,
 			// eslint-disable-next-line no-eval
@@ -119,9 +126,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Pad Start': {
+	{
 		command: 'multiCursorMagic.padStart',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Pad Start',
+		handler: createCommand({
 			type: 'input',
 			parseFn: (x) => x,
 			prompt: 'What character would you like to pad with?',
@@ -130,9 +138,10 @@ export const commands: Record<string, { command: string; callback: () => Promise
 		}),
 	},
 
-	'Multi-Cursor Magic: Format Colors': {
+	{
 		command: 'multiCursorMagic.formatColors',
-		callback: createCommand({
+		title: 'Multi-Cursor Magic: Format Colors',
+		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: (selection: string) => {
 				const tw = R.find(palette, (c) => c.fullName === selection)
@@ -158,4 +167,6 @@ export const commands: Record<string, { command: string; callback: () => Promise
 			transform: (c, _selections, option) => option.fmt(c),
 		}),
 	},
-}
+])
+
+export type CommandId = (typeof commands)[number]['command']

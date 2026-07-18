@@ -1,5 +1,7 @@
+import type { CommandApi } from '@repo/vscode-utils/registry'
+import type * as vscode from 'vscode'
+
 import { format, isValid, parse } from 'date-fns'
-import * as vscode from 'vscode'
 
 import COUNTRIES from '../lib/countries.json'
 import US_STATES from '../lib/states.json'
@@ -27,7 +29,7 @@ export type Command<TParsed, TOption extends vscode.QuickPickItem> = {
 
 export const createCommand =
 	<TParsed, TOption extends vscode.QuickPickItem>(command: Command<TParsed, TOption>) =>
-	async () => {
+	async ({ vscode }: CommandApi) => {
 		const editor = vscode.window.activeTextEditor
 		if (!editor) return vscode.window.showInformationMessage('No editor is active')
 		if (editor.selections.length === 0) return vscode.window.showInformationMessage('No selections found')
