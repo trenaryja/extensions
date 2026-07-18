@@ -1,6 +1,5 @@
 import { setting } from '@repo/vscode-utils/config'
 import { z } from 'zod'
-import { DEFAULT_CALLOUTS } from './callouts.data'
 
 /** Single source of truth for Markdown Live settings — generates `contributes.configuration` and the typed accessor. */
 export const configSchema = z.object({
@@ -15,10 +14,10 @@ export const configSchema = z.object({
 		scope: 'window',
 	}),
 	'markdownLive.callouts': setting(
-		z.record(z.string(), z.object({ icon: z.string(), color: z.string().optional() })).default(DEFAULT_CALLOUTS),
+		z.record(z.string(), z.object({ icon: z.string().optional(), color: z.string().optional() })).default({}),
 		{
 			markdownDescription:
-				'Callout types mapped to `{ "icon": …, "color"?: … }`. `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>` string. Add your own types here — unknown callout types fall back to a default icon.',
+				'Override callout icons/colors or add custom types. Each entry is `{ "icon"?: …, "color"?: … }`. An `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>`. Omit `icon` to keep the built-in and only change the color. A `"default"` entry sets the fallback icon for any unlisted type.',
 			scope: 'window',
 		},
 	),

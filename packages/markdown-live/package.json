@@ -142,90 +142,8 @@
 					]
 				},
 				"markdownLive.callouts": {
-					"default": {
-						"note": {
-							"icon": "ℹ️"
-						},
-						"info": {
-							"icon": "ℹ️"
-						},
-						"todo": {
-							"icon": "✅"
-						},
-						"tip": {
-							"icon": "💡"
-						},
-						"hint": {
-							"icon": "💡"
-						},
-						"important": {
-							"icon": "💡"
-						},
-						"success": {
-							"icon": "✅"
-						},
-						"check": {
-							"icon": "✅"
-						},
-						"done": {
-							"icon": "✅"
-						},
-						"question": {
-							"icon": "❓"
-						},
-						"help": {
-							"icon": "❓"
-						},
-						"faq": {
-							"icon": "❓"
-						},
-						"warning": {
-							"icon": "⚠️"
-						},
-						"caution": {
-							"icon": "⚠️"
-						},
-						"attention": {
-							"icon": "⚠️"
-						},
-						"failure": {
-							"icon": "❌"
-						},
-						"fail": {
-							"icon": "❌"
-						},
-						"missing": {
-							"icon": "❌"
-						},
-						"danger": {
-							"icon": "🔥"
-						},
-						"error": {
-							"icon": "🔥"
-						},
-						"bug": {
-							"icon": "🐛"
-						},
-						"example": {
-							"icon": "📌"
-						},
-						"quote": {
-							"icon": "💬"
-						},
-						"cite": {
-							"icon": "💬"
-						},
-						"abstract": {
-							"icon": "📋"
-						},
-						"summary": {
-							"icon": "📋"
-						},
-						"tldr": {
-							"icon": "📋"
-						}
-					},
-					"markdownDescription": "Callout types mapped to `{ \"icon\": …, \"color\"?: … }`. `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>` string. Add your own types here — unknown callout types fall back to a default icon.",
+					"default": {},
+					"markdownDescription": "Override callout icons/colors or add custom types. Each entry is `{ \"icon\"?: …, \"color\"?: … }`. An `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>`. Omit `icon` to keep the built-in and only change the color. A `\"default\"` entry sets the fallback icon for any unlisted type.",
 					"scope": "window",
 					"type": "object",
 					"propertyNames": {
@@ -240,10 +158,7 @@
 							"color": {
 								"type": "string"
 							}
-						},
-						"required": [
-							"icon"
-						]
+						}
 					}
 				}
 			}

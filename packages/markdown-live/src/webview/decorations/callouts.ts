@@ -1,18 +1,18 @@
 import { type EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
-import { type CalloutConfig, DEFAULT_CALLOUTS } from '../../callouts.data'
+import { type CalloutConfig, resolveCallout } from '../../callouts.data'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
 
 const CALLOUT_TITLE_RE = /^>\s*\[!(\w+)\](.*)$/i
 
-// The active callout config (defaults merged with the user's `markdownLive.callouts` setting).
-let currentCallouts: CalloutConfig = { ...DEFAULT_CALLOUTS }
+// The user's `markdownLive.callouts` setting (raw — icons/colors are resolved per-type against the defaults).
+let userCallouts: CalloutConfig = {}
 const refresh = StateEffect.define<null>()
 
 /** Apply the user's callout config and rebuild — called from the webview when settings arrive/change. */
 export function applyCallouts(view: EditorView, config: CalloutConfig) {
-	currentCallouts = { ...DEFAULT_CALLOUTS, ...config }
+	userCallouts = config
 	view.dispatch({ effects: refresh.of(null) })
 }
 
@@ -92,7 +92,7 @@ function buildCalloutDecorations(state: EditorState): DecorationSet {
 		const to = doc.line(endLineNum).to
 		// Reveal the raw callout (editable) while the cursor is inside it; otherwise render the widget.
 		if (!selectionTouches(state, from, to)) {
-			const style = currentCallouts[type] ?? { icon: '💬' }
+			const style = resolveCallout(userCallouts, type)
 			builder.add(
 				from,
 				to,

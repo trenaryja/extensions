@@ -1,5 +1,5 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { type CalloutConfig, DEFAULT_CALLOUTS } from './callouts.data'
+import { type CalloutConfig, DEFAULT_CALLOUTS, resolveCallout } from './callouts.data'
 import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
 // Lazy import keeps this module (and the contributes codegen) free of any top-level `vscode` import.
@@ -66,13 +66,15 @@ export const commands = defineCommands([
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markdownLive.callouts') ?? {}
-			const merged: CalloutConfig = { ...DEFAULT_CALLOUTS, ...config }
-			const items: CalloutPickItem[] = Object.entries(merged).map(([type, style]) => {
-				const icon = style.icon.trim()
+			const types = [...new Set([...Object.keys(DEFAULT_CALLOUTS), ...Object.keys(config)])].filter(
+				(t) => t !== 'default',
+			)
+			const items: CalloutPickItem[] = types.map((type) => {
+				const icon = resolveCallout(config, type).icon.trim()
 				if (icon.startsWith('$(') && icon.endsWith(')'))
 					return { label: type, type, iconPath: new vscode.ThemeIcon(icon.slice(2, -1)) }
 				if (icon.startsWith('<svg')) return { label: type, type, description: 'custom SVG' }
-				return { label: `${style.icon} ${type}`, type }
+				return { label: `${icon} ${type}`, type }
 			})
 			const picked = await vscode.window.showQuickPick(items, { placeHolder: 'Callout type' })
 			if (!picked) return
