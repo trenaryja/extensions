@@ -6,6 +6,7 @@ import { languages } from '@codemirror/language-data'
 import { syntaxTree } from '@codemirror/language'
 import { markdownLiveTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
+import { setShikiTheme } from './decorations/codeblocks'
 import type { MermaidRenderMode } from './decorations/mermaid'
 
 declare function acquireVsCodeApi(): {
@@ -30,7 +31,8 @@ type Settings = {
 type InitMessage = { type: 'init'; content: string; settings: Settings }
 type UpdateMessage = { type: 'update'; content: string }
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
-type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage
+type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | null }
+type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage
 
 let currentSettings: Settings = { mermaidRenderMode: 'inline' }
 let view: EditorView | null = null
@@ -123,6 +125,11 @@ window.addEventListener('unhandledrejection', (event) => {
 
 window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 	const msg = event.data
+
+	if (msg.type === 'shikiTheme') {
+		setShikiTheme(msg.theme)
+		return
+	}
 
 	if (msg.type === 'init') {
 		currentSettings = msg.settings

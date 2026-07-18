@@ -2,6 +2,7 @@ import { createWebviewHtml } from '@repo/vscode-utils'
 import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { EDITOR_VIEW_TYPE } from './contributes'
+import { resolveActiveShikiTheme } from './shikiTheme'
 
 type WebviewMessage =
 	| { type: 'ready' }
@@ -52,10 +53,16 @@ const resolveEditor = (
 	// True while we apply an edit that came from the webview — prevents echoing it back and resetting the cursor.
 	let pendingWebviewEdit = false
 	const sendUpdate = () => webviewPanel.webview.postMessage({ type: 'update', content: document.getText() })
+	// Resolve the user's active VS Code theme to a Shiki theme so code blocks match it (falls back to null).
+	const sendShikiTheme = async () =>
+		webviewPanel.webview.postMessage({ type: 'shikiTheme', theme: await resolveActiveShikiTheme() })
 
 	webviewPanel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
-		if (msg.type === 'ready')
-			return webviewPanel.webview.postMessage({ type: 'init', content: document.getText(), settings: readSettings() })
+		if (msg.type === 'ready') {
+			webviewPanel.webview.postMessage({ type: 'init', content: document.getText(), settings: readSettings() })
+			sendShikiTheme()
+			return
+		}
 
 		if (msg.type === 'edit') {
 			pendingWebviewEdit = true
@@ -90,9 +97,11 @@ const resolveEditor = (
 		if (e.affectsConfiguration('markdownLive'))
 			webviewPanel.webview.postMessage({ type: 'settingsUpdate', settings: readSettings() })
 	})
+	const themeDisposable = vscode.window.onDidChangeActiveColorTheme(() => sendShikiTheme())
 	webviewPanel.onDidDispose(() => {
 		changeDisposable.dispose()
 		configDisposable.dispose()
+		themeDisposable.dispose()
 	})
 }
 
