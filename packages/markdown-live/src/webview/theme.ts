@@ -45,23 +45,17 @@ export const markdownLiveTheme = EditorView.theme(
 			fontSize: '2em',
 			fontWeight: '700',
 			lineHeight: '1.3',
-			marginTop: '0.5em',
-			marginBottom: '0.3em',
 			color: 'var(--vscode-editor-foreground)',
 		},
 		'.md-h2': {
 			fontSize: '1.6em',
 			fontWeight: '700',
 			lineHeight: '1.3',
-			marginTop: '0.5em',
-			marginBottom: '0.3em',
 		},
 		'.md-h3': {
 			fontSize: '1.3em',
 			fontWeight: '600',
 			lineHeight: '1.3',
-			marginTop: '0.5em',
-			marginBottom: '0.3em',
 		},
 		'.md-h4': {
 			fontSize: '1.1em',
@@ -176,65 +170,6 @@ export const markdownLiveTheme = EditorView.theme(
 			fontSize: '0.85em',
 		},
 
-		// Code block widget
-		'.md-codeblock-widget': {
-			display: 'block',
-			borderRadius: '6px',
-			overflow: 'hidden',
-			margin: '0.5em 0',
-			border: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.2))',
-		},
-		'.md-codeblock-header': {
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'space-between',
-			padding: '0.2rem 0.75rem',
-			background: 'var(--vscode-editorWidget-background, rgba(128,128,128,0.06))',
-			borderBottom: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.1))',
-			minHeight: '1.75rem',
-		},
-		'.md-codeblock-lang': {
-			fontSize: '0.72em',
-			opacity: '0.45',
-			fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-			letterSpacing: '0.03em',
-		},
-		'.md-codeblock-copy': {
-			opacity: '0',
-			transition: 'opacity 0.15s',
-			padding: '0.15em 0.55em',
-			fontSize: '0.72em',
-			fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-			background: 'var(--vscode-button-secondaryBackground, rgba(128,128,128,0.2))',
-			color: 'var(--vscode-button-secondaryForeground, var(--vscode-editor-foreground))',
-			border: '1px solid var(--vscode-button-border, rgba(128,128,128,0.3))',
-			borderRadius: '3px',
-			cursor: 'pointer',
-		},
-		'.md-codeblock-widget:hover .md-codeblock-copy': {
-			opacity: '1',
-		},
-		'.md-codeblock-copy:hover': {
-			background: 'var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,0.3))',
-		},
-		// Plain pre shown while Shiki loads
-		'.md-codeblock-plain': {
-			margin: '0',
-			padding: '0.85rem 1rem',
-			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
-			fontSize: '0.88em',
-			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.12))',
-			overflowX: 'auto',
-		},
-		// Shiki output — transformer removed inline style from <pre> so CSS controls background
-		'.md-codeblock-shiki pre': {
-			margin: '0',
-			padding: '0.85rem 1rem',
-			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.12))',
-			fontSize: '0.88em',
-			overflowX: 'auto',
-		},
-
 		// Widgets
 		'.md-widget': {
 			display: 'block',
@@ -242,7 +177,6 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-hr': {
 			border: 'none',
 			borderTop: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.35))',
-			margin: '1em 0',
 			display: 'block',
 		},
 		'.md-img': {
@@ -250,7 +184,6 @@ export const markdownLiveTheme = EditorView.theme(
 			height: 'auto',
 			borderRadius: '4px',
 			display: 'block',
-			margin: '0.5em 0',
 		},
 		'.md-task-checkbox': {
 			marginRight: '0.4em',
@@ -263,7 +196,6 @@ export const markdownLiveTheme = EditorView.theme(
 			borderCollapse: 'separate',
 			borderSpacing: '0',
 			width: '100%',
-			margin: '1em 0',
 			fontSize: '0.875em',
 			textAlign: 'left',
 		},
@@ -327,7 +259,6 @@ export const markdownLiveTheme = EditorView.theme(
 		// Mermaid
 		'.md-mermaid-widget': {
 			display: 'block',
-			margin: '0.5em 0',
 			overflow: 'auto',
 		},
 		'.md-mermaid-error': {
@@ -339,7 +270,6 @@ export const markdownLiveTheme = EditorView.theme(
 			borderRadius: '4px',
 			border: '1px solid rgba(255,100,100,0.3)',
 			display: 'block',
-			margin: '0.5em 0',
 		},
 	},
 	{ dark: false },
