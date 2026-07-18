@@ -282,30 +282,35 @@ export const markdownLiveTheme = EditorView.theme(
 		},
 
 		// Callout widget
-		// Callouts derive everything from one --callout-color accent (default neutral), so built-in AND
-		// custom types get consistent header/body separation. Per-type rules / config just set the accent.
-		'.md-callout': {
-			'--callout-color': 'var(--vscode-descriptionForeground, rgba(140,140,160,0.9))',
-			borderRadius: '6px',
-			margin: '0.75em 0',
-			overflow: 'hidden',
-			border: '1px solid color-mix(in srgb, var(--callout-color) 40%, transparent)',
-			background: 'color-mix(in srgb, var(--callout-color) 6%, transparent)',
+		// Callouts are styled in place — the `>` lines stay editable text. Each callout line gets a
+		// container look derived from --callout-color (neutral fallback); per-type rules / config set it.
+		'.md-callout-line': {
+			background: 'color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 6%, transparent)',
+			borderLeft: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
+			borderRight: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
+			paddingLeft: '0.85em',
+			paddingRight: '0.85em',
 		},
-		'.md-callout-title': {
-			display: 'flex',
-			alignItems: 'center',
-			gap: '0.4em',
-			padding: '0.5em 0.75em',
+		'.md-callout-line-head': {
+			marginTop: '0.75em',
+			paddingTop: '0.4em',
+			borderTop: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
+			borderTopLeftRadius: '6px',
+			borderTopRightRadius: '6px',
+			background: 'color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 14%, transparent)',
 			fontWeight: '600',
-			fontSize: '0.9em',
-			background: 'color-mix(in srgb, var(--callout-color) 14%, transparent)',
-			color: 'var(--callout-color)',
+			color: 'var(--callout-color, inherit)',
 		},
-		'.md-callout-content': {
-			padding: '0.5em 0.75em 0.75em',
-			fontSize: '0.95em',
-			lineHeight: '1.6',
+		'.md-callout-line-last': {
+			marginBottom: '0.75em',
+			paddingBottom: '0.4em',
+			borderBottom: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
+			borderBottomLeftRadius: '6px',
+			borderBottomRightRadius: '6px',
+		},
+		'.md-callout-icon': {
+			marginRight: '0.45em',
+			color: 'var(--callout-color, inherit)',
 		},
 		// Per-type accent colors (each just sets --callout-color; the base rules derive border/bg/title).
 		'.md-callout-note, .md-callout-info, .md-callout-todo': { '--callout-color': '#4fc1ff' },
