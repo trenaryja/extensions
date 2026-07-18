@@ -1,5 +1,6 @@
 import { setting } from '@repo/vscode-utils/config'
 import { z } from 'zod'
+import { DEFAULT_CALLOUTS } from './callouts.data'
 
 /** Single source of truth for Markdown Live settings — generates `contributes.configuration` and the typed accessor. */
 export const configSchema = z.object({
@@ -13,6 +14,14 @@ export const configSchema = z.object({
 		],
 		scope: 'window',
 	}),
+	'markdownLive.callouts': setting(
+		z.record(z.string(), z.object({ icon: z.string(), color: z.string().optional() })).default(DEFAULT_CALLOUTS),
+		{
+			markdownDescription:
+				'Callout types mapped to `{ "icon": …, "color"?: … }`. `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>` string. Add your own types here — unknown callout types fall back to a default icon.',
+			scope: 'window',
+		},
+	),
 })
 
 export type Config = z.infer<typeof configSchema>

@@ -1,9 +1,12 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { CALLOUT_TYPES, CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
+import { type CalloutConfig, DEFAULT_CALLOUTS } from './callouts.data'
+import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
 // Lazy import keeps this module (and the contributes codegen) free of any top-level `vscode` import.
 const insert = async (text: string) => (await import('./editorProvider')).insertIntoActiveEditor(text)
 const PALETTE_MD = [{ id: 'commandPalette' as const, when: 'resourceExtname == .md' }]
+
+type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
 
 /** Custom-editor view type — the id VS Code opens `.md` files with. */
 export const EDITOR_VIEW_TYPE = 'markdownLive.editor'
@@ -62,9 +65,18 @@ export const commands = defineCommands([
 		category: 'Markdown Live',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
-			const type = await vscode.window.showQuickPick(CALLOUT_TYPES, { placeHolder: 'Callout type' })
-			if (!type) return
-			await insert(`> [!${type}] ${CURSOR}\n> \n`)
+			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markdownLive.callouts') ?? {}
+			const merged: CalloutConfig = { ...DEFAULT_CALLOUTS, ...config }
+			const items: CalloutPickItem[] = Object.entries(merged).map(([type, style]) => {
+				const icon = style.icon.trim()
+				if (icon.startsWith('$(') && icon.endsWith(')'))
+					return { label: type, type, iconPath: new vscode.ThemeIcon(icon.slice(2, -1)) }
+				if (icon.startsWith('<svg')) return { label: type, type, description: 'custom SVG' }
+				return { label: `${style.icon} ${type}`, type }
+			})
+			const picked = await vscode.window.showQuickPick(items, { placeHolder: 'Callout type' })
+			if (!picked) return
+			await insert(`> [!${picked.type}] ${CURSOR}\n> \n`)
 		},
 	},
 	{

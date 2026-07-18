@@ -34,6 +34,7 @@
 		"@repo/vscode-utils": "workspace:*",
 		"@tailwindcss/cli": "^4.3.3",
 		"@types/vscode": "^1.100.0",
+		"@vscode/codicons": "^0.0.45",
 		"@vscode/vsce": "^3.7.1",
 		"bun-types": "latest",
 		"daisyui": "^5.6.18",
@@ -139,6 +140,111 @@
 						"below",
 						"disabled"
 					]
+				},
+				"markdownLive.callouts": {
+					"default": {
+						"note": {
+							"icon": "ℹ️"
+						},
+						"info": {
+							"icon": "ℹ️"
+						},
+						"todo": {
+							"icon": "✅"
+						},
+						"tip": {
+							"icon": "💡"
+						},
+						"hint": {
+							"icon": "💡"
+						},
+						"important": {
+							"icon": "💡"
+						},
+						"success": {
+							"icon": "✅"
+						},
+						"check": {
+							"icon": "✅"
+						},
+						"done": {
+							"icon": "✅"
+						},
+						"question": {
+							"icon": "❓"
+						},
+						"help": {
+							"icon": "❓"
+						},
+						"faq": {
+							"icon": "❓"
+						},
+						"warning": {
+							"icon": "⚠️"
+						},
+						"caution": {
+							"icon": "⚠️"
+						},
+						"attention": {
+							"icon": "⚠️"
+						},
+						"failure": {
+							"icon": "❌"
+						},
+						"fail": {
+							"icon": "❌"
+						},
+						"missing": {
+							"icon": "❌"
+						},
+						"danger": {
+							"icon": "🔥"
+						},
+						"error": {
+							"icon": "🔥"
+						},
+						"bug": {
+							"icon": "🐛"
+						},
+						"example": {
+							"icon": "📌"
+						},
+						"quote": {
+							"icon": "💬"
+						},
+						"cite": {
+							"icon": "💬"
+						},
+						"abstract": {
+							"icon": "📋"
+						},
+						"summary": {
+							"icon": "📋"
+						},
+						"tldr": {
+							"icon": "📋"
+						}
+					},
+					"markdownDescription": "Callout types mapped to `{ \"icon\": …, \"color\"?: … }`. `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>` string. Add your own types here — unknown callout types fall back to a default icon.",
+					"scope": "window",
+					"type": "object",
+					"propertyNames": {
+						"type": "string"
+					},
+					"additionalProperties": {
+						"type": "object",
+						"properties": {
+							"icon": {
+								"type": "string"
+							},
+							"color": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"icon"
+						]
+					}
 				}
 			}
 		}

@@ -11,7 +11,10 @@ type WebviewMessage =
 	| { type: 'webviewError'; message: string; stack: string }
 	| { type: 'requestShikiTheme'; name: string }
 
-const readSettings = () => ({ mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode') })
+const readSettings = () => ({
+	mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode'),
+	callouts: getConfig('markdownLive.callouts'),
+})
 
 // The most recently active Markdown Live editor — the target for insert commands, since custom editors
 // don't set vscode.window.activeTextEditor. It persists while a picker is open (which deactivates the webview).
@@ -38,7 +41,11 @@ const getHtml = (context: vscode.ExtensionContext, webview: vscode.Webview) =>
 	createWebviewHtml({
 		webview,
 		scriptUri: vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview.js'),
-		styleUris: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview.css')],
+		styleUris: [
+			vscode.Uri.joinPath(context.extensionUri, 'dist', 'codicon.css'),
+			vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview.css'),
+		],
+		cspAddons: ' font-src data:;',
 		htmlAttrs: 'data-theme="vscode"',
 		title: 'Markdown Live',
 		headStyles,

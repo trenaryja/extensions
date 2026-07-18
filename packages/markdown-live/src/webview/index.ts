@@ -7,7 +7,9 @@ import { syntaxTree } from '@codemirror/language'
 import { markdownLiveTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
+import { applyCallouts } from './decorations/callouts'
 import { CURSOR } from '../snippets'
+import type { CalloutConfig } from '../callouts.data'
 import type { MermaidRenderMode } from './decorations/mermaid'
 
 declare function acquireVsCodeApi(): {
@@ -37,6 +39,7 @@ requestShikiTheme()
 
 type Settings = {
 	mermaidRenderMode: MermaidRenderMode
+	callouts: CalloutConfig
 }
 
 type InitMessage = { type: 'init'; content: string; settings: Settings }
@@ -46,7 +49,7 @@ type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | 
 type InsertMessage = { type: 'insert'; text: string }
 type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
 
-let currentSettings: Settings = { mermaidRenderMode: 'inline' }
+let currentSettings: Settings = { mermaidRenderMode: 'inline', callouts: {} }
 let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -181,6 +184,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 				})
 			}
 		}
+		if (view) applyCallouts(view, currentSettings.callouts)
 		return
 	}
 
@@ -191,11 +195,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'settingsUpdate') {
 		currentSettings = msg.settings
-		// Re-apply decorations by forcing a viewport update
-		if (view) {
-			// Dispatching an empty transaction triggers a redraw with the new settings
-			view.dispatch({})
-		}
+		if (view) applyCallouts(view, currentSettings.callouts)
 	}
 })
 

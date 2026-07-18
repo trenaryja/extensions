@@ -1,129 +1,106 @@
-import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
-import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
+import { type EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { type CalloutConfig, DEFAULT_CALLOUTS } from '../../callouts.data'
+import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
-
-const CALLOUT_ICONS: Record<string, string> = {
-	note: 'ℹ️',
-	info: 'ℹ️',
-	todo: 'ℹ️',
-	tip: '💡',
-	hint: '💡',
-	important: '💡',
-	success: '✅',
-	check: '✅',
-	done: '✅',
-	warning: '⚠️',
-	caution: '⚠️',
-	attention: '⚠️',
-	failure: '❌',
-	fail: '❌',
-	missing: '❌',
-	danger: '🔥',
-	error: '🔥',
-	bug: '🐛',
-	question: '❓',
-	help: '❓',
-	faq: '❓',
-	abstract: '📋',
-	summary: '📋',
-	tldr: '📋',
-	example: '📌',
-	quote: '💬',
-	cite: '💬',
-}
 
 const CALLOUT_TITLE_RE = /^>\s*\[!(\w+)\](.*)$/i
 
-class CalloutWidget extends WidgetType {
-	constructor(
-		private calloutType: string,
-		private title: string,
-		private contentLines: string[],
-	) {
-		super()
-	}
+// The active callout config (defaults merged with the user's `markdownLive.callouts` setting).
+let currentCallouts: CalloutConfig = { ...DEFAULT_CALLOUTS }
+const refresh = StateEffect.define<null>()
 
-	toDOM() {
-		const typeLower = this.calloutType.toLowerCase()
-		const icon = CALLOUT_ICONS[typeLower] ?? 'ℹ️'
-		const displayTitle = this.title.trim() || typeLower.toUpperCase()
-
-		const container = document.createElement('div')
-		container.className = `md-callout md-callout-${typeLower}`
-
-		const titleDiv = document.createElement('div')
-		titleDiv.className = 'md-callout-title'
-
-		const iconSpan = document.createElement('span')
-		iconSpan.className = 'md-callout-icon'
-		iconSpan.textContent = icon
-
-		const titleSpan = document.createElement('span')
-		titleSpan.className = 'md-callout-title-text'
-		titleSpan.textContent = displayTitle
-
-		titleDiv.appendChild(iconSpan)
-		titleDiv.appendChild(titleSpan)
-		container.appendChild(titleDiv)
-
-		if (this.contentLines.length > 0) {
-			const contentDiv = document.createElement('div')
-			contentDiv.className = 'md-callout-content'
-			const stripped = this.contentLines.map((l) => l.replace(/^>\s?/, '')).join('\n')
-			contentDiv.textContent = stripped
-			container.appendChild(contentDiv)
-		}
-
-		return container
-	}
-
-	ignoreEvent(event: Event) {
-		// Let a mousedown through so clicking the callout places the cursor and reveals the source to edit.
-		return event.type !== 'mousedown'
-	}
-
-	eq(other: CalloutWidget) {
-		return (
-			other.calloutType === this.calloutType &&
-			other.title === this.title &&
-			JSON.stringify(other.contentLines) === JSON.stringify(this.contentLines)
-		)
-	}
+/** Apply the user's callout config and rebuild — called from the webview when settings arrive/change. */
+export function applyCallouts(view: EditorView, config: CalloutConfig) {
+	currentCallouts = { ...DEFAULT_CALLOUTS, ...config }
+	view.dispatch({ effects: refresh.of(null) })
 }
+
+// An icon can be an emoji, a `$(codicon)` name, or a raw <svg> string (config is trusted).
+const renderIcon = (icon: string) => {
+	const span = document.createElement('span')
+	span.className = 'md-callout-icon'
+	const trimmed = icon.trim()
+	if (trimmed.startsWith('$(') && trimmed.endsWith(')'))
+		span.classList.add('codicon', `codicon-${trimmed.slice(2, -1)}`)
+	else if (trimmed.startsWith('<svg')) span.innerHTML = trimmed
+	else span.textContent = icon
+	return span
+}
+
+type CalloutValue = { type: string; title: string; content: string[]; icon: string; color?: string }
+
+const calloutWidget = defineWidget<CalloutValue>({
+	eq: (a, b) =>
+		a.type === b.type &&
+		a.title === b.title &&
+		a.icon === b.icon &&
+		a.color === b.color &&
+		a.content.length === b.content.length &&
+		a.content.every((line, index) => line === b.content[index]),
+	// Let a mousedown through so clicking the callout places the cursor and reveals the source to edit.
+	ignoreEvent: (event) => event.type !== 'mousedown',
+	toDOM: (value) => {
+		const container = document.createElement('div')
+		container.className = `md-callout md-callout-${value.type}`
+		if (value.color) container.style.borderColor = value.color
+
+		const title = document.createElement('div')
+		title.className = 'md-callout-title'
+		if (value.color) title.style.color = value.color
+		title.appendChild(renderIcon(value.icon))
+		const titleText = document.createElement('span')
+		titleText.className = 'md-callout-title-text'
+		titleText.textContent = value.title.trim() || value.type.toUpperCase()
+		title.appendChild(titleText)
+		container.appendChild(title)
+
+		if (value.content.length) {
+			const content = document.createElement('div')
+			content.className = 'md-callout-content'
+			content.textContent = value.content.map((line) => line.replace(/^>\s?/, '')).join('\n')
+			container.appendChild(content)
+		}
+		return container
+	},
+})
 
 function buildCalloutDecorations(state: EditorState): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
 	const doc = state.doc
-	const lines = doc.lines
 
 	let lineNum = 1
-	while (lineNum <= lines) {
+	while (lineNum <= doc.lines) {
 		const line = doc.line(lineNum)
 		const match = CALLOUT_TITLE_RE.exec(line.text)
-
 		if (!match) {
 			lineNum++
 			continue
 		}
 
-		const calloutType = match[1] ?? 'note'
-		const titleExtra = match[2] ?? ''
-		const contentLines: string[] = []
+		const type = (match[1] ?? 'note').toLowerCase()
+		const title = match[2] ?? ''
+		const content: string[] = []
 		let endLineNum = lineNum
-
-		for (let nextLine = lineNum + 1; nextLine <= lines; nextLine++) {
-			const next = doc.line(nextLine)
-			if (!next.text.startsWith('>')) break
-			contentLines.push(next.text)
-			endLineNum = nextLine
+		for (let next = lineNum + 1; next <= doc.lines; next++) {
+			if (!doc.line(next).text.startsWith('>')) break
+			content.push(doc.line(next).text)
+			endLineNum = next
 		}
 
 		const from = line.from
 		const to = doc.line(endLineNum).to
-
 		// Reveal the raw callout (editable) while the cursor is inside it; otherwise render the widget.
-		if (!selectionTouches(state, from, to))
-			builder.add(from, to, Decoration.replace({ widget: new CalloutWidget(calloutType, titleExtra, contentLines) }))
+		if (!selectionTouches(state, from, to)) {
+			const style = currentCallouts[type] ?? { icon: '💬' }
+			builder.add(
+				from,
+				to,
+				Decoration.replace({
+					widget: calloutWidget({ type, title, content, icon: style.icon, color: style.color }),
+				}),
+			)
+		}
 
 		lineNum = endLineNum + 1
 	}
@@ -136,7 +113,8 @@ export const calloutsPlugin = StateField.define<DecorationSet>({
 		return buildCalloutDecorations(state)
 	},
 	update(decorations, transaction) {
-		if (!docOrSelectionChanged(transaction)) return decorations
+		const refreshed = transaction.effects.some((effect) => effect.is(refresh))
+		if (!docOrSelectionChanged(transaction) && !refreshed) return decorations
 		return buildCalloutDecorations(transaction.state)
 	},
 	provide(field) {
