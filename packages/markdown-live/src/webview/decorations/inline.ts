@@ -1,5 +1,5 @@
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 
 // Matches **bold**, __bold__
 const BOLD_RE = /(\*\*|__)(.+?)\1/g
@@ -12,98 +12,72 @@ const CODE_RE = /`([^`]+)`/g
 // Matches [text](url)
 const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g
 
+const marker = Decoration.mark({ class: 'md-marker' })
+
+/**
+ * True when a selection intersects (or touches) the range — the Obsidian "Live Preview" reveal test.
+ * When active, we leave the raw markdown source visible so you can edit the syntax directly.
+ */
+const isActive = (view: EditorView, from: number, to: number) =>
+	view.state.selection.ranges.some((range) => range.from <= to && range.to >= from)
+
 function buildInlineDecorations(view: EditorView): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
 	const doc = view.state.doc
 	const collected: Array<{ from: number; to: number; deco: Decoration }> = []
 
+	const push = (from: number, to: number, deco: Decoration) => collected.push({ from, to, deco })
+
+	// Hide the marker + style the content, unless the cursor is inside the span (then reveal raw source).
+	const styleSpan = (lineFrom: number, matchIndex: number, matchLength: number, markerLen: number, cls: string) => {
+		const start = lineFrom + matchIndex
+		const end = start + matchLength
+		if (isActive(view, start, end)) return
+		const contentStart = start + markerLen
+		const contentEnd = end - markerLen
+		push(start, contentStart, marker)
+		push(contentStart, contentEnd, Decoration.mark({ class: cls }))
+		push(contentEnd, end, marker)
+	}
+
 	for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
 		const line = doc.line(lineNum)
 		const lineText = line.text
 
-		// Skip fenced code block lines — handled by blocks plugin
+		// Skip fenced code block lines — handled by the code-block plugin.
 		if (lineText.startsWith('```') || lineText.startsWith('    ')) continue
 
-		// Bold
-		for (const match of lineText.matchAll(BOLD_RE)) {
-			const start = line.from + match.index!
-			const marker = match[1]!
-			const content = match[2]!
-			const markerLen = marker.length
-			collected.push({ from: start, to: start + markerLen, deco: Decoration.mark({ class: 'md-marker' }) })
-			collected.push({
-				from: start + markerLen,
-				to: start + markerLen + content.length,
-				deco: Decoration.mark({ class: 'md-bold' }),
-			})
-			const closeStart = start + markerLen + content.length
-			collected.push({ from: closeStart, to: closeStart + markerLen, deco: Decoration.mark({ class: 'md-marker' }) })
-		}
+		for (const match of lineText.matchAll(BOLD_RE))
+			styleSpan(line.from, match.index!, match[0].length, match[1]!.length, 'md-bold')
 
-		// Italic
 		for (const match of lineText.matchAll(ITALIC_RE)) {
-			const start = line.from + match.index!
 			const content = match[1] ?? match[2]
-			if (!content) continue
-			collected.push({ from: start, to: start + 1, deco: Decoration.mark({ class: 'md-marker' }) })
-			collected.push({
-				from: start + 1,
-				to: start + 1 + content.length,
-				deco: Decoration.mark({ class: 'md-italic' }),
-			})
-			const closeStart = start + 1 + content.length
-			collected.push({ from: closeStart, to: closeStart + 1, deco: Decoration.mark({ class: 'md-marker' }) })
+			if (content) styleSpan(line.from, match.index!, match[0].length, 1, 'md-italic')
 		}
 
-		// Strikethrough
-		for (const match of lineText.matchAll(STRIKE_RE)) {
-			const start = line.from + match.index!
-			const content = match[1]!
-			collected.push({ from: start, to: start + 2, deco: Decoration.mark({ class: 'md-marker' }) })
-			collected.push({
-				from: start + 2,
-				to: start + 2 + content.length,
-				deco: Decoration.mark({ class: 'md-strikethrough' }),
-			})
-			const closeStart = start + 2 + content.length
-			collected.push({ from: closeStart, to: closeStart + 2, deco: Decoration.mark({ class: 'md-marker' }) })
-		}
+		for (const match of lineText.matchAll(STRIKE_RE))
+			styleSpan(line.from, match.index!, match[0].length, 2, 'md-strikethrough')
 
-		// Inline code
-		for (const match of lineText.matchAll(CODE_RE)) {
-			const start = line.from + match.index!
-			const content = match[1]!
-			collected.push({ from: start, to: start + 1, deco: Decoration.mark({ class: 'md-marker' }) })
-			collected.push({
-				from: start + 1,
-				to: start + 1 + content.length,
-				deco: Decoration.mark({ class: 'md-code-inline' }),
-			})
-			const closeStart = start + 1 + content.length
-			collected.push({ from: closeStart, to: closeStart + 1, deco: Decoration.mark({ class: 'md-marker' }) })
-		}
+		for (const match of lineText.matchAll(CODE_RE))
+			styleSpan(line.from, match.index!, match[0].length, 1, 'md-code-inline')
 
-		// Links — hide [text](url), show only text styled as link
+		// Links — hide the [ ]( url ) chrome, show only the link text (unless the cursor is inside).
 		for (const match of lineText.matchAll(LINK_RE)) {
 			const start = line.from + match.index!
-			const fullLen = match[0].length
+			const end = start + match[0].length
+			if (isActive(view, start, end)) continue
 			const linkText = match[1]!
 			const url = match[2]!
-			collected.push({ from: start, to: start + 1, deco: Decoration.mark({ class: 'md-marker' }) })
-			collected.push({
-				from: start + 1,
-				to: start + 1 + linkText.length,
-				deco: Decoration.mark({ class: 'md-link-text', attributes: { title: url } }),
-			})
-			const closeBracket = start + 1 + linkText.length
-			collected.push({ from: closeBracket, to: start + fullLen, deco: Decoration.mark({ class: 'md-marker' }) })
+			const textStart = start + 1
+			const textEnd = textStart + linkText.length
+			push(start, textStart, marker)
+			push(textStart, textEnd, Decoration.mark({ class: 'md-link-text', attributes: { title: url } }))
+			push(textEnd, end, marker)
 		}
 	}
 
-	// Sort by from position, then by to position (larger range first for same from)
+	// RangeSetBuilder needs sorted, non-overlapping ranges.
 	collected.sort((a, b) => a.from - b.from || b.to - a.to)
-
-	// Add to builder — skip overlapping ranges
 	let lastTo = -1
 	for (const { from, to, deco } of collected) {
 		if (from < lastTo) continue
@@ -121,8 +95,10 @@ export const inlineDecorationsPlugin = ViewPlugin.fromClass(
 			this.decorations = buildInlineDecorations(view)
 		}
 		update(update: ViewUpdate) {
-			if (update.docChanged || update.viewportChanged) this.decorations = buildInlineDecorations(update.view)
+			// Rebuild on selection change too, so markers reveal/hide as the cursor moves (Live Preview).
+			if (update.docChanged || update.viewportChanged || update.selectionSet)
+				this.decorations = buildInlineDecorations(update.view)
 		}
 	},
-	{ decorations: (v) => v.decorations },
+	{ decorations: (plugin) => plugin.decorations },
 )
