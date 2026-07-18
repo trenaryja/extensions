@@ -1,47 +1,38 @@
-import {
-	Decoration,
-	type DecorationSet,
-	type EditorView,
-	ViewPlugin,
-	type ViewUpdate,
-	WidgetType,
-} from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
+import { Decoration, type DecorationSet, type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { defineWidget } from '../lib/widget'
+import { selectionTouches } from './active'
 
 // ---------- Widgets ----------
 
-class HrWidget extends WidgetType {
-	toDOM() {
+// Let a mousedown through so clicking the widget places the cursor and reveals the raw source to edit.
+const editable = (event: Event) => event.type !== 'mousedown'
+
+const hrWidget = defineWidget<null>({
+	eq: () => true,
+	ignoreEvent: editable,
+	toDOM: () => {
+		// Wrap so the rule can be vertically centered within the line box (the wrapper has line height).
+		const wrap = document.createElement('div')
+		wrap.className = 'md-hr-wrap'
 		const hr = document.createElement('hr')
 		hr.className = 'md-hr'
-		return hr
-	}
-	ignoreEvent() {
-		return true
-	}
-}
+		wrap.appendChild(hr)
+		return wrap
+	},
+})
 
-class ImageWidget extends WidgetType {
-	constructor(
-		private alt: string,
-		private src: string,
-	) {
-		super()
-	}
-	toDOM() {
+const imageWidget = defineWidget<{ alt: string; src: string }>({
+	eq: (a, b) => a.alt === b.alt && a.src === b.src,
+	ignoreEvent: editable,
+	toDOM: (value) => {
 		const img = document.createElement('img')
 		img.className = 'md-img'
-		img.alt = this.alt
-		img.src = this.src
+		img.alt = value.alt
+		img.src = value.src
 		return img
-	}
-	ignoreEvent() {
-		return true
-	}
-	eq(other: ImageWidget) {
-		return other.alt === this.alt && other.src === this.src
-	}
-}
+	},
+})
 
 // ---------- Types ----------
 
@@ -72,6 +63,8 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 	for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
 		const line = doc.line(lineNum)
 		const text = line.text
+		// Reveal the raw source (editable) whenever the cursor is on this line.
+		const active = selectionTouches(view.state, line.from, line.to)
 
 		// Reset callout tracking when we leave a blockquote context
 		if (!text.startsWith('>')) inCallout = false
@@ -98,22 +91,23 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 		}
 		if (inCodeBlock) continue
 
-		// --- Horizontal rule ---
+		// --- Horizontal rule (editable on cursor entry) ---
 		if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(text)) {
-			entries.push(markDeco(line.from, line.to, Decoration.replace({ widget: new HrWidget() })))
+			if (!active) entries.push(markDeco(line.from, line.to, Decoration.replace({ widget: hrWidget(null) })))
 			continue
 		}
 
-		// --- Images ---
+		// --- Images (editable on cursor entry) ---
 		const imgMatch = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(text)
 		if (imgMatch) {
-			entries.push(
-				markDeco(
-					line.from,
-					line.to,
-					Decoration.replace({ widget: new ImageWidget(imgMatch[1] ?? '', imgMatch[2] ?? '') }),
-				),
-			)
+			if (!active)
+				entries.push(
+					markDeco(
+						line.from,
+						line.to,
+						Decoration.replace({ widget: imageWidget({ alt: imgMatch[1] ?? '', src: imgMatch[2] ?? '' }) }),
+					),
+				)
 			continue
 		}
 
@@ -161,8 +155,9 @@ export const blocksPlugin = ViewPlugin.fromClass(
 			this.decorations = buildBlockDecorations(view)
 		}
 		update(update: ViewUpdate) {
-			if (update.docChanged || update.viewportChanged) this.decorations = buildBlockDecorations(update.view)
+			if (update.docChanged || update.viewportChanged || update.selectionSet)
+				this.decorations = buildBlockDecorations(update.view)
 		}
 	},
-	{ decorations: (v: { decorations: DecorationSet }) => v.decorations },
+	{ decorations: (plugin) => plugin.decorations },
 )

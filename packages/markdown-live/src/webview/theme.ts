@@ -174,10 +174,15 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-widget': {
 			display: 'block',
 		},
+		'.md-hr-wrap': {
+			display: 'flex',
+			alignItems: 'center',
+			height: '1.7em',
+		},
 		'.md-hr': {
+			flex: '1',
 			border: 'none',
-			borderTop: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.35))',
-			display: 'block',
+			borderTop: '1px solid color-mix(in srgb, var(--vscode-editor-foreground, #888) 25%, transparent)',
 		},
 		'.md-img': {
 			maxWidth: '100%',
