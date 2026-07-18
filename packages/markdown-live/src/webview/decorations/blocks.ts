@@ -93,17 +93,15 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 			continue
 		}
 
-		// --- Images (editable on cursor entry) ---
+		// --- Images ---
 		const imgMatch = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(text)
 		if (imgMatch) {
-			if (!active)
-				entries.push(
-					markDeco(
-						line.from,
-						line.to,
-						Decoration.replace({ widget: imageWidget({ alt: imgMatch[1] ?? '', src: imgMatch[2] ?? '' }) }),
-					),
-				)
+			const image = imageWidget({ alt: imgMatch[1] ?? '', src: imgMatch[2] ?? '' })
+			// While editing, keep the image rendered as a block just BELOW the editable `![...]` source, so the
+			// document height barely changes on reveal (no ~500px collapse → no jarring scroll jump), and you
+			// get a live preview. Otherwise, replace the line with the image.
+			if (active) entries.push(markDeco(line.to, line.to, Decoration.widget({ widget: image, side: 1, block: true })))
+			else entries.push(markDeco(line.from, line.to, Decoration.replace({ widget: image })))
 			continue
 		}
 
