@@ -99,6 +99,50 @@ export const markdownLiveTheme = EditorView.theme(
 			padding: '0.1em 0.35em',
 		},
 
+		// Code blocks (model C+): the fenced block stays editable text; these paint the container,
+		// dim the ``` fence lines, and place the copy/delete tools. Shiki colors come from inline styles.
+		'.md-cb': {
+			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
+			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
+			fontSize: '0.9em',
+			padding: '0 1rem',
+		},
+		'.md-cb-open': {
+			position: 'relative',
+			paddingTop: '0.4rem',
+			borderTopLeftRadius: '6px',
+			borderTopRightRadius: '6px',
+		},
+		'.md-cb-close': {
+			paddingBottom: '0.4rem',
+			borderBottomLeftRadius: '6px',
+			borderBottomRightRadius: '6px',
+		},
+		'.md-cb-open, .md-cb-close': {
+			color: 'var(--vscode-descriptionForeground, rgba(128,128,128,0.6))',
+			fontSize: '0.72em',
+		},
+		'.md-cb-tools': {
+			float: 'right',
+			display: 'inline-flex',
+			gap: '0.3rem',
+			userSelect: 'none',
+		},
+		'.md-cb-btn': {
+			fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+			fontSize: '0.72rem',
+			lineHeight: '1',
+			padding: '0.2em 0.55em',
+			background: 'var(--vscode-button-secondaryBackground, rgba(128,128,128,0.2))',
+			color: 'var(--vscode-button-secondaryForeground, var(--vscode-editor-foreground))',
+			border: '1px solid var(--vscode-button-border, rgba(128,128,128,0.3))',
+			borderRadius: '3px',
+			cursor: 'pointer',
+		},
+		'.md-cb-btn:hover': {
+			background: 'var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,0.3))',
+		},
+
 		// Links
 		'.md-link-text': {
 			color: 'var(--vscode-textLink-foreground, #4fc1ff)',
