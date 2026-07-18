@@ -5,7 +5,10 @@
 	"private": true,
 	"exports": {
 		".": "./src/index.ts",
-		"./build": "./src/build.ts"
+		"./build": "./src/build.ts",
+		"./registry": "./src/registry.ts",
+		"./config": "./src/config.ts",
+		"./contribute": "./src/contribute.ts"
 	},
 	"files": [
 		"src/**/*"
@@ -16,8 +19,12 @@
 	},
 	"devDependencies": {
 		"@repo/config": "workspace:*",
+		"@types/node": "^26.1.1",
 		"@types/vscode": "^1.107.0",
 		"esbuild": "^0.27.0",
 		"prettier": "^3.8.3"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
 	}
 }
