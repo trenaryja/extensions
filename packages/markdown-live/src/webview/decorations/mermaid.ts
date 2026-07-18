@@ -1,6 +1,7 @@
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
 import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
 import mermaid from 'mermaid'
+import { docOrSelectionChanged, selectionTouches } from './active'
 
 export type MermaidRenderMode = 'inline' | 'below' | 'disabled'
 
@@ -49,8 +50,9 @@ class MermaidWidget extends WidgetType {
 		return wrapper
 	}
 
-	ignoreEvent() {
-		return true
+	ignoreEvent(event: Event) {
+		// Let a mousedown through so clicking the diagram places the cursor and reveals the source to edit.
+		return event.type !== 'mousedown'
 	}
 
 	eq(other: MermaidWidget) {
@@ -103,7 +105,9 @@ function buildMermaidDecorations(state: EditorState, mode: MermaidRenderMode): D
 		const endLine = doc.line(block.endLine)
 
 		if (mode === 'inline') {
-			builder.add(startLine.from, endLine.to, Decoration.replace({ widget: new MermaidWidget(block.code) }))
+			// Reveal the raw block (editable) while the cursor is inside it; otherwise render the diagram.
+			if (!selectionTouches(state, startLine.from, endLine.to))
+				builder.add(startLine.from, endLine.to, Decoration.replace({ widget: new MermaidWidget(block.code) }))
 		} else {
 			// 'below' — keep source visible, insert diagram widget after the closing fence
 			builder.add(endLine.to, endLine.to, Decoration.widget({ widget: new MermaidWidget(block.code), side: 1 }))
@@ -119,7 +123,7 @@ export function createMermaidPlugin(getMode: () => MermaidRenderMode) {
 			return buildMermaidDecorations(state, getMode())
 		},
 		update(decorations, transaction) {
-			if (!transaction.docChanged) return decorations
+			if (!docOrSelectionChanged(transaction)) return decorations
 			return buildMermaidDecorations(transaction.state, getMode())
 		},
 		provide(field) {

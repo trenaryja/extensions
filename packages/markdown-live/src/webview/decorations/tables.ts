@@ -1,5 +1,6 @@
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
 import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
+import { docOrSelectionChanged, selectionTouches } from './active'
 
 function isSeparatorRow(text: string): boolean {
 	return /^\|?[\s\-|:]+\|[\s\-|:]*$/.test(text) && text.includes('-')
@@ -45,8 +46,9 @@ class TableWidget extends WidgetType {
 		return table
 	}
 
-	ignoreEvent() {
-		return true
+	ignoreEvent(event: Event) {
+		// Let a mousedown through so clicking the table places the cursor and reveals the source to edit.
+		return event.type !== 'mousedown'
 	}
 
 	eq(other: TableWidget) {
@@ -89,7 +91,11 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 			endLineNum = dataLine
 		}
 
-		builder.add(line.from, doc.line(endLineNum).to, Decoration.replace({ widget: new TableWidget(headers, dataRows) }))
+		const from = line.from
+		const to = doc.line(endLineNum).to
+		// Reveal the raw table (editable) while the cursor is inside it; otherwise render the widget.
+		if (!selectionTouches(state, from, to))
+			builder.add(from, to, Decoration.replace({ widget: new TableWidget(headers, dataRows) }))
 
 		lineNum = endLineNum + 1
 	}
@@ -102,7 +108,7 @@ export const tablesPlugin = StateField.define<DecorationSet>({
 		return buildTableDecorations(state)
 	},
 	update(decorations, transaction) {
-		if (!transaction.docChanged) return decorations
+		if (!docOrSelectionChanged(transaction)) return decorations
 		return buildTableDecorations(transaction.state)
 	},
 	provide(field) {

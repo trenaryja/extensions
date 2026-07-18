@@ -16,6 +16,13 @@ declare function acquireVsCodeApi(): {
 
 const vscode = acquireVsCodeApi()
 
+// Toggle a class while ⌘/Ctrl is held, so links only show the pointer cursor then (a plain click edits).
+const syncModifier = (event: KeyboardEvent | MouseEvent) =>
+	document.documentElement.classList.toggle('md-mod-held', event.metaKey || event.ctrlKey)
+window.addEventListener('keydown', syncModifier)
+window.addEventListener('keyup', syncModifier)
+window.addEventListener('blur', () => document.documentElement.classList.remove('md-mod-held'))
+
 type Settings = {
 	mermaidRenderMode: MermaidRenderMode
 }

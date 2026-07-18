@@ -1,5 +1,6 @@
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
 import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
+import { docOrSelectionChanged, selectionTouches } from './active'
 
 const CALLOUT_ICONS: Record<string, string> = {
 	note: 'ℹ️',
@@ -76,8 +77,9 @@ class CalloutWidget extends WidgetType {
 		return container
 	}
 
-	ignoreEvent() {
-		return true
+	ignoreEvent(event: Event) {
+		// Let a mousedown through so clicking the callout places the cursor and reveals the source to edit.
+		return event.type !== 'mousedown'
 	}
 
 	eq(other: CalloutWidget) {
@@ -119,7 +121,9 @@ function buildCalloutDecorations(state: EditorState): DecorationSet {
 		const from = line.from
 		const to = doc.line(endLineNum).to
 
-		builder.add(from, to, Decoration.replace({ widget: new CalloutWidget(calloutType, titleExtra, contentLines) }))
+		// Reveal the raw callout (editable) while the cursor is inside it; otherwise render the widget.
+		if (!selectionTouches(state, from, to))
+			builder.add(from, to, Decoration.replace({ widget: new CalloutWidget(calloutType, titleExtra, contentLines) }))
 
 		lineNum = endLineNum + 1
 	}
@@ -132,7 +136,7 @@ export const calloutsPlugin = StateField.define<DecorationSet>({
 		return buildCalloutDecorations(state)
 	},
 	update(decorations, transaction) {
-		if (!transaction.docChanged) return decorations
+		if (!docOrSelectionChanged(transaction)) return decorations
 		return buildCalloutDecorations(transaction.state)
 	},
 	provide(field) {

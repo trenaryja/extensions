@@ -73,3 +73,8 @@
 	--color-error: var(--vscode-editorError-foreground, oklch(65% 0.2 25));
 	--color-error-content: var(--vscode-editor-background, oklch(20% 0 0));
 }
+
+/* Links read as editable text by default; the pointer only appears while ⌘/Ctrl is held (toggled in index.ts). */
+html.md-mod-held .md-link-text {
+	cursor: pointer;
+}

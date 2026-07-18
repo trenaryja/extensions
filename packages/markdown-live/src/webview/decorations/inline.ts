@@ -55,7 +55,10 @@ function buildInline(view: EditorView): DecorationSet {
 					add(
 						open.to,
 						closeText.from,
-						Decoration.mark({ class: 'md-link-text', attributes: url ? { title: url } : {} }),
+						Decoration.mark({
+							class: 'md-link-text',
+							attributes: url ? { title: `⌘/Ctrl-click to open · ${url}` } : {},
+						}),
 					)
 					if (!isActive(view, node.from, node.to)) {
 						add(open.from, open.to, hide) // [

@@ -2,6 +2,7 @@ import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
 import { type BundledLanguage, bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+import { docOrSelectionChanged, selectionTouches } from './active'
 
 // ---------- Highlighter singleton (pure JS engine — no WASM, CSP-safe) ----------
 
@@ -46,6 +47,8 @@ class CodeBlockWidget extends WidgetType {
 		const copyBtn = document.createElement('button')
 		copyBtn.className = 'md-codeblock-copy'
 		copyBtn.textContent = 'Copy'
+		// Don't let interacting with the copy button place the cursor / reveal the block's source.
+		copyBtn.addEventListener('mousedown', (event) => event.stopPropagation())
 		copyBtn.addEventListener('click', () => {
 			navigator.clipboard.writeText(this.code).then(() => {
 				copyBtn.textContent = 'Copied!'
@@ -105,8 +108,9 @@ class CodeBlockWidget extends WidgetType {
 		return wrapper
 	}
 
-	ignoreEvent() {
-		return true
+	ignoreEvent(event: Event) {
+		// Let a mousedown through so clicking the block places the cursor and reveals the source to edit.
+		return event.type !== 'mousedown'
 	}
 }
 
@@ -157,7 +161,9 @@ function buildCodeBlockDecorations(state: EditorState): DecorationSet {
 		const from = doc.line(blockStart).from
 		const to = doc.line(lineNum).to
 
-		builder.add(from, to, Decoration.replace({ widget: new CodeBlockWidget(lang, codeLines.join('\n')) }))
+		// Reveal the raw block (editable) while the cursor is inside it; otherwise render the widget.
+		if (!selectionTouches(state, from, to))
+			builder.add(from, to, Decoration.replace({ widget: new CodeBlockWidget(lang, codeLines.join('\n')) }))
 
 		lineNum++
 	}
@@ -170,7 +176,7 @@ export const codeblocksPlugin = StateField.define<DecorationSet>({
 		return buildCodeBlockDecorations(state)
 	},
 	update(decorations, transaction) {
-		if (!transaction.docChanged) return decorations
+		if (!docOrSelectionChanged(transaction)) return decorations
 		return buildCodeBlockDecorations(transaction.state)
 	},
 	provide(field) {

@@ -103,7 +103,9 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-link-text': {
 			color: 'var(--vscode-textLink-foreground, #4fc1ff)',
 			textDecoration: 'underline',
-			cursor: 'pointer',
+			// Text cursor by default (a plain click edits); the pointer appears only while ⌘/Ctrl is held,
+			// via the `html.md-mod-held` rule in styles.css.
+			cursor: 'text',
 		},
 
 		// Blockquote — Decoration.line adds to .cm-line so border-left and padding work

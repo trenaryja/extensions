@@ -36,15 +36,13 @@ function buildTaskDecorations(view: EditorView): DecorationSet {
 		const match = TASK_RE.exec(line.text)
 		if (!match) continue
 
-		const bullet = match[1]!
-		const mark = match[2]!
-		const checked = mark.toLowerCase() === 'x'
-		// The task marker is `[ ] ` or `[x] ` — 4 chars, after the bullet prefix
-		const markerStart = line.from + bullet.length
-		const markerEnd = markerStart + mark.length + 3 // `[?] ` = 4 chars but we keep the space after
+		const checked = match[2]!.toLowerCase() === 'x'
+		// Replace the whole `-␣[ ]␣` prefix (bullet + checkbox marker) with the checkbox, keeping the
+		// leading indent — so the rendered task is just "☑ text", with no stray hyphen in front.
+		const from = line.from + (match[1]!.length - 2) // start of the bullet char (strip indent)
+		const to = line.from + match[0]!.length // end of `[?]␣`
 
-		// Replace `[ ] ` with the checkbox widget
-		builder.add(markerStart, markerEnd, Decoration.replace({ widget: new CheckboxWidget(checked), side: 1 }))
+		builder.add(from, to, Decoration.replace({ widget: new CheckboxWidget(checked), side: 1 }))
 	}
 
 	return builder.finish()

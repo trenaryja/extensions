@@ -1,5 +1,5 @@
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
-import { RangeSetBuilder } from '@codemirror/state'
+import { selectionTouches } from './active'
 
 const HEADING_RE = /^(#{1,6})\s/
 
@@ -12,8 +12,11 @@ const headingClass: Record<number, string> = {
 	6: 'md-h6',
 }
 
+// Hidden prefix collapses out of layout, so there's no leading gap where the `#` markers were.
+const hide = Decoration.replace({})
+
 function buildHeadingDecorations(view: EditorView): DecorationSet {
-	const builder = new RangeSetBuilder<Decoration>()
+	const ranges: Array<{ from: number; to: number; deco: Decoration }> = []
 	const doc = view.state.doc
 
 	for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
@@ -21,18 +24,20 @@ function buildHeadingDecorations(view: EditorView): DecorationSet {
 		const match = HEADING_RE.exec(line.text)
 		if (!match) continue
 
-		const markers = match[1]!
-		const level = markers.length
-		const cls = headingClass[level] ?? 'md-h6'
-		const markerEnd = line.from + markers.length
+		const level = match[1]!.length
+		const markerEnd = line.from + match[0]!.length // end of the `##␣` prefix, including its space
 
-		// Style the whole line as a heading
-		builder.add(line.from, line.to, Decoration.mark({ class: cls }))
-		// Hide the # markers
-		builder.add(line.from, markerEnd, Decoration.mark({ class: 'md-heading-marker' }))
+		// Style the heading text (not the markers), so revealed `#`s stay normal-size when editing.
+		if (line.to > markerEnd)
+			ranges.push({ from: markerEnd, to: line.to, deco: Decoration.mark({ class: headingClass[level] ?? 'md-h6' }) })
+		// Hide the `##␣` prefix (markers + the space) unless the cursor is on this line.
+		if (!selectionTouches(view.state, line.from, line.to)) ranges.push({ from: line.from, to: markerEnd, deco: hide })
 	}
 
-	return builder.finish()
+	return Decoration.set(
+		ranges.map(({ from, to, deco }) => deco.range(from, to)),
+		true,
+	)
 }
 
 export const headingsPlugin = ViewPlugin.fromClass(
@@ -42,8 +47,9 @@ export const headingsPlugin = ViewPlugin.fromClass(
 			this.decorations = buildHeadingDecorations(view)
 		}
 		update(update: ViewUpdate) {
-			if (update.docChanged || update.viewportChanged) this.decorations = buildHeadingDecorations(update.view)
+			if (update.docChanged || update.viewportChanged || update.selectionSet)
+				this.decorations = buildHeadingDecorations(update.view)
 		}
 	},
-	{ decorations: (v) => v.decorations },
+	{ decorations: (plugin) => plugin.decorations },
 )
