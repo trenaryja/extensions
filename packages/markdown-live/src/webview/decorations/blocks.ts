@@ -12,13 +12,9 @@ const hrWidget = defineWidget<null>({
 	eq: () => true,
 	ignoreEvent: editable,
 	toDOM: () => {
-		// Wrap so the rule can be vertically centered within the line box (the wrapper has line height).
-		const wrap = document.createElement('div')
-		wrap.className = 'md-hr-wrap'
 		const hr = document.createElement('hr')
 		hr.className = 'md-hr'
-		wrap.appendChild(hr)
-		return wrap
+		return hr
 	},
 })
 

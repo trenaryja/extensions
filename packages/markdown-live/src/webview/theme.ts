@@ -174,13 +174,11 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-widget': {
 			display: 'block',
 		},
-		'.md-hr-wrap': {
-			display: 'flex',
-			alignItems: 'center',
-			height: '1.7em',
-		},
+		// Inline-block + vertical-align keeps the rule's line at its natural height (no extra vertical space).
 		'.md-hr': {
-			flex: '1',
+			display: 'inline-block',
+			width: '100%',
+			verticalAlign: 'middle',
 			border: 'none',
 			borderTop: '1px solid color-mix(in srgb, var(--vscode-editor-foreground, #888) 25%, transparent)',
 		},

@@ -65,6 +65,19 @@ function buildInline(view: EditorView): DecorationSet {
 						add(closeText.from, node.to, hide) // ](url)
 					}
 				}
+				if (node.name === 'Image') {
+					// Style just the URL of an image like a link (visible only while editing — otherwise the
+					// blocks plugin replaces the line with the rendered <img>). ⌘/Ctrl-click opens it.
+					const urlNode = node.node.getChild('URL')
+					if (urlNode) {
+						const url = view.state.sliceDoc(urlNode.from, urlNode.to)
+						add(
+							urlNode.from,
+							urlNode.to,
+							Decoration.mark({ class: 'md-link-text', attributes: { title: `⌘/Ctrl-click to open · ${url}` } }),
+						)
+					}
+				}
 			},
 		})
 	}

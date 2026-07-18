@@ -102,7 +102,10 @@ const resolveEditor = (
 		if (msg.type === 'navigate') {
 			if (/^https?:\/\//i.test(msg.url)) return vscode.env.openExternal(vscode.Uri.parse(msg.url))
 			const resolved = vscode.Uri.joinPath(document.uri, '..', msg.url)
-			return vscode.commands.executeCommand('vscode.openWith', resolved, EDITOR_VIEW_TYPE)
+			// Open .md targets in Markdown Live; everything else (images, etc.) with the default editor/viewer.
+			if (/\.md$/i.test(resolved.path))
+				return vscode.commands.executeCommand('vscode.openWith', resolved, EDITOR_VIEW_TYPE)
+			return vscode.commands.executeCommand('vscode.open', resolved)
 		}
 	})
 

@@ -64,7 +64,7 @@ type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
 function linkUrlAt(editorView: EditorView, pos: number): string | null {
 	let node: MarkdownNode | null = syntaxTree(editorView.state).resolveInner(pos, 0)
 	while (node) {
-		if (node.name === 'Link') {
+		if (node.name === 'Link' || node.name === 'Image') {
 			const urlNode = node.getChild('URL')
 			return urlNode ? editorView.state.sliceDoc(urlNode.from, urlNode.to) : null
 		}
