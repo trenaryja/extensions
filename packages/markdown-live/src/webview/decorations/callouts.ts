@@ -43,11 +43,11 @@ const calloutWidget = defineWidget<CalloutValue>({
 	toDOM: (value) => {
 		const container = document.createElement('div')
 		container.className = `md-callout md-callout-${value.type}`
-		if (value.color) container.style.borderColor = value.color
+		// One accent drives border, body tint, and the title bar (see the --callout-color CSS).
+		if (value.color) container.style.setProperty('--callout-color', value.color)
 
 		const title = document.createElement('div')
 		title.className = 'md-callout-title'
-		if (value.color) title.style.color = value.color
 		title.appendChild(renderIcon(value.icon))
 		const titleText = document.createElement('span')
 		titleText.className = 'md-callout-title-text'

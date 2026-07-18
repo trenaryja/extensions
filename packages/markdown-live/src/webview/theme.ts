@@ -282,11 +282,15 @@ export const markdownLiveTheme = EditorView.theme(
 		},
 
 		// Callout widget
+		// Callouts derive everything from one --callout-color accent (default neutral), so built-in AND
+		// custom types get consistent header/body separation. Per-type rules / config just set the accent.
 		'.md-callout': {
+			'--callout-color': 'var(--vscode-descriptionForeground, rgba(140,140,160,0.9))',
 			borderRadius: '6px',
 			margin: '0.75em 0',
 			overflow: 'hidden',
-			border: '1px solid',
+			border: '1px solid color-mix(in srgb, var(--callout-color) 40%, transparent)',
+			background: 'color-mix(in srgb, var(--callout-color) 6%, transparent)',
 		},
 		'.md-callout-title': {
 			display: 'flex',
@@ -295,104 +299,24 @@ export const markdownLiveTheme = EditorView.theme(
 			padding: '0.5em 0.75em',
 			fontWeight: '600',
 			fontSize: '0.9em',
+			background: 'color-mix(in srgb, var(--callout-color) 14%, transparent)',
+			color: 'var(--callout-color)',
 		},
 		'.md-callout-content': {
 			padding: '0.5em 0.75em 0.75em',
 			fontSize: '0.95em',
 			lineHeight: '1.6',
 		},
-		// Callout color variants
-		'.md-callout-note, .md-callout-info, .md-callout-todo': {
-			borderColor: 'rgba(79,193,255,0.4)',
-			background: 'rgba(79,193,255,0.06)',
-		},
-		'.md-callout-note .md-callout-title, .md-callout-info .md-callout-title, .md-callout-todo .md-callout-title': {
-			background: 'rgba(79,193,255,0.12)',
-			color: '#4fc1ff',
-		},
-		'.md-callout-tip, .md-callout-hint, .md-callout-important': {
-			borderColor: 'rgba(83,197,120,0.4)',
-			background: 'rgba(83,197,120,0.06)',
-		},
-		'.md-callout-tip .md-callout-title, .md-callout-hint .md-callout-title, .md-callout-important .md-callout-title': {
-			background: 'rgba(83,197,120,0.12)',
-			color: '#53c578',
-		},
-		'.md-callout-success, .md-callout-check, .md-callout-done': {
-			borderColor: 'rgba(83,197,120,0.4)',
-			background: 'rgba(83,197,120,0.06)',
-		},
-		'.md-callout-success .md-callout-title, .md-callout-check .md-callout-title, .md-callout-done .md-callout-title': {
-			background: 'rgba(83,197,120,0.12)',
-			color: '#53c578',
-		},
-		'.md-callout-warning, .md-callout-caution, .md-callout-attention': {
-			borderColor: 'rgba(255,200,60,0.4)',
-			background: 'rgba(255,200,60,0.06)',
-		},
-		'.md-callout-warning .md-callout-title, .md-callout-caution .md-callout-title, .md-callout-attention .md-callout-title':
-			{
-				background: 'rgba(255,200,60,0.12)',
-				color: '#ffc83c',
-			},
-		'.md-callout-failure, .md-callout-fail, .md-callout-missing': {
-			borderColor: 'rgba(255,100,100,0.4)',
-			background: 'rgba(255,100,100,0.06)',
-		},
-		'.md-callout-failure .md-callout-title, .md-callout-fail .md-callout-title, .md-callout-missing .md-callout-title':
-			{
-				background: 'rgba(255,100,100,0.12)',
-				color: '#ff6464',
-			},
-		'.md-callout-danger, .md-callout-error': {
-			borderColor: 'rgba(255,100,100,0.4)',
-			background: 'rgba(255,100,100,0.06)',
-		},
-		'.md-callout-danger .md-callout-title, .md-callout-error .md-callout-title': {
-			background: 'rgba(255,100,100,0.12)',
-			color: '#ff6464',
-		},
-		'.md-callout-bug': {
-			borderColor: 'rgba(255,100,100,0.4)',
-			background: 'rgba(255,100,100,0.06)',
-		},
-		'.md-callout-bug .md-callout-title': {
-			background: 'rgba(255,100,100,0.12)',
-			color: '#ff6464',
-		},
-		'.md-callout-question, .md-callout-help, .md-callout-faq': {
-			borderColor: 'rgba(180,120,255,0.4)',
-			background: 'rgba(180,120,255,0.06)',
-		},
-		'.md-callout-question .md-callout-title, .md-callout-help .md-callout-title, .md-callout-faq .md-callout-title': {
-			background: 'rgba(180,120,255,0.12)',
-			color: '#b478ff',
-		},
-		'.md-callout-abstract, .md-callout-summary, .md-callout-tldr': {
-			borderColor: 'rgba(0,200,180,0.4)',
-			background: 'rgba(0,200,180,0.06)',
-		},
-		'.md-callout-abstract .md-callout-title, .md-callout-summary .md-callout-title, .md-callout-tldr .md-callout-title':
-			{
-				background: 'rgba(0,200,180,0.12)',
-				color: '#00c8b4',
-			},
-		'.md-callout-example': {
-			borderColor: 'rgba(180,120,255,0.4)',
-			background: 'rgba(180,120,255,0.06)',
-		},
-		'.md-callout-example .md-callout-title': {
-			background: 'rgba(180,120,255,0.12)',
-			color: '#b478ff',
-		},
-		'.md-callout-quote, .md-callout-cite': {
-			borderColor: 'rgba(128,128,128,0.4)',
-			background: 'rgba(128,128,128,0.06)',
-		},
-		'.md-callout-quote .md-callout-title, .md-callout-cite .md-callout-title': {
-			background: 'rgba(128,128,128,0.12)',
-			color: 'var(--vscode-editor-foreground)',
-		},
+		// Per-type accent colors (each just sets --callout-color; the base rules derive border/bg/title).
+		'.md-callout-note, .md-callout-info, .md-callout-todo': { '--callout-color': '#4fc1ff' },
+		'.md-callout-tip, .md-callout-hint, .md-callout-important': { '--callout-color': '#53c578' },
+		'.md-callout-success, .md-callout-check, .md-callout-done': { '--callout-color': '#53c578' },
+		'.md-callout-warning, .md-callout-caution, .md-callout-attention': { '--callout-color': '#ffc83c' },
+		'.md-callout-failure, .md-callout-fail, .md-callout-missing': { '--callout-color': '#ff6464' },
+		'.md-callout-danger, .md-callout-error, .md-callout-bug': { '--callout-color': '#ff6464' },
+		'.md-callout-question, .md-callout-help, .md-callout-faq, .md-callout-example': { '--callout-color': '#b478ff' },
+		'.md-callout-abstract, .md-callout-summary, .md-callout-tldr': { '--callout-color': '#00c8b4' },
+		'.md-callout-quote, .md-callout-cite': { '--callout-color': 'var(--vscode-descriptionForeground, #9aa0aa)' },
 
 		// Mermaid
 		'.md-mermaid-widget': {
