@@ -268,6 +268,9 @@ export const markdownLiveTheme = EditorView.theme(
 		// the blank markdown lines between callouts provide the external separation.
 		'.md-callout-line-head': {
 			paddingTop: '0.5em',
+			// Match padding-bottom so the header is vertically centered even when it's not also the last line
+			// (expanded callouts) — and it gives the title→content breathing room.
+			paddingBottom: '0.5em',
 			borderTop: '1px solid color-mix(in srgb, var(--callout-color, rgba(140,140,160,0.85)) 40%, transparent)',
 			borderTopLeftRadius: '6px',
 			borderTopRightRadius: '6px',
