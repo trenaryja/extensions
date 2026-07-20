@@ -104,7 +104,7 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 | Frontmatter (YAML)                        | ✅ (dimmed)         |
 | Block markdown inside callouts            | ❌                  |
 | Nested callouts                           | ❌                  |
-| Math `$…$` / `$$…$$`                       | 🔜                  |
+| Math `$…$` / `$$…$$` / ` ```math `          | ✅ (MathJax→SVG, copy/export as SVG) |
 | Wikilinks `[[…]]`                         | ❌ (v1.1 PKM)       |
 | Embeds `![[…]]`                           | ❌ (v1.1 PKM)       |
 | Tags `#tag`                               | ❌ (v1.1 PKM)       |
