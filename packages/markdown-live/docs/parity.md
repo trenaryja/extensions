@@ -19,13 +19,13 @@ suite. When engineers say "core markdown" today, they almost always mean CommonM
 
 ## The layers
 
-| Layer                                | What it adds                                                                                          | Spec status                              |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| **CommonMark**                       | headings, emphasis, lists, blockquotes, links, images, inline & fenced code, thematic breaks, HTML    | Formal spec + conformance suite          |
-| **GFM** (GitHub Flavored)            | tables, task lists, `~~strikethrough~~`, autolinks, raw-HTML filtering                                | Formal spec — a strict superset of CommonMark |
-| **GitHub Alerts**                    | `> [!NOTE]` callout blockquotes (5 types)                                                             | **Not** in the GFM spec — a github.com feature |
-| **Obsidian**                         | callouts, `[[wikilinks]]`, `![[embeds]]`, `#tags`, `^block-refs`, `$math$`, `%%comments%%`             | App-specific                             |
-| **Pandoc / MDX / RST / …**           | footnotes, definition lists, citations / JSX / directives                                             | Tool-specific                            |
+| Layer                      | What it adds                                                                                       | Spec status                                    |
+| -------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **CommonMark**             | headings, emphasis, lists, blockquotes, links, images, inline & fenced code, thematic breaks, HTML | Formal spec + conformance suite                |
+| **GFM** (GitHub Flavored)  | tables, task lists, `~~strikethrough~~`, autolinks, raw-HTML filtering                             | Formal spec — a strict superset of CommonMark  |
+| **GitHub Alerts**          | `> [!NOTE]` callout blockquotes (5 types)                                                          | **Not** in the GFM spec — a github.com feature |
+| **Obsidian**               | callouts, `[[wikilinks]]`, `![[embeds]]`, `#tags`, `^block-refs`, `$math$`, `%%comments%%`         | App-specific                                   |
+| **Pandoc / MDX / RST / …** | footnotes, definition lists, citations / JSX / directives                                          | Tool-specific                                  |
 
 The mental model: **CommonMark is the trunk; every flavor is a branch that adds — and occasionally
 redefines — syntax.**
@@ -44,13 +44,13 @@ blockquote with a `[!TYPE]` tag:
 
 …but they're different features:
 
-|                | GitHub Alerts                                | Obsidian Callouts             |
-| -------------- | -------------------------------------------- | ----------------------------- |
-| Types          | 5 (note, tip, important, warning, caution)   | 13 primaries + aliases        |
-| Custom title   | ❌                                           | ✅ `> [!tip] My title`        |
-| Foldable       | ❌                                           | ✅ `> [!tip]-` / `> [!tip]+`  |
-| Custom types   | ❌                                           | ✅ (via CSS)                  |
-| Spec'd?        | ❌ github.com feature                        | ❌ app feature                |
+|              | GitHub Alerts                              | Obsidian Callouts            |
+| ------------ | ------------------------------------------ | ---------------------------- |
+| Types        | 5 (note, tip, important, warning, caution) | 13 primaries + aliases       |
+| Custom title | ❌                                         | ✅ `> [!tip] My title`       |
+| Foldable     | ❌                                         | ✅ `> [!tip]-` / `> [!tip]+` |
+| Custom types | ❌                                         | ✅ (via CSS)                 |
+| Spec'd?      | ❌ github.com feature                      | ❌ app feature               |
 
 And they **conflict**:
 
@@ -70,51 +70,51 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 
 ### CommonMark (core)
 
-| Feature                        | Status                              |
-| ------------------------------ | ----------------------------------- |
-| Headings (ATX `#`)             | ✅                                  |
-| Bold / italic / inline code    | ✅                                  |
-| Blockquotes                    | ✅                                  |
-| Lists (ordered/unordered/nested) | ✅                                |
-| Fenced code blocks             | ✅ (+ Shiki, theme-matched)         |
-| Links & images                 | ✅ (inline-editable, clickable)     |
-| Thematic break (`---`)         | ✅                                  |
-| Setext headings (`===`/`---`)  | ❌                                  |
-| Reference links `[x][id]`      | ❌                                  |
-| Bare-URL autolinks             | ❌                                  |
-| Raw HTML                       | 🟡                                  |
+| Feature                          | Status                          |
+| -------------------------------- | ------------------------------- |
+| Headings (ATX `#`)               | ✅                              |
+| Bold / italic / inline code      | ✅                              |
+| Blockquotes                      | ✅                              |
+| Lists (ordered/unordered/nested) | ✅                              |
+| Fenced code blocks               | ✅ (+ Shiki, theme-matched)     |
+| Links & images                   | ✅ (inline-editable, clickable) |
+| Thematic break (`---`)           | ✅                              |
+| Setext headings (`===`/`---`)    | ❌                              |
+| Reference links `[x][id]`        | ❌                              |
+| Bare-URL autolinks               | ❌                              |
+| Raw HTML                         | 🟡                              |
 
 ### GFM
 
-| Feature              | Status                                              |
-| -------------------- | --------------------------------------------------- |
-| Tables               | 🟡 (inline-edit, live preview, row/col tools; more below) |
-| Strikethrough        | ✅                                                  |
-| Task lists           | ✅                                                  |
-| Alerts (5 types)     | ✅ (covered by the callouts superset)               |
+| Feature          | Status                                                    |
+| ---------------- | --------------------------------------------------------- |
+| Tables           | 🟡 (inline-edit, live preview, row/col tools; more below) |
+| Strikethrough    | ✅                                                        |
+| Task lists       | ✅                                                        |
+| Alerts (5 types) | ✅ (covered by the callouts superset)                     |
 
 ### Obsidian
 
-| Feature                                   | Status              |
-| ----------------------------------------- | ------------------- |
-| Callouts (13 + aliases)                   | ✅                  |
-| Callout default + custom title            | ✅                  |
-| Callout fold (`+`/`-`, collapsible)       | ✅                  |
-| Callout custom types/colors/icons (config) | ✅                 |
-| Frontmatter (YAML)                        | ✅ (dimmed)         |
-| Block markdown inside callouts            | ❌                  |
-| Nested callouts                           | ❌                  |
-| Math `$…$` / `$$…$$` / ` ```math `          | ✅ (MathJax→SVG, copy/export as SVG) |
-| Wikilinks `[[…]]`                         | ❌ (v1.1 PKM)       |
-| Embeds `![[…]]`                           | ❌ (v1.1 PKM)       |
-| Tags `#tag`                               | ❌ (v1.1 PKM)       |
-| Block refs `^id`                          | ❌ (v1.1 PKM)       |
-| Comments `%%…%%`                          | ❌ (v1.1 PKM)       |
+| Feature                                    | Status                                           |
+| ------------------------------------------ | ------------------------------------------------ |
+| Callouts (13 + aliases)                    | ✅                                               |
+| Callout default + custom title             | ✅                                               |
+| Callout fold (`+`/`-`, collapsible)        | ✅                                               |
+| Callout custom types/colors/icons (config) | ✅                                               |
+| Frontmatter (YAML)                         | ✅ (dimmed)                                      |
+| Block markdown inside callouts             | 🟡 (lists/tasks/headings; code & nested pending) |
+| Nested callouts                            | ❌                                               |
+| Math `$…$` / `$$…$$` / ` ```math `         | ✅ (MathJax→SVG, copy/export as SVG)             |
+| Wikilinks `[[…]]`                          | ❌ (v1.1 PKM)                                    |
+| Embeds `![[…]]`                            | ❌ (v1.1 PKM)                                    |
+| Tags `#tag`                                | ❌ (v1.1 PKM)                                    |
+| Block refs `^id`                           | ❌ (v1.1 PKM)                                    |
+| Comments `%%…%%`                           | ❌ (v1.1 PKM)                                    |
 
 ### Diagrams / rich
 
-| Feature | Status                                              |
-| ------- | --------------------------------------------------- |
+| Feature | Status                                                   |
+| ------- | -------------------------------------------------------- |
 | Mermaid | ✅ (theme-bridged, live preview, code-block edit chrome) |
 
 ---
