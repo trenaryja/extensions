@@ -1,10 +1,8 @@
 import type { Extension } from '@codemirror/state'
-import { headingsPlugin } from './headings'
 import { inlineDecorationsPlugin } from './inline'
 import { blocksPlugin } from './blocks'
 import { codeblocksPlugin } from './codeblocks'
-import { listsPlugin } from './lists'
-import { tasksPlugin } from './tasks'
+import { treeBlocksPlugin } from './treeBlocks'
 import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
 import { createMermaidPlugin, type MermaidRenderMode } from './mermaid'
@@ -20,9 +18,8 @@ export function createDecorationExtensions(getMode: () => MermaidRenderMode): Ex
 		mathPlugin,
 		// ViewPlugins (line/mark decos only)
 		blocksPlugin,
-		headingsPlugin,
-		tasksPlugin,
-		listsPlugin,
+		// Tree-driven structural rendering (headings, lists, tasks) — works inside callouts/blockquotes.
+		treeBlocksPlugin,
 		inlineDecorationsPlugin,
 	]
 }
