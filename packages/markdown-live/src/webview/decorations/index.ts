@@ -8,6 +8,7 @@ import { tasksPlugin } from './tasks'
 import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
 import { createMermaidPlugin, type MermaidRenderMode } from './mermaid'
+import { mathPlugin } from './math'
 
 export function createDecorationExtensions(getMode: () => MermaidRenderMode): Extension[] {
 	return [
@@ -16,6 +17,7 @@ export function createDecorationExtensions(getMode: () => MermaidRenderMode): Ex
 		codeblocksPlugin,
 		createMermaidPlugin(getMode),
 		tablesPlugin,
+		mathPlugin,
 		// ViewPlugins (line/mark decos only)
 		blocksPlugin,
 		headingsPlugin,

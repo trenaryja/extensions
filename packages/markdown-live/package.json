@@ -25,6 +25,7 @@
 		"@codemirror/language-data": "^6.5.1",
 		"@codemirror/state": "^6.5.2",
 		"@codemirror/view": "^6.38.1",
+		"mathjax-full": "^3.2.2",
 		"mermaid": "^11.16.0",
 		"shiki": "^4.2.0",
 		"zod": "^4.4.3"
@@ -77,6 +78,11 @@
 				"command": "markdownLive.insertMermaid",
 				"title": "Insert Mermaid Diagram",
 				"category": "Markdown Live"
+			},
+			{
+				"command": "markdownLive.copyMathSvg",
+				"title": "Copy Equation as SVG",
+				"category": "Markdown Live"
 			}
 		],
 		"keybindings": [
@@ -106,6 +112,10 @@
 				},
 				{
 					"command": "markdownLive.insertMermaid",
+					"when": "resourceExtname == .md"
+				},
+				{
+					"command": "markdownLive.copyMathSvg",
 					"when": "resourceExtname == .md"
 				}
 			]
@@ -824,6 +834,12 @@
 					"markdownDescription": "Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.",
 					"scope": "window",
 					"type": "boolean"
+				},
+				"markdownLive.mathExportColor": {
+					"default": "currentColor",
+					"markdownDescription": "Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.",
+					"scope": "window",
+					"type": "string"
 				}
 			}
 		}

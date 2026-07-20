@@ -10,11 +10,13 @@ type WebviewMessage =
 	| { type: 'navigate'; url: string }
 	| { type: 'webviewError'; message: string; stack: string }
 	| { type: 'requestShikiTheme'; name: string }
+	| { type: 'mathSvgCopied'; ok: boolean }
 
 const readSettings = () => ({
 	mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode'),
 	callouts: getConfig('markdownLive.callouts'),
 	calloutDefaultTitle: getConfig('markdownLive.calloutDefaultTitle'),
+	mathExportColor: getConfig('markdownLive.mathExportColor'),
 })
 
 // The most recently active Markdown Live editor — the target for insert commands, since custom editors
@@ -25,6 +27,12 @@ export const insertIntoActiveEditor = (text: string) => {
 	const panel = activePanel
 	if (!panel) return void vscode.window.showWarningMessage('Markdown Live: open a markdown file to insert into.')
 	panel.webview.postMessage({ type: 'insert', text })
+}
+
+export const copyMathFromActiveEditor = () => {
+	const panel = activePanel
+	if (!panel) return void vscode.window.showWarningMessage('Markdown Live: open a markdown file first.')
+	panel.webview.postMessage({ type: 'copyMathSvg' })
 }
 
 const headStyles = `    * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,6 +90,11 @@ const resolveEditor = (
 			return webviewPanel.webview.postMessage({ type: 'init', content: document.getText(), settings: readSettings() })
 
 		if (msg.type === 'requestShikiTheme') return sendShikiTheme(msg.name)
+
+		if (msg.type === 'mathSvgCopied')
+			return void vscode.window.showInformationMessage(
+				msg.ok ? 'Copied equation as SVG.' : 'Markdown Live: place the cursor in an equation first.',
+			)
 
 		if (msg.type === 'edit') {
 			pendingWebviewEdit = true

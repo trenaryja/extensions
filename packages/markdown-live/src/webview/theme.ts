@@ -320,6 +320,42 @@ export const markdownLiveTheme = EditorView.theme(
 			border: '1px solid rgba(255,100,100,0.3)',
 			display: 'block',
 		},
+
+		// Math (MathJax SVG). Glyphs use `currentColor`, so inherit the editor foreground for live rendering.
+		'.md-math': {
+			color: 'var(--vscode-editor-foreground)',
+		},
+		'.md-math-inline': {
+			display: 'inline-block',
+		},
+		'.md-math-block': {
+			display: 'block',
+			position: 'relative',
+			textAlign: 'center',
+			overflowX: 'auto',
+			padding: '0.2rem 0',
+		},
+		'.md-math-svg': {
+			display: 'block',
+		},
+		// Copy-SVG button, revealed on hover of a block equation (top-right).
+		'.md-math-tools': {
+			position: 'absolute',
+			top: '0',
+			right: '0',
+			opacity: '0',
+			transition: 'opacity 0.12s',
+			pointerEvents: 'none',
+		},
+		'.md-math-block:hover .md-math-tools': {
+			opacity: '1',
+			pointerEvents: 'auto',
+		},
+		'.md-math-error': {
+			color: '#ff6464',
+			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
+			fontSize: '0.85em',
+		},
 	},
 	{ dark: false },
 )

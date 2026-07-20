@@ -11,21 +11,17 @@ Feature-specific tests:
 - [Callouts](test-callouts.md)
 - [Mermaid Diagrams](test-mermaid.md)
 - [Tables](test-tables.md)
+- [Math](test-math.md)
 
 ---
 
 ## Headings
 
 # H1 Heading
-
 ## H2 Heading
-
 ### H3 Heading
-
 #### H4 Heading
-
 ##### H5 Heading
-
 ###### H6 Heading
 
 ---
@@ -40,7 +36,7 @@ _italic_ and _also italic_
 
 ~~strikethrough~~
 
-`inline code`
+A sentence with some `inline code` right in the middle
 
 **bold with _nested italic_ inside**
 

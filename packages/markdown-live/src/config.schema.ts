@@ -31,6 +31,11 @@ export const configSchema = z.object({
 			'Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.',
 		scope: 'window',
 	}),
+	'markdownLive.mathExportColor': setting(z.string().default('currentColor'), {
+		markdownDescription:
+			'Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.',
+		scope: 'window',
+	}),
 })
 
 export type Config = z.infer<typeof configSchema>

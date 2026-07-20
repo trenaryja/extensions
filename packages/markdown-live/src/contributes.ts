@@ -91,6 +91,13 @@ export const commands = defineCommands([
 			await insert(`\`\`\`mermaid\n${example}${CURSOR}\n\`\`\`\n`)
 		},
 	},
+	{
+		command: 'markdownLive.copyMathSvg',
+		title: 'Copy Equation as SVG',
+		category: 'Markdown Live',
+		menus: PALETTE_MD,
+		handler: async () => (await import('./editorProvider')).copyMathFromActiveEditor(),
+	},
 ] as const)
 
 export type CommandId = (typeof commands)[number]['command']

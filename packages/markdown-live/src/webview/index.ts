@@ -8,6 +8,7 @@ import { markdownLiveTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
+import { copyMathAtCursor, setMathExportColor } from './decorations/math'
 import { CURSOR } from '../snippets'
 import type { CalloutConfig } from '../callouts.data'
 import { type MermaidRenderMode, refreshMermaidTheme } from './decorations/mermaid'
@@ -46,6 +47,7 @@ type Settings = {
 	mermaidRenderMode: MermaidRenderMode
 	callouts: CalloutConfig
 	calloutDefaultTitle: boolean
+	mathExportColor: string
 }
 
 type InitMessage = { type: 'init'; content: string; settings: Settings }
@@ -53,9 +55,21 @@ type UpdateMessage = { type: 'update'; content: string }
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
 type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | null }
 type InsertMessage = { type: 'insert'; text: string }
-type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
+type CopyMathMessage = { type: 'copyMathSvg' }
+type ExtensionMessage =
+	| InitMessage
+	| UpdateMessage
+	| SettingsUpdateMessage
+	| ShikiThemeMessage
+	| InsertMessage
+	| CopyMathMessage
 
-let currentSettings: Settings = { mermaidRenderMode: 'inline', callouts: {}, calloutDefaultTitle: true }
+let currentSettings: Settings = {
+	mermaidRenderMode: 'inline',
+	callouts: {},
+	calloutDefaultTitle: true,
+	mathExportColor: 'currentColor',
+}
 let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -152,6 +166,11 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 		return
 	}
 
+	if (msg.type === 'copyMathSvg') {
+		vscode.postMessage({ type: 'mathSvgCopied', ok: view ? copyMathAtCursor(view) : false })
+		return
+	}
+
 	if (msg.type === 'insert') {
 		if (view) {
 			const { from, to } = view.state.selection.main
@@ -170,6 +189,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'init') {
 		currentSettings = msg.settings
+		setMathExportColor(currentSettings.mathExportColor)
 		if (view) {
 			// Already have an editor — just update content and settings
 			applyExternalUpdate(msg.content)
@@ -201,6 +221,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'settingsUpdate') {
 		currentSettings = msg.settings
+		setMathExportColor(currentSettings.mathExportColor)
 		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
 	}
 })
