@@ -284,6 +284,12 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-callout-icon': {
 			marginRight: '0.45em',
 			color: 'var(--callout-color, inherit)',
+			// The codicon is an inline-block that defaults to baseline alignment (sits high next to the title);
+			// middle-align it to the text so the icon and heading are vertically centered.
+			verticalAlign: 'middle',
+		},
+		'.md-callout-title': {
+			verticalAlign: 'middle',
 		},
 		// Mermaid
 		'.md-mermaid-widget': {
