@@ -35,23 +35,6 @@ export const CODE_LANGUAGES = [
 	'diff',
 ]
 
-export const CALLOUT_TYPES = [
-	'note',
-	'tip',
-	'info',
-	'important',
-	'success',
-	'question',
-	'warning',
-	'caution',
-	'failure',
-	'danger',
-	'bug',
-	'example',
-	'quote',
-	'abstract',
-]
-
 // Diagram type → a starter example (latest mermaid spec). The picker key is the friendly name.
 export const MERMAID_EXAMPLES: Record<string, string> = {
 	Flowchart: 'flowchart TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[OK]\n  B -->|No| D[Retry]',

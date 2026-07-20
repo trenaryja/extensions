@@ -818,6 +818,12 @@
 							}
 						}
 					}
+				},
+				"markdownLive.calloutDefaultTitle": {
+					"default": true,
+					"markdownDescription": "Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.",
+					"scope": "window",
+					"type": "boolean"
 				}
 			}
 		}

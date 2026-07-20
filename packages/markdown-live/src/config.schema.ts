@@ -26,6 +26,11 @@ export const configSchema = z.object({
 			scope: 'window',
 		},
 	),
+	'markdownLive.calloutDefaultTitle': setting(z.boolean().default(true), {
+		markdownDescription:
+			'Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.',
+		scope: 'window',
+	}),
 })
 
 export type Config = z.infer<typeof configSchema>

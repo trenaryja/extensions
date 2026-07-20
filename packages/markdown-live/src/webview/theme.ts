@@ -285,17 +285,6 @@ export const markdownLiveTheme = EditorView.theme(
 			marginRight: '0.45em',
 			color: 'var(--callout-color, inherit)',
 		},
-		// Per-type accent colors (each just sets --callout-color; the base rules derive border/bg/title).
-		'.md-callout-note, .md-callout-info, .md-callout-todo': { '--callout-color': '#4fc1ff' },
-		'.md-callout-tip, .md-callout-hint, .md-callout-important': { '--callout-color': '#53c578' },
-		'.md-callout-success, .md-callout-check, .md-callout-done': { '--callout-color': '#53c578' },
-		'.md-callout-warning, .md-callout-caution, .md-callout-attention': { '--callout-color': '#ffc83c' },
-		'.md-callout-failure, .md-callout-fail, .md-callout-missing': { '--callout-color': '#ff6464' },
-		'.md-callout-danger, .md-callout-error, .md-callout-bug': { '--callout-color': '#ff6464' },
-		'.md-callout-question, .md-callout-help, .md-callout-faq, .md-callout-example': { '--callout-color': '#b478ff' },
-		'.md-callout-abstract, .md-callout-summary, .md-callout-tldr': { '--callout-color': '#00c8b4' },
-		'.md-callout-quote, .md-callout-cite': { '--callout-color': 'var(--vscode-descriptionForeground, #9aa0aa)' },
-
 		// Mermaid
 		'.md-mermaid-widget': {
 			display: 'block',

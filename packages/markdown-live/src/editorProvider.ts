@@ -14,6 +14,7 @@ type WebviewMessage =
 const readSettings = () => ({
 	mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode'),
 	callouts: getConfig('markdownLive.callouts'),
+	calloutDefaultTitle: getConfig('markdownLive.calloutDefaultTitle'),
 })
 
 // The most recently active Markdown Live editor — the target for insert commands, since custom editors

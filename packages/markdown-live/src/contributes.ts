@@ -1,5 +1,5 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { type CalloutConfig, DEFAULT_CALLOUTS, resolveCallout } from './callouts.data'
+import { type CalloutConfig, CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
 import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
 // Lazy import keeps this module (and the contributes codegen) free of any top-level `vscode` import.
@@ -66,9 +66,7 @@ export const commands = defineCommands([
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markdownLive.callouts') ?? {}
-			const types = [...new Set([...Object.keys(DEFAULT_CALLOUTS), ...Object.keys(config)])].filter(
-				(t) => t !== 'default',
-			)
+			const types = [...new Set([...CALLOUT_PRIMARIES, ...Object.keys(config)])].filter((t) => t !== 'default')
 			const items: CalloutPickItem[] = types.map((type) => {
 				const icon = resolveCallout(config, type).icon.trim()
 				if (icon.startsWith('$(') && icon.endsWith(')'))

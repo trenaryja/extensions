@@ -45,6 +45,7 @@ requestShikiTheme()
 type Settings = {
 	mermaidRenderMode: MermaidRenderMode
 	callouts: CalloutConfig
+	calloutDefaultTitle: boolean
 }
 
 type InitMessage = { type: 'init'; content: string; settings: Settings }
@@ -54,7 +55,7 @@ type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | 
 type InsertMessage = { type: 'insert'; text: string }
 type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
 
-let currentSettings: Settings = { mermaidRenderMode: 'inline', callouts: {} }
+let currentSettings: Settings = { mermaidRenderMode: 'inline', callouts: {}, calloutDefaultTitle: true }
 let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -189,7 +190,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 				})
 			}
 		}
-		if (view) applyCallouts(view, currentSettings.callouts)
+		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
 		return
 	}
 
@@ -200,7 +201,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'settingsUpdate') {
 		currentSettings = msg.settings
-		if (view) applyCallouts(view, currentSettings.callouts)
+		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
 	}
 })
 

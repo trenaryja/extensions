@@ -2,98 +2,89 @@
 
 ← [Back to test suite](test.md)
 
-All supported Obsidian callout types:
+Built-in types follow Obsidian's taxonomy: each **primary** owns an icon + color; aliases render identically.
 
 ---
 
-> [!NOTE]
-> General information. Use for neutral notes and context.
+## Types (13 primaries)
 
-> [!INFO]
-> Informational content. Alias for NOTE.
+> [!note]
+> General information and context.
 
-> [!TODO]
+> [!abstract]
+> A summary or overview. Aliases: summary, tldr.
+
+> [!info]
+> Informational content.
+
+> [!todo]
 > Something that needs to be done.
 
-> [!TIP]
-> A helpful hint or best practice.
+> [!tip]
+> A helpful hint or best practice. Aliases: hint, important.
 
-> [!HINT]
-> Alias for TIP.
+> [!success]
+> Operation completed successfully. Aliases: check, done.
 
-> [!IMPORTANT]
-> Important information that shouldn't be missed.
+> [!question]
+> A question or something uncertain. Aliases: help, faq.
 
-> [!SUCCESS]
-> Operation completed successfully.
+> [!warning]
+> Proceed with caution. Aliases: caution, attention.
 
-> [!CHECK]
-> Alias for SUCCESS.
+> [!failure]
+> Something failed. Aliases: fail, missing.
 
-> [!DONE]
-> Alias for SUCCESS.
+> [!danger]
+> Something could go very wrong. Alias: error.
 
-> [!WARNING]
-> Proceed with caution.
-
-> [!CAUTION]
-> Alias for WARNING.
-
-> [!ATTENTION]
-> Alias for WARNING.
-
-> [!FAILURE]
-> Something failed.
-
-> [!FAIL]
-> Alias for FAILURE.
-
-> [!MISSING]
-> Alias for FAILURE.
-
-> [!DANGER]
-> Something could go very wrong.
-
-> [!ERROR]
-> Alias for DANGER.
-
-> [!BUG]
+> [!bug]
 > Something is broken.
 
-> [!QUESTION]
-> A question or something uncertain.
-
-> [!HELP]
-> Alias for QUESTION.
-
-> [!FAQ]
-> Alias for QUESTION.
-
-> [!ABSTRACT]
-> A summary or overview.
-
-> [!SUMMARY]
-> Alias for ABSTRACT.
-
-> [!TLDR]
-> Alias for ABSTRACT.
-
-> [!EXAMPLE]
+> [!example]
 > An example or demonstration.
 
-> [!QUOTE]
-> A quotation or citation.
+> [!quote]
+> A quotation or citation. Alias: cite.
 > — Someone famous
-
-> [!CITE]
-> Alias for QUOTE.
 
 ---
 
-## Multi-line content
+## Default title (untitled → type name)
 
-> [!NOTE] Custom title
-> Callouts can have a custom title after the type tag.
-> They can also span multiple lines of content.
->
-> But the blank `>` line above starts a new blockquote, so this would actually be a separate callout in strict parsing.
+With no title after the tag, the heading shows the capitalized type name (Obsidian behavior).
+Toggle with the `markdownLive.calloutDefaultTitle` setting.
+
+> [!warning]
+> Heading reads "Warning" above this line.
+
+## Custom title
+
+> [!tip] Pro tip
+> Text after the type tag becomes the title.
+
+## Aliases resolve to their primary
+
+> [!hint]
+> Renders exactly like tip — green lightbulb, heading "Hint".
+
+> [!error]
+> Renders exactly like danger — red flame, heading "Error".
+
+## Foldable markers (Obsidian +/−)
+
+> [!note]- Collapsed by default
+> The `-` marker no longer leaks into the title. (Click-to-collapse is coming next.)
+
+> [!note]+ Expanded but foldable
+> The `+` marker is stripped from the title too.
+
+## Inline markdown in content
+
+> [!info]
+> Content supports **bold**, _italic_, `code`, and [links](test.md).
+
+## Unknown type (neutral fallback)
+
+> [!custom]
+> An unrecognized type gets the default icon and a neutral gray accent.
