@@ -1,31 +1,24 @@
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { defineWidget } from '../lib/widget'
 
-// Matches `- [ ] ` or `- [x] ` (also `* [ ]` and `* [x]`)
-const TASK_RE = /^(\s*[-*]\s)\[([ xX])\]\s/
+// `- [ ] ` / `- [x] ` (also `*`), allowing a leading blockquote/callout prefix so tasks render inside callouts.
+const TASK_RE = /^(\s*(?:>\s*)*[-*]\s)\[([ xX])\]\s/
 
-class CheckboxWidget extends WidgetType {
-	constructor(private checked: boolean) {
-		super()
-	}
-	toDOM() {
+const checkboxWidget = defineWidget<{ checked: boolean }>({
+	eq: (a, b) => a.checked === b.checked,
+	// Let mousedown through so the cursor can land near the checkbox; the checkbox itself never changes state
+	// (editing the markdown is the source of truth).
+	ignoreEvent: (event) => event.type !== 'mousedown',
+	toDOM: (value) => {
 		const checkbox = document.createElement('input')
 		checkbox.type = 'checkbox'
 		checkbox.className = 'md-task-checkbox'
-		checkbox.checked = this.checked
-		// Read-only visual — editing the markdown is the source of truth
-		checkbox.addEventListener('change', (e) => e.preventDefault())
+		checkbox.checked = value.checked
+		checkbox.addEventListener('change', (event) => event.preventDefault())
 		return checkbox
-	}
-	ignoreEvent(event: Event) {
-		// Allow click events to propagate so the cursor lands near the checkbox,
-		// but prevent the checkbox from actually changing state.
-		return event.type !== 'mousedown'
-	}
-	eq(other: CheckboxWidget) {
-		return other.checked === this.checked
-	}
-}
+	},
+})
 
 function buildTaskDecorations(view: EditorView): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
@@ -36,13 +29,13 @@ function buildTaskDecorations(view: EditorView): DecorationSet {
 		const match = TASK_RE.exec(line.text)
 		if (!match) continue
 
-		const checked = match[2]!.toLowerCase() === 'x'
-		// Replace the whole `-␣[ ]␣` prefix (bullet + checkbox marker) with the checkbox, keeping the
-		// leading indent — so the rendered task is just "☑ text", with no stray hyphen in front.
-		const from = line.from + (match[1]!.length - 2) // start of the bullet char (strip indent)
-		const to = line.from + match[0]!.length // end of `[?]␣`
+		const checked = (match[2] ?? '').toLowerCase() === 'x'
+		// Replace the `-␣[ ]␣` marker (bullet + checkbox) with the checkbox, keeping any leading indent/prefix —
+		// so the rendered task is just "☑ text". The bullet + space are the last 2 chars of match[1].
+		const from = line.from + ((match[1]?.length ?? 0) - 2)
+		const to = line.from + match[0].length
 
-		builder.add(from, to, Decoration.replace({ widget: new CheckboxWidget(checked), side: 1 }))
+		builder.add(from, to, Decoration.replace({ widget: checkboxWidget({ checked }), side: 1 }))
 	}
 
 	return builder.finish()
@@ -58,5 +51,5 @@ export const tasksPlugin = ViewPlugin.fromClass(
 			if (update.docChanged || update.viewportChanged) this.decorations = buildTaskDecorations(update.view)
 		}
 	},
-	{ decorations: (v) => v.decorations },
+	{ decorations: (plugin) => plugin.decorations },
 )

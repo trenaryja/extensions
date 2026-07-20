@@ -1,26 +1,20 @@
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { defineWidget } from '../lib/widget'
 
-// Matches unordered bullets: `- `, `* `, `+ ` at start (with optional indent)
-// Negative lookahead for `[` avoids matching task list items (handled by tasksPlugin)
-const BULLET_RE = /^(\s*)([-*+]) (?!\[)/
+// Unordered bullets `- `/`* `/`+ `, allowing a leading blockquote/callout prefix (`> `, `> > `) so lists
+// render inside callouts and blockquotes too. Negative lookahead for `[` skips task items (tasksPlugin).
+const BULLET_RE = /^(\s*(?:>\s*)*)([-*+]) (?!\[)/
 
-class BulletWidget extends WidgetType {
-	toDOM() {
+const bulletWidget = defineWidget<null>({
+	eq: () => true,
+	toDOM: () => {
 		const span = document.createElement('span')
 		span.className = 'md-list-bullet-glyph'
 		span.textContent = '•'
 		return span
-	}
-	ignoreEvent() {
-		return true
-	}
-	eq() {
-		return true
-	}
-}
-
-const bulletWidget = new BulletWidget()
+	},
+})
 
 function buildListDecorations(view: EditorView): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
@@ -30,9 +24,9 @@ function buildListDecorations(view: EditorView): DecorationSet {
 		const line = doc.line(lineNum)
 		const match = BULLET_RE.exec(line.text)
 		if (!match) continue
-		const bulletPos = line.from + match[1]!.length
-		// Replace the `-` / `*` / `+` glyph with `•` (space after is preserved)
-		builder.add(bulletPos, bulletPos + 1, Decoration.replace({ widget: bulletWidget }))
+		const bulletPos = line.from + (match[1]?.length ?? 0)
+		// Replace the `-` / `*` / `+` glyph with `•` (the space after is preserved).
+		builder.add(bulletPos, bulletPos + 1, Decoration.replace({ widget: bulletWidget(null) }))
 	}
 
 	return builder.finish()
@@ -48,5 +42,5 @@ export const listsPlugin = ViewPlugin.fromClass(
 			if (update.docChanged || update.viewportChanged) this.decorations = buildListDecorations(update.view)
 		}
 	},
-	{ decorations: (v: { decorations: DecorationSet }) => v.decorations },
+	{ decorations: (plugin) => plugin.decorations },
 )

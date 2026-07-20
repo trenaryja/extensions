@@ -1,7 +1,8 @@
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { selectionTouches } from './active'
 
-const HEADING_RE = /^(#{1,6})\s/
+// Allow a leading blockquote/callout prefix (`> `) so headings render inside callouts and blockquotes.
+const HEADING_RE = /^((?:\s*>\s*)*)(#{1,6})\s/
 
 const headingClass: Record<number, string> = {
 	1: 'md-h1',
@@ -24,14 +25,16 @@ function buildHeadingDecorations(view: EditorView): DecorationSet {
 		const match = HEADING_RE.exec(line.text)
 		if (!match) continue
 
-		const level = match[1]!.length
-		const markerEnd = line.from + match[0]!.length // end of the `##␣` prefix, including its space
+		const prefixLen = (match[1] ?? '').length // any leading blockquote/callout `> ` (hidden by that plugin)
+		const level = (match[2] ?? '').length
+		const markerEnd = line.from + match[0].length // end of the `> ##␣` prefix, including its space
 
 		// Style the heading text (not the markers), so revealed `#`s stay normal-size when editing.
 		if (line.to > markerEnd)
 			ranges.push({ from: markerEnd, to: line.to, deco: Decoration.mark({ class: headingClass[level] ?? 'md-h6' }) })
-		// Hide the `##␣` prefix (markers + the space) unless the cursor is on this line.
-		if (!selectionTouches(view.state, line.from, line.to)) ranges.push({ from: line.from, to: markerEnd, deco: hide })
+		// Hide just the `##␣` markers (not the blockquote prefix, which its own plugin hides) unless the cursor is here.
+		if (!selectionTouches(view.state, line.from, line.to))
+			ranges.push({ from: line.from + prefixLen, to: markerEnd, deco: hide })
 	}
 
 	return Decoration.set(

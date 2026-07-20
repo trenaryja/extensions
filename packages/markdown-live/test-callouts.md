@@ -91,3 +91,24 @@ it flips the marker in the source, so the fold state is saved in the document.
 
 > [!custom]
 > An unrecognized type gets the default icon and a neutral gray accent.
+
+## Block content inside callouts
+
+Lists, task lists, and headings now render inside a callout (they work in plain blockquotes too).
+
+> [!tip] Lists
+> - First bullet
+> - Second bullet
+>   - Nested bullet
+
+> [!todo] Task lists
+> - [x] Done item
+> - [ ] Pending item
+
+> [!note] Headings
+> ## A heading inside a callout
+> Regular text below it, with **bold** and `code`.
+
+> [!warning] Next phase
+> Fenced code blocks and nested callouts inside a callout aren't handled yet — those are the harder cases.
+> Ordered lists (`1.`) show as raw text for now (we only render `-`/`*`/`+` bullets).
