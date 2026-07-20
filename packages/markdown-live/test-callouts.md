@@ -94,12 +94,16 @@ it flips the marker in the source, so the fold state is saved in the document.
 
 ## Block content inside callouts
 
-Lists, task lists, and headings now render inside a callout (they work in plain blockquotes too).
+Lists, task lists, headings, and code blocks all render inside a callout now (and in plain blockquotes too) —
+because rendering reads the syntax tree, which already understands the nesting.
 
-> [!tip] Lists
+> [!tip] Lists (bullet + ordered)
 > - First bullet
 > - Second bullet
 >   - Nested bullet
+>
+> 1. Ordered one
+> 2. Ordered two
 
 > [!todo] Task lists
 > - [x] Done item
@@ -109,6 +113,12 @@ Lists, task lists, and headings now render inside a callout (they work in plain 
 > ## A heading inside a callout
 > Regular text below it, with **bold** and `code`.
 
-> [!warning] Next phase
-> Fenced code blocks and nested callouts inside a callout aren't handled yet — those are the harder cases.
-> Ordered lists (`1.`) show as raw text for now (we only render `-`/`*`/`+` bullets).
+> [!example] Code blocks
+>
+> ```ts
+> const greet = (name: string) => `Hello, ${name}!`
+> console.log(greet('world'))
+> ```
+
+> [!warning] Still to come
+> Nested callouts (`> > [!x]`) are the remaining case.

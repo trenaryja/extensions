@@ -1,7 +1,6 @@
 import type { Extension } from '@codemirror/state'
 import { inlineDecorationsPlugin } from './inline'
 import { blocksPlugin } from './blocks'
-import { codeblocksPlugin } from './codeblocks'
 import { treeBlocksPlugin } from './treeBlocks'
 import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
@@ -12,13 +11,12 @@ export function createDecorationExtensions(getMode: () => MermaidRenderMode): Ex
 	return [
 		// StateFields first (own multi-line replace ranges)
 		calloutsPlugin,
-		codeblocksPlugin,
 		createMermaidPlugin(getMode),
 		tablesPlugin,
 		mathPlugin,
 		// ViewPlugins (line/mark decos only)
 		blocksPlugin,
-		// Tree-driven structural rendering (headings, lists, tasks) — works inside callouts/blockquotes.
+		// Tree-driven structural rendering (headings, lists, tasks, fenced code) — works inside callouts too.
 		treeBlocksPlugin,
 		inlineDecorationsPlugin,
 	]
