@@ -291,6 +291,17 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-callout-title': {
 			verticalAlign: 'middle',
 		},
+		// Fold chevron (only on `+`/`-` callouts) — click toggles collapse.
+		'.md-callout-fold': {
+			marginRight: '0.3em',
+			verticalAlign: 'middle',
+			fontSize: '0.9em',
+			cursor: 'pointer',
+			opacity: '0.65',
+		},
+		'.md-callout-fold:hover': {
+			opacity: '1',
+		},
 		// Mermaid
 		'.md-mermaid-widget': {
 			display: 'block',

@@ -73,11 +73,14 @@ Toggle with the `markdownLive.calloutDefaultTitle` setting.
 
 ## Foldable markers (Obsidian +/−)
 
+Add `+` (expanded) or `-` (collapsed) after the type to make a callout foldable. Click the chevron to toggle —
+it flips the marker in the source, so the fold state is saved in the document.
+
 > [!note]- Collapsed by default
-> The `-` marker no longer leaks into the title. (Click-to-collapse is coming next.)
+> This content is hidden until you expand it. Click the chevron on the header.
 
 > [!note]+ Expanded but foldable
-> The `+` marker is stripped from the title too.
+> This content shows; click the chevron to collapse it.
 
 ## Inline markdown in content
 
