@@ -1,6 +1,7 @@
 import type { Extension } from '@codemirror/state'
 import { inlineDecorationsPlugin } from './inline'
 import { blocksPlugin } from './blocks'
+import { codeScrollSync } from './codeblocks'
 import { treeBlocksPlugin } from './treeBlocks'
 import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
@@ -19,5 +20,6 @@ export function createDecorationExtensions(getMode: () => MermaidRenderMode): Ex
 		// Tree-driven structural rendering (headings, lists, tasks, fenced code) — works inside callouts too.
 		treeBlocksPlugin,
 		inlineDecorationsPlugin,
+		codeScrollSync,
 	]
 }

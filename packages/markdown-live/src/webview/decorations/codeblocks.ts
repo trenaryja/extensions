@@ -1,4 +1,5 @@
 import { StateEffect } from '@codemirror/state'
+import { EditorView, ViewPlugin } from '@codemirror/view'
 import { type BundledLanguage, bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import { defineWidget } from '../lib/widget'
@@ -158,3 +159,49 @@ export const toolsWidget = defineWidget<{ code: string; from: number; to: number
 		return tools
 	},
 })
+
+// ---------- Horizontal scroll sync ----------
+
+// A code block is many separate line elements, each its own overflow-x scroller (so code doesn't wrap). Walk
+// the contiguous `.md-cb` siblings that make up one block.
+const codeBlockLines = (line: HTMLElement) => {
+	const lines = [line]
+	for (
+		let s = line.previousElementSibling;
+		s instanceof HTMLElement && s.classList.contains('md-cb');
+		s = s.previousElementSibling
+	)
+		lines.push(s)
+	for (
+		let s = line.nextElementSibling;
+		s instanceof HTMLElement && s.classList.contains('md-cb');
+		s = s.nextElementSibling
+	)
+		lines.push(s)
+	return lines
+}
+
+// Keep every line of a code block at the same horizontal scroll, so the block scrolls (and follows the caret)
+// as one unit rather than line-by-line.
+export const codeScrollSync = ViewPlugin.fromClass(
+	class {
+		scroller: HTMLElement
+		syncing = false
+		onScroll = (event: Event) => {
+			const line = event.target
+			if (this.syncing || !(line instanceof HTMLElement) || !line.classList.contains('md-cb')) return
+			this.syncing = true
+			const left = line.scrollLeft
+			for (const sibling of codeBlockLines(line))
+				if (sibling !== line && sibling.scrollLeft !== left) sibling.scrollLeft = left
+			this.syncing = false
+		}
+		constructor(view: EditorView) {
+			this.scroller = view.scrollDOM
+			this.scroller.addEventListener('scroll', this.onScroll, true) // capture — scroll events don't bubble
+		}
+		destroy() {
+			this.scroller.removeEventListener('scroll', this.onScroll, true)
+		}
+	},
+)

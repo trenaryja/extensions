@@ -315,6 +315,16 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-callout-line.md-cb': {
 			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
 		},
+		// The code block's own rounded corners fight the callout's straight side borders (the tint peeks
+		// through at the corners). Inside a callout, render the code as a clean flat band instead.
+		'.md-callout-line.md-cb-open': {
+			borderTopLeftRadius: '0',
+			borderTopRightRadius: '0',
+		},
+		'.md-callout-line.md-cb-close': {
+			borderBottomLeftRadius: '0',
+			borderBottomRightRadius: '0',
+		},
 		// Mermaid
 		'.md-mermaid-widget': {
 			display: 'block',
