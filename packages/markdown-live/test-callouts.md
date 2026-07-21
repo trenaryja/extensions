@@ -98,6 +98,7 @@ Lists, task lists, headings, and code blocks all render inside a callout now (an
 because rendering reads the syntax tree, which already understands the nesting.
 
 > [!tip] Lists (bullet + ordered)
+>
 > - First bullet
 > - Second bullet
 >   - Nested bullet
@@ -106,22 +107,24 @@ because rendering reads the syntax tree, which already understands the nesting.
 > 2. Ordered two
 
 > [!todo] Task lists
+>
 > - [x] Done item
 > - [ ] Pending item
 
 > [!note] Headings
+>
 > ## A heading inside a callout
+>
 > Regular text below it, with **bold** and `code`.
 
 > [!example] Code blocks
 >
 > This is a codeblock below
-> 
+>
 > ```ts
 > const greet = (name: string) => `Hello, ${name}!` + 'hi world asdfa'
 > console.log(greet('world'))
 > ```
-
 
 ## Nested callouts
 
