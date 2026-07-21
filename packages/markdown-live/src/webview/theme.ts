@@ -121,6 +121,14 @@ export const markdownLiveTheme = EditorView.theme(
 			display: 'inline-flex',
 			gap: '0.3rem',
 			userSelect: 'none',
+			// Hidden until the pointer is over the block (codeHoverTools tags the fence line with md-cb-hovered).
+			opacity: '0',
+			transition: 'opacity 0.12s',
+			pointerEvents: 'none',
+		},
+		'.md-cb-hovered .md-cb-tools': {
+			opacity: '1',
+			pointerEvents: 'auto',
 		},
 		'.md-cb-btn': {
 			fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

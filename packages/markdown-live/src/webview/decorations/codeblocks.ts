@@ -1,4 +1,5 @@
 import { StateEffect } from '@codemirror/state'
+import { EditorView, ViewPlugin } from '@codemirror/view'
 import { type BundledLanguage, bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import { defineWidget } from '../lib/widget'
@@ -160,3 +161,40 @@ export const toolsWidget = defineWidget<{ code: string; from: number; to: number
 		return tools
 	},
 })
+
+// ---------- Hover-to-reveal tools ----------
+
+// The tools live on the opening fence line, but a code block is many flat sibling lines with no container, so
+// CSS can't reveal them on hover of the whole block. Tag the block's `.md-cb-open` line with `md-cb-hovered`
+// while the pointer is anywhere over that block; the CSS shows the tools when that class is present.
+export const codeHoverTools = ViewPlugin.fromClass(
+	class {
+		dom: HTMLElement
+		hovered: HTMLElement | null = null
+		setHovered = (open: HTMLElement | null) => {
+			if (open === this.hovered) return
+			this.hovered?.classList.remove('md-cb-hovered')
+			open?.classList.add('md-cb-hovered')
+			this.hovered = open
+		}
+		onOver = (event: Event) => {
+			const line = (event.target as HTMLElement).closest?.('.cm-line') as HTMLElement | null
+			if (!line?.classList.contains('md-cb')) return this.setHovered(null)
+			// Walk back to the block's opening fence line (where the tools live).
+			let open: HTMLElement | null = line
+			while (open?.classList.contains('md-cb') && !open.classList.contains('md-cb-open'))
+				open = open.previousElementSibling as HTMLElement | null
+			this.setHovered(open?.classList.contains('md-cb-open') ? open : null)
+		}
+		onLeave = () => this.setHovered(null)
+		constructor(view: EditorView) {
+			this.dom = view.scrollDOM
+			this.dom.addEventListener('mouseover', this.onOver)
+			this.dom.addEventListener('mouseleave', this.onLeave)
+		}
+		destroy() {
+			this.dom.removeEventListener('mouseover', this.onOver)
+			this.dom.removeEventListener('mouseleave', this.onLeave)
+		}
+	},
+)
