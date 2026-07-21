@@ -100,10 +100,6 @@ export const markdownLiveTheme = EditorView.theme(
 			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
 			fontSize: '0.9em',
 			padding: '0 1rem',
-			// Code never wraps — override the editor's global line wrapping and scroll on the x-axis instead
-			// (wrapped code is misleading). Each code line is its own fixed-width horizontal scroller.
-			whiteSpace: 'pre',
-			overflowX: 'auto',
 		},
 		'.md-cb-open': {
 			position: 'relative',
@@ -125,37 +121,6 @@ export const markdownLiveTheme = EditorView.theme(
 			display: 'inline-flex',
 			gap: '0.3rem',
 			userSelect: 'none',
-		},
-
-		// Read-mode code panel (widget shown when the cursor is away) — a single scroll container, so the
-		// whole block scrolls horizontally as one unit; clicking it reveals the editable source.
-		'.md-code-render': {
-			position: 'relative',
-			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
-			borderRadius: '6px',
-			overflow: 'hidden', // clip the scrolling <pre> to the rounded corners
-		},
-		'.md-code-pre': {
-			margin: '0',
-			padding: '0.6rem 1rem',
-			overflowX: 'auto',
-			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
-			fontSize: '0.9em',
-			lineHeight: '1.5',
-		},
-		'.md-code-render .md-cb-tools': {
-			position: 'absolute',
-			top: '0.4rem',
-			right: '0.4rem',
-			float: 'none',
-			opacity: '0',
-			transition: 'opacity 0.12s',
-			pointerEvents: 'none',
-			zIndex: '1',
-		},
-		'.md-code-render:hover .md-cb-tools': {
-			opacity: '1',
-			pointerEvents: 'auto',
 		},
 		'.md-cb-btn': {
 			fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
