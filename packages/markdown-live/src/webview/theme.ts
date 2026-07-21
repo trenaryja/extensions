@@ -205,23 +205,17 @@ export const markdownLiveTheme = EditorView.theme(
 		// Table widget
 		'.md-table-wrap': {
 			display: 'block',
-			position: 'relative',
 			overflowX: 'auto',
+			padding: '2px 0',
 		},
-		// Row/column tools, revealed on hover of the table (top-right).
-		'.md-table-tools': {
-			position: 'absolute',
-			top: '0.35rem',
-			right: '0.35rem',
-			display: 'flex',
-			gap: '0.3rem',
-			opacity: '0',
-			transition: 'opacity 0.12s',
-			pointerEvents: 'none',
-		},
-		'.md-table-wrap:hover .md-table-tools': {
-			opacity: '1',
-			pointerEvents: 'auto',
+		// A grid frame around the table: the table sits top-left, the "+" add bars fill the right and bottom
+		// tracks, and the delete-table button fills the corner. Content-sized so the add bars hug the edges.
+		'.md-table-frame': {
+			display: 'inline-grid',
+			gridTemplateColumns: 'auto auto',
+			gridTemplateRows: 'auto auto',
+			position: 'relative',
+			verticalAlign: 'top',
 		},
 		// Source revealed while editing — a monospace container like a code block, so the pipes line up.
 		'.md-table-src': {
@@ -241,25 +235,22 @@ export const markdownLiveTheme = EditorView.theme(
 			borderBottomRightRadius: '6px',
 		},
 		'.md-table': {
-			borderCollapse: 'separate',
-			borderSpacing: '0',
-			width: '100%',
+			gridArea: '1 / 1',
+			borderCollapse: 'collapse',
 			fontSize: '0.875em',
 			textAlign: 'left',
 		},
+		// Full grid lines in both directions.
 		'.md-table th, .md-table td': {
-			padding: '0.75rem 1rem',
+			border: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.22))',
+			padding: '0.5rem 0.85rem',
 			verticalAlign: 'middle',
 			position: 'relative',
 		},
 		'.md-table thead th': {
 			fontWeight: '600',
-			opacity: '0.6',
 			whiteSpace: 'nowrap',
-			borderBottom: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.2))',
-		},
-		'.md-table tbody tr:not(:last-child) td': {
-			borderBottom: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.1))',
+			background: 'color-mix(in srgb, var(--vscode-editor-foreground, #888) 7%, transparent)',
 		},
 		// Editable cell content — click to edit; a subtle highlight while active.
 		'.md-td-content': {
@@ -272,57 +263,151 @@ export const markdownLiveTheme = EditorView.theme(
 			boxShadow: '0 0 0 1px var(--vscode-focusBorder, #007fd4)',
 			borderRadius: '2px',
 		},
-		// Small codicon control buttons (table tools, per-column, per-row).
-		'.md-table-btn': {
-			display: 'inline-flex',
+		// Drag handles: a slim grip on the top edge of each header (columns) / left edge of each row. Grab to
+		// reorder; click for the options menu. Faint on row/column hover, solid when hovered directly.
+		'.md-col-handle': {
+			position: 'absolute',
+			top: '-1px',
+			left: '0',
+			right: '0',
+			height: '5px',
+			borderRadius: '3px 3px 0 0',
+			background: 'var(--vscode-editorWidget-border, rgba(128,128,128,0.5))',
+			opacity: '0',
+			cursor: 'grab',
+			transition: 'opacity 0.12s',
+			zIndex: '2',
+		},
+		'.md-row-handle': {
+			position: 'absolute',
+			top: '0',
+			bottom: '0',
+			left: '-1px',
+			width: '5px',
+			borderRadius: '3px 0 0 3px',
+			background: 'var(--vscode-editorWidget-border, rgba(128,128,128,0.5))',
+			opacity: '0',
+			cursor: 'grab',
+			transition: 'opacity 0.12s',
+			zIndex: '2',
+		},
+		'.md-table th:hover .md-col-handle, .md-table tbody tr:hover .md-row-handle': {
+			opacity: '0.6',
+		},
+		'.md-col-handle:hover, .md-row-handle:hover': {
+			opacity: '1',
+			background: 'var(--vscode-focusBorder, #007fd4)',
+		},
+		// The drop indicator drawn while dragging a column/row (a line at the target boundary).
+		'.md-drop-indicator': {
+			position: 'absolute',
+			background: 'var(--vscode-focusBorder, #007fd4)',
+			borderRadius: '1px',
+			opacity: '0',
+			pointerEvents: 'none',
+			zIndex: '4',
+		},
+		// Edge "+" bars: add a column on the right, a row below. Revealed on hover of the frame.
+		'.md-table-add': {
+			display: 'flex',
 			alignItems: 'center',
 			justifyContent: 'center',
-			width: '1.35rem',
-			height: '1.35rem',
-			fontSize: '0.8rem',
+			background: 'transparent',
+			border: '1px dashed var(--vscode-editorWidget-border, rgba(128,128,128,0.35))',
+			borderRadius: '4px',
 			color: 'var(--vscode-descriptionForeground, #9aa0aa)',
-			background: 'var(--vscode-editorWidget-background, rgba(40,40,40,0.95))',
-			border: '1px solid var(--vscode-widget-border, rgba(128,128,128,0.3))',
-			borderRadius: '3px',
 			cursor: 'pointer',
+			fontSize: '0.85rem',
+			opacity: '0',
+			transition: 'opacity 0.12s',
 		},
-		'.md-table-btn:hover': {
+		'.md-table-add-col': {
+			gridArea: '1 / 2',
+			width: '1.4rem',
+			marginLeft: '4px',
+		},
+		'.md-table-add-row': {
+			gridArea: '2 / 1',
+			height: '1.4rem',
+			marginTop: '4px',
+		},
+		'.md-table-frame:hover .md-table-add': {
+			opacity: '1',
+		},
+		'.md-table-add:hover': {
+			borderStyle: 'solid',
+			background: 'var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.2))',
 			color: 'var(--vscode-editor-foreground)',
-			background: 'var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.25))',
 		},
-		// Per-column controls (top-right of a header), revealed on header hover.
-		'.md-col-controls': {
-			position: 'absolute',
-			top: '2px',
-			right: '2px',
+		// Corner button (bottom-right of the grid): delete the whole table.
+		'.md-table-corner': {
+			gridArea: '2 / 2',
 			display: 'flex',
-			gap: '2px',
+			alignItems: 'center',
+			justifyContent: 'center',
+			width: '1.4rem',
+			height: '1.4rem',
+			margin: '4px 0 0 4px',
+			background: 'transparent',
+			border: 'none',
+			borderRadius: '4px',
+			color: 'var(--vscode-descriptionForeground, #9aa0aa)',
+			cursor: 'pointer',
+			fontSize: '0.8rem',
 			opacity: '0',
 			transition: 'opacity 0.12s',
-			pointerEvents: 'none',
-			zIndex: '2',
 		},
-		'.md-table th:hover .md-col-controls': {
+		'.md-table-frame:hover .md-table-corner': {
+			opacity: '0.55',
+		},
+		'.md-table-corner:hover': {
 			opacity: '1',
-			pointerEvents: 'auto',
+			color: 'var(--vscode-errorForeground, #f14c4c)',
+			background: 'var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.2))',
 		},
-		// Per-row controls (left of the first cell), revealed on row hover.
-		'.md-row-controls': {
-			position: 'absolute',
-			left: '2px',
-			top: '50%',
-			transform: 'translateY(-50%)',
+		// Context menu opened from a column/row handle (insert / align / delete).
+		'.md-table-menu': {
+			position: 'fixed',
+			zIndex: '1000',
+			minWidth: '168px',
+			padding: '4px',
+			background: 'var(--vscode-menu-background, var(--vscode-editorWidget-background, #252526))',
+			color: 'var(--vscode-menu-foreground, var(--vscode-editor-foreground, #ccc))',
+			border: '1px solid var(--vscode-menu-border, var(--vscode-editorWidget-border, rgba(128,128,128,0.3)))',
+			borderRadius: '6px',
+			boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+			fontSize: '0.85rem',
+		},
+		'.md-menu-item': {
 			display: 'flex',
-			flexDirection: 'column',
-			gap: '2px',
-			opacity: '0',
-			transition: 'opacity 0.12s',
-			pointerEvents: 'none',
-			zIndex: '2',
+			alignItems: 'center',
+			gap: '0.55rem',
+			width: '100%',
+			padding: '0.35rem 0.6rem',
+			background: 'transparent',
+			border: 'none',
+			borderRadius: '4px',
+			color: 'inherit',
+			cursor: 'pointer',
+			textAlign: 'left',
+			fontSize: 'inherit',
 		},
-		'.md-table tbody tr:hover .md-row-controls': {
-			opacity: '1',
-			pointerEvents: 'auto',
+		'.md-menu-item .codicon': {
+			fontSize: '0.9rem',
+			opacity: '0.85',
+		},
+		'.md-menu-item:hover': {
+			background: 'var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground, rgba(128,128,128,0.2)))',
+			color: 'var(--vscode-menu-selectionForeground, inherit)',
+		},
+		'.md-menu-danger:hover': {
+			background: 'var(--vscode-errorForeground, #f14c4c)',
+			color: '#fff',
+		},
+		'.md-menu-sep': {
+			height: '1px',
+			margin: '4px 6px',
+			background: 'var(--vscode-menu-separatorBackground, rgba(128,128,128,0.25))',
 		},
 
 		// Callout widget

@@ -2,10 +2,11 @@
 
 ← [Back to test suite](test.md)
 
-Tables render as a live grid. **Click any cell** to edit it in place (Enter or click away to commit).
-**Hover a header** for per-column controls — cycle alignment, insert a column, delete a column. **Hover a
-row** for insert/delete. **Hover the table** for the toolbar (add row, delete table). Put the cursor on the
-table to reveal its raw source below, with the grid kept as a live preview.
+Tables render as a live grid with full grid lines. **Click any cell** to edit it in place (Enter or click
+away to commit). Each column has a **grip on its top edge** and each row a **grip on its left edge**: drag a
+grip to reorder, or click it for a menu (insert left/right or above/below, set alignment, delete). The
+**edge "+" bars** add a column on the right or a row below; the **corner** deletes the table. Put the cursor
+on the table to reveal its raw source below, with the grid kept as a live preview.
 
 ---
 
@@ -57,9 +58,9 @@ table to reveal its raw source below, with the grid kept as a live preview.
 
 ## Inline Formatting in Cells
 
-| Feature       | Syntax               | Status        |
-| ------------- | -------------------- | ------------- |
-| Inline code   | `const x = 1`        | **shipped**   |
-| Bold & italic | **bold**, _italic_   | **shipped**   |
-| Strikethrough | ~~old approach~~     | _deprecated_  |
+| Feature       | Syntax                         | Status              |
+| ------------- | ------------------------------ | ------------------- |
+| Inline code   | `const x = 1`                  | **shipped**         |
+| Bold & italic | **bold**, _italic_             | **shipped**         |
+| Strikethrough | ~~old approach~~               | _deprecated_        |
 | Link          | [example](https://example.com) | see [docs](test.md) |

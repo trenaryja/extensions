@@ -86,30 +86,30 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 
 ### GFM
 
-| Feature          | Status                                                            |
-| ---------------- | ----------------------------------------------------------------- |
-| Tables           | ✅ (click-to-edit cells, alignment cycling, row/col insert+delete) |
-| Strikethrough    | ✅                                                                |
-| Task lists       | ✅                                                                |
-| Alerts (5 types) | ✅ (covered by the callouts superset)                             |
+| Feature          | Status                                                                  |
+| ---------------- | ----------------------------------------------------------------------- |
+| Tables           | ✅ (click-to-edit cells, drag-reorder rows/cols, handle menu, edge add) |
+| Strikethrough    | ✅                                                                      |
+| Task lists       | ✅                                                                      |
+| Alerts (5 types) | ✅ (covered by the callouts superset)                                   |
 
 ### Obsidian
 
-| Feature                                    | Status                                           |
-| ------------------------------------------ | ------------------------------------------------ |
-| Callouts (13 + aliases)                    | ✅                                               |
-| Callout default + custom title             | ✅                                               |
-| Callout fold (`+`/`-`, collapsible)        | ✅                                               |
-| Callout custom types/colors/icons (config) | ✅                                               |
-| Frontmatter (YAML)                         | ✅ (dimmed)                                      |
+| Feature                                    | Status                                                           |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| Callouts (13 + aliases)                    | ✅                                                               |
+| Callout default + custom title             | ✅                                                               |
+| Callout fold (`+`/`-`, collapsible)        | ✅                                                               |
+| Callout custom types/colors/icons (config) | ✅                                                               |
+| Frontmatter (YAML)                         | ✅ (dimmed)                                                      |
 | Block markdown inside callouts             | ✅ (lists/tasks/headings/code/nested; tables & diagrams pending) |
-| Nested callouts                            | ✅ (indented, per-level color/icon/title)       |
-| Math `$…$` / `$$…$$` / ` ```math `         | ✅ (MathJax→SVG, copy/export as SVG)             |
-| Wikilinks `[[…]]`                          | ❌ (v1.1 PKM)                                    |
-| Embeds `![[…]]`                            | ❌ (v1.1 PKM)                                    |
-| Tags `#tag`                                | ❌ (v1.1 PKM)                                    |
-| Block refs `^id`                           | ❌ (v1.1 PKM)                                    |
-| Comments `%%…%%`                           | ❌ (v1.1 PKM)                                    |
+| Nested callouts                            | ✅ (indented, per-level color/icon/title)                        |
+| Math `$…$` / `$$…$$` / ` ```math `         | ✅ (MathJax→SVG, copy/export as SVG)                             |
+| Wikilinks `[[…]]`                          | ❌ (v1.1 PKM)                                                    |
+| Embeds `![[…]]`                            | ❌ (v1.1 PKM)                                                    |
+| Tags `#tag`                                | ❌ (v1.1 PKM)                                                    |
+| Block refs `^id`                           | ❌ (v1.1 PKM)                                                    |
+| Comments `%%…%%`                           | ❌ (v1.1 PKM)                                                    |
 
 ### Diagrams / rich
 
