@@ -115,10 +115,23 @@ because rendering reads the syntax tree, which already understands the nesting.
 
 > [!example] Code blocks
 >
+> This is a codeblock below
+> 
 > ```ts
-> const greet = (name: string) => `Hello, ${name}!`
+> const greet = (name: string) => `Hello, ${name}!` + 'hi world asdfa'
 > console.log(greet('world'))
 > ```
 
-> [!warning] Still to come
-> Nested callouts (`> > [!x]`) are the remaining case.
+
+## Nested callouts
+
+Nest with extra `>` markers — each level gets its own indent, color, border, icon, and title.
+
+> [!note] Outer
+> Outer content.
+>
+> > [!warning] Inner
+> > Nested one level deep.
+> > More inner content.
+>
+> Back to outer content.
