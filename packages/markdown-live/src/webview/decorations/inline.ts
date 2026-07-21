@@ -46,19 +46,19 @@ function buildInline(view: EditorView): DecorationSet {
 					return
 				}
 				if (node.name === 'Link') {
+					// Only style navigable links (`[text](url)`). A URL-less `[text]` — e.g. a callout's `[!type]`
+					// tag, which the parser also reads as a Link — isn't a real link, so leave it as plain text.
+					const urlNode = node.node.getChild('URL')
+					if (!urlNode) return
 					const marks = node.node.getChildren('LinkMark') // [ ] ( )
 					const open = marks[0]
 					const closeText = marks[1]
 					if (!open || !closeText) return
-					const urlNode = node.node.getChild('URL')
-					const url = urlNode ? view.state.sliceDoc(urlNode.from, urlNode.to) : ''
+					const url = view.state.sliceDoc(urlNode.from, urlNode.to)
 					add(
 						open.to,
 						closeText.from,
-						Decoration.mark({
-							class: 'md-link-text',
-							attributes: url ? { title: `⌘/Ctrl-click to open · ${url}` } : {},
-						}),
+						Decoration.mark({ class: 'md-link-text', attributes: { title: `⌘/Ctrl-click to open · ${url}` } }),
 					)
 					if (!isActive(view, node.from, node.to)) {
 						add(open.from, open.to, hide) // [

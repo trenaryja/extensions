@@ -305,6 +305,12 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-callout-fold:hover': {
 			opacity: '1',
 		},
+		// A code block inside a callout: both are line decorations on the same line, and the callout rule is
+		// defined later (so its tint would win). Force the code background back on top so the block still reads
+		// as a distinct code container within the callout.
+		'.md-callout-line.md-cb': {
+			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
+		},
 		// Mermaid
 		'.md-mermaid-widget': {
 			display: 'block',
