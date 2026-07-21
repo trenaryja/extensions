@@ -102,8 +102,8 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 | Callout fold (`+`/`-`, collapsible)        | ✅                                               |
 | Callout custom types/colors/icons (config) | ✅                                               |
 | Frontmatter (YAML)                         | ✅ (dimmed)                                      |
-| Block markdown inside callouts             | 🟡 (lists/tasks/headings; code & nested pending) |
-| Nested callouts                            | ❌                                               |
+| Block markdown inside callouts             | ✅ (lists/tasks/headings/code/nested; tables & diagrams pending) |
+| Nested callouts                            | ✅ (indented, per-level color/icon/title)       |
 | Math `$…$` / `$$…$$` / ` ```math `         | ✅ (MathJax→SVG, copy/export as SVG)             |
 | Wikilinks `[[…]]`                          | ❌ (v1.1 PKM)                                    |
 | Embeds `![[…]]`                            | ❌ (v1.1 PKM)                                    |
