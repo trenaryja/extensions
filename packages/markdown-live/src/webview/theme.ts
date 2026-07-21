@@ -100,6 +100,10 @@ export const markdownLiveTheme = EditorView.theme(
 			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
 			fontSize: '0.9em',
 			padding: '0 1rem',
+			// Code never wraps — override the editor's global line wrapping and scroll on the x-axis instead
+			// (wrapped code is misleading). Each code line is its own fixed-width horizontal scroller.
+			whiteSpace: 'pre',
+			overflowX: 'auto',
 		},
 		'.md-cb-open': {
 			position: 'relative',
