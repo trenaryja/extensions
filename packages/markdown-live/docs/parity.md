@@ -86,12 +86,12 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 
 ### GFM
 
-| Feature          | Status                                                                  |
-| ---------------- | ----------------------------------------------------------------------- |
-| Tables           | ✅ (click-to-edit cells, drag-reorder rows/cols, handle menu, edge add) |
-| Strikethrough    | ✅                                                                      |
-| Task lists       | ✅                                                                      |
-| Alerts (5 types) | ✅ (covered by the callouts superset)                                   |
+| Feature          | Status                                                                       |
+| ---------------- | ---------------------------------------------------------------------------- |
+| Tables           | ✅ (data-grid: click-to-edit, Tab/Enter nav, drag-reorder, right-click menu) |
+| Strikethrough    | ✅                                                                           |
+| Task lists       | ✅                                                                           |
+| Alerts (5 types) | ✅ (covered by the callouts superset)                                        |
 
 ### Obsidian
 

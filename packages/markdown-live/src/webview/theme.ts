@@ -240,10 +240,12 @@ export const markdownLiveTheme = EditorView.theme(
 			fontSize: '0.875em',
 			textAlign: 'left',
 		},
-		// Full grid lines in both directions.
+		// Full grid lines in both directions. Padding lives on the content span (below) so the whole cell — not
+		// just the text — is a click-to-edit target.
 		'.md-table th, .md-table td': {
 			border: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.22))',
-			padding: '0.5rem 0.85rem',
+			padding: '0',
+			minWidth: '2.5rem',
 			verticalAlign: 'middle',
 			position: 'relative',
 		},
@@ -252,16 +254,17 @@ export const markdownLiveTheme = EditorView.theme(
 			whiteSpace: 'nowrap',
 			background: 'color-mix(in srgb, var(--vscode-editor-foreground, #888) 7%, transparent)',
 		},
-		// Editable cell content — click to edit; a subtle highlight while active.
+		// Editable cell content fills the cell (click anywhere in the cell to edit); highlighted while active.
 		'.md-td-content': {
-			display: 'inline-block',
-			minWidth: '1ch',
+			display: 'block',
+			padding: '0.45rem 0.8rem',
+			minHeight: '1.5em',
 			outline: 'none',
 			cursor: 'text',
+			boxSizing: 'border-box',
 		},
 		'.md-td-content[data-editing]': {
-			boxShadow: '0 0 0 1px var(--vscode-focusBorder, #007fd4)',
-			borderRadius: '2px',
+			boxShadow: 'inset 0 0 0 2px var(--vscode-focusBorder, #007fd4)',
 		},
 		// Drag handles: a slim grip on the top edge of each header (columns) / left edge of each row. Grab to
 		// reorder; click for the options menu. Faint on row/column hover, solid when hovered directly.

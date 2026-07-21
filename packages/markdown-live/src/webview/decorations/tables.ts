@@ -1,7 +1,7 @@
 import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
-import { docOrSelectionChanged, selectionTouches } from './active'
+import { docOrSelectionChanged, selectionRangeTouches } from './active'
 
 type Align = 'left' | 'center' | 'right' | null
 type TableModel = { headers: string[]; aligns: Align[]; rows: string[][]; from: number; to: number }
@@ -152,7 +152,13 @@ const closeMenu = () => {
 
 type MenuItem = 'separator' | { label: string; icon: string; danger?: boolean; onClick: () => void }
 
-function openMenu(view: EditorView, anchor: HTMLElement, items: MenuItem[]) {
+// Position a menu below-left of an element (used by the grip handles); right-click uses the pointer instead.
+const anchorPos = (el: HTMLElement) => {
+	const rect = el.getBoundingClientRect()
+	return { x: rect.left, y: rect.bottom + 4 }
+}
+
+function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuItem[]) {
 	closeMenu()
 	const menu = document.createElement('div')
 	menu.className = 'md-table-menu'
@@ -180,9 +186,8 @@ function openMenu(view: EditorView, anchor: HTMLElement, items: MenuItem[]) {
 	}
 	// Live inside the editor (so themed styles apply) but position: fixed to escape the table's scroll clip.
 	view.dom.append(menu)
-	const rect = anchor.getBoundingClientRect()
-	menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8))}px`
-	menu.style.top = `${Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - menu.offsetHeight - 8))}px`
+	menu.style.left = `${Math.max(8, Math.min(at.x, window.innerWidth - menu.offsetWidth - 8))}px`
+	menu.style.top = `${Math.max(8, Math.min(at.y, window.innerHeight - menu.offsetHeight - 8))}px`
 	const onDown = (event: Event) => {
 		if (!menu.contains(event.target as Node)) closeMenu()
 	}
@@ -198,8 +203,31 @@ function openMenu(view: EditorView, anchor: HTMLElement, items: MenuItem[]) {
 	}
 }
 
+// Copy the table's raw markdown to the clipboard (async API, with an execCommand fallback for older webviews).
+function copyMarkdown(model: TableModel) {
+	const text = serialize(model)
+	if (navigator.clipboard?.writeText) {
+		navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
+	} else fallbackCopy(text)
+}
+function fallbackCopy(text: string) {
+	const area = document.createElement('textarea')
+	area.value = text
+	area.style.cssText = 'position:fixed;opacity:0'
+	document.body.append(area)
+	area.select()
+	document.execCommand('copy')
+	area.remove()
+}
+
+// Reveal the raw markdown by selecting the table's range — a non-empty selection flips it into source mode.
+const revealSource = (view: EditorView, model: TableModel) => {
+	view.dispatch({ selection: { anchor: model.from, head: model.to } })
+	view.focus()
+}
+
 const columnMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, col: number) =>
-	openMenu(view, anchor, [
+	openMenu(view, anchorPos(anchor), [
 		{ label: 'Insert left', icon: 'arrow-left', onClick: () => rewrite(view, model, insertColumn(model, col)) },
 		{ label: 'Insert right', icon: 'arrow-right', onClick: () => rewrite(view, model, insertColumn(model, col + 1)) },
 		'separator',
@@ -224,7 +252,7 @@ const columnMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, co
 	])
 
 const rowMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, rowIndex: number) =>
-	openMenu(view, anchor, [
+	openMenu(view, anchorPos(anchor), [
 		{ label: 'Insert above', icon: 'arrow-up', onClick: () => rewrite(view, model, insertRow(model, rowIndex)) },
 		{ label: 'Insert below', icon: 'arrow-down', onClick: () => rewrite(view, model, insertRow(model, rowIndex + 1)) },
 		'separator',
@@ -235,6 +263,64 @@ const rowMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, rowIn
 			onClick: () => rewrite(view, model, deleteRow(model, rowIndex)),
 		},
 	])
+
+// The full right-click menu for a cell: row + column + alignment + table actions. (rowIndex -1 = header.)
+function cellMenu(view: EditorView, at: { x: number; y: number }, model: TableModel, rowIndex: number, col: number) {
+	const deleteRowItem: MenuItem[] =
+		rowIndex >= 0
+			? [
+					{
+						label: 'Delete row',
+						icon: 'trash',
+						danger: true,
+						onClick: () => rewrite(view, model, deleteRow(model, rowIndex)),
+					},
+				]
+			: []
+	openMenu(view, at, [
+		{
+			label: 'Insert row above',
+			icon: 'arrow-up',
+			onClick: () => rewrite(view, model, insertRow(model, Math.max(0, rowIndex))),
+		},
+		{
+			label: 'Insert row below',
+			icon: 'arrow-down',
+			onClick: () => rewrite(view, model, insertRow(model, rowIndex + 1)),
+		},
+		'separator',
+		{ label: 'Insert column left', icon: 'arrow-left', onClick: () => rewrite(view, model, insertColumn(model, col)) },
+		{
+			label: 'Insert column right',
+			icon: 'arrow-right',
+			onClick: () => rewrite(view, model, insertColumn(model, col + 1)),
+		},
+		'separator',
+		{
+			label: 'Align left',
+			icon: 'arrow-small-left',
+			onClick: () => rewrite(view, model, setAlign(model, col, 'left')),
+		},
+		{ label: 'Align center', icon: 'arrow-both', onClick: () => rewrite(view, model, setAlign(model, col, 'center')) },
+		{
+			label: 'Align right',
+			icon: 'arrow-small-right',
+			onClick: () => rewrite(view, model, setAlign(model, col, 'right')),
+		},
+		'separator',
+		...deleteRowItem,
+		{
+			label: 'Delete column',
+			icon: 'trash',
+			danger: true,
+			onClick: () => rewrite(view, model, deleteColumn(model, col)),
+		},
+		'separator',
+		{ label: 'Copy as Markdown', icon: 'copy', onClick: () => copyMarkdown(model) },
+		{ label: 'Edit source', icon: 'code', onClick: () => revealSource(view, model) },
+		{ label: 'Delete table', icon: 'trash', danger: true, onClick: () => deleteTable(view, model) },
+	])
+}
 
 // ---------- Drag-to-reorder ----------
 
@@ -278,8 +364,17 @@ function attachHandle(
 
 // ---------- Cells ----------
 
-// A cell renders inline markdown; on focus it swaps to its raw source (editable), and on blur commits the
-// change back to the document (which reserializes + re-renders). Enter commits; a new line is never inserted.
+// A structural rewrite rebuilds the widget, so keyboard navigation records the cell to focus next and the
+// fresh widget re-focuses it after it mounts. Keyed by table `from` (stable across in-place edits).
+let pendingFocus: { from: number; row: number; col: number } | null = null
+function focusCell(table: HTMLElement, row: number, col: number) {
+	const cells = row < 0 ? table.querySelectorAll('thead th') : (table.querySelectorAll('tbody tr')[row]?.children ?? [])
+	const content = (cells[col] as HTMLElement | undefined)?.querySelector('.md-td-content')
+	if (content instanceof HTMLElement) content.focus()
+}
+
+// A cell renders inline markdown; on focus it swaps to its raw source (editable), and commits on blur. Tab /
+// Shift-Tab / Enter move between cells (grid-style); Escape cancels. A newline is never inserted into a cell.
 function editableCell(
 	cell: HTMLElement,
 	raw: string,
@@ -287,10 +382,47 @@ function editableCell(
 	col: number,
 	model: TableModel,
 	view: EditorView,
+	table: HTMLElement,
 ) {
 	cell.className = 'md-td-content'
 	cell.contentEditable = 'true'
 	appendInline(cell, raw)
+
+	const render = () => {
+		cell.textContent = ''
+		appendInline(cell, raw)
+	}
+	// Commit the current text; returns true when it changed (and therefore dispatched a rebuild).
+	const commit = () => {
+		if (!cell.dataset.editing) return false
+		delete cell.dataset.editing
+		const next = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
+		if (next === raw) {
+			render()
+			return false
+		}
+		rewrite(view, model, setCell(model, rowIndex, col, next))
+		return true
+	}
+
+	const cols = model.headers.length
+	const rows = model.rows.length
+	const nextCell = () =>
+		col < cols - 1 ? { row: rowIndex, col: col + 1 } : rowIndex < rows - 1 ? { row: rowIndex + 1, col: 0 } : null
+	const prevCell = () =>
+		col > 0 ? { row: rowIndex, col: col - 1 } : rowIndex > -1 ? { row: rowIndex - 1, col: cols - 1 } : null
+	const belowCell = () => (rowIndex < rows - 1 ? { row: rowIndex + 1, col } : null)
+
+	// Commit, then move focus to the target — across the rebuild when the value changed, directly otherwise.
+	const moveTo = (target: { row: number; col: number } | null) => {
+		if (!target) return cell.blur()
+		pendingFocus = { from: model.from, row: target.row, col: target.col }
+		if (!commit()) {
+			pendingFocus = null
+			focusCell(table, target.row, target.col)
+		}
+	}
+
 	cell.addEventListener('focusin', () => {
 		if (cell.dataset.editing) return
 		cell.dataset.editing = '1'
@@ -303,19 +435,21 @@ function editableCell(
 		selection?.addRange(range)
 	})
 	cell.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
+		if (event.key === 'Escape') {
 			event.preventDefault()
+			delete cell.dataset.editing
+			render()
 			cell.blur()
+		} else if (event.key === 'Enter') {
+			event.preventDefault()
+			moveTo(belowCell())
+		} else if (event.key === 'Tab') {
+			event.preventDefault()
+			moveTo(event.shiftKey ? prevCell() : nextCell())
 		}
 	})
 	cell.addEventListener('blur', () => {
-		if (!cell.dataset.editing) return
-		delete cell.dataset.editing
-		const next = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
-		if (next === raw) {
-			cell.textContent = ''
-			appendInline(cell, raw)
-		} else rewrite(view, model, setCell(model, rowIndex, col, next))
+		commit()
 	})
 }
 
@@ -340,12 +474,10 @@ const tableWidget = defineWidget<TableModel>({
 		a.from === b.from &&
 		a.to === b.to &&
 		JSON.stringify([a.headers, a.aligns, a.rows]) === JSON.stringify([b.headers, b.aligns, b.rows]),
-	// Route clicks: cells, handles, and add/corner buttons handle themselves (return true → CM ignores them); a
-	// click on the table chrome (borders/gaps) falls through to CM, which places the cursor and reveals the source.
+	// Every event inside the table (cells, handles, borders) is handled by our own DOM — CM never sees it, so a
+	// plain click can't move the cursor into the range and flip it to source. Raw editing is opt-in ("Edit source").
 	ignoreEvent: (event) =>
-		!!(event.target as HTMLElement)?.closest?.(
-			'.md-td-content, .md-col-handle, .md-row-handle, .md-table-add, .md-table-corner, .md-table-menu',
-		),
+		!!(event.target as HTMLElement)?.closest?.('.md-table, .md-table-add, .md-table-corner, .md-table-menu'),
 	toDOM: (model, view) => {
 		const wrap = document.createElement('div')
 		wrap.className = 'md-table-wrap'
@@ -404,8 +536,12 @@ const tableWidget = defineWidget<TableModel>({
 			th.append(handle)
 
 			const content = document.createElement('span')
-			editableCell(content, header, -1, col, model, view)
+			editableCell(content, header, -1, col, model, view, table)
 			th.append(content)
+			th.addEventListener('contextmenu', (event) => {
+				event.preventDefault()
+				cellMenu(view, { x: event.clientX, y: event.clientY }, model, -1, col)
+			})
 			headerRow.append(th)
 		})
 
@@ -441,8 +577,12 @@ const tableWidget = defineWidget<TableModel>({
 					td.append(handle)
 				}
 				const content = document.createElement('span')
-				editableCell(content, row[col] ?? '', rowIndex, col, model, view)
+				editableCell(content, row[col] ?? '', rowIndex, col, model, view, table)
 				td.append(content)
+				td.addEventListener('contextmenu', (event) => {
+					event.preventDefault()
+					cellMenu(view, { x: event.clientX, y: event.clientY }, model, rowIndex, col)
+				})
 			})
 		})
 
@@ -461,6 +601,13 @@ const tableWidget = defineWidget<TableModel>({
 			deleteTable(view, model)
 		})
 		frame.append(corner)
+
+		// Grid-style keyboard navigation asked to focus a cell after this (re)build — do it once mounted.
+		if (pendingFocus?.from === model.from) {
+			const target = pendingFocus
+			pendingFocus = null
+			requestAnimationFrame(() => focusCell(table, target.row, target.col))
+		}
 
 		return wrap
 	},
@@ -499,7 +646,7 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		const to = doc.line(endLineNum).to
 		const model: TableModel = { headers, aligns, rows, from, to }
 
-		if (!selectionTouches(state, from, to)) {
+		if (!selectionRangeTouches(state, from, to)) {
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model) }))
 		} else {
 			// Editing: reveal the source with monospace container chrome and keep the table rendered just below
