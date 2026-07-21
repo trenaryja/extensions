@@ -2,6 +2,11 @@
 
 ← [Back to test suite](test.md)
 
+Tables render as a live grid. **Click any cell** to edit it in place (Enter or click away to commit).
+**Hover a header** for per-column controls — cycle alignment, insert a column, delete a column. **Hover a
+row** for insert/delete. **Hover the table** for the toolbar (add row, delete table). Put the cursor on the
+table to reveal its raw source below, with the grid kept as a live preview.
+
 ---
 
 ## Extension Settings

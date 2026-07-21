@@ -250,6 +250,7 @@ export const markdownLiveTheme = EditorView.theme(
 		'.md-table th, .md-table td': {
 			padding: '0.75rem 1rem',
 			verticalAlign: 'middle',
+			position: 'relative',
 		},
 		'.md-table thead th': {
 			fontWeight: '600',
@@ -259,6 +260,69 @@ export const markdownLiveTheme = EditorView.theme(
 		},
 		'.md-table tbody tr:not(:last-child) td': {
 			borderBottom: '1px solid var(--vscode-editorWidget-border, rgba(128,128,128,0.1))',
+		},
+		// Editable cell content — click to edit; a subtle highlight while active.
+		'.md-td-content': {
+			display: 'inline-block',
+			minWidth: '1ch',
+			outline: 'none',
+			cursor: 'text',
+		},
+		'.md-td-content[data-editing]': {
+			boxShadow: '0 0 0 1px var(--vscode-focusBorder, #007fd4)',
+			borderRadius: '2px',
+		},
+		// Small codicon control buttons (table tools, per-column, per-row).
+		'.md-table-btn': {
+			display: 'inline-flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			width: '1.35rem',
+			height: '1.35rem',
+			fontSize: '0.8rem',
+			color: 'var(--vscode-descriptionForeground, #9aa0aa)',
+			background: 'var(--vscode-editorWidget-background, rgba(40,40,40,0.95))',
+			border: '1px solid var(--vscode-widget-border, rgba(128,128,128,0.3))',
+			borderRadius: '3px',
+			cursor: 'pointer',
+		},
+		'.md-table-btn:hover': {
+			color: 'var(--vscode-editor-foreground)',
+			background: 'var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.25))',
+		},
+		// Per-column controls (top-right of a header), revealed on header hover.
+		'.md-col-controls': {
+			position: 'absolute',
+			top: '2px',
+			right: '2px',
+			display: 'flex',
+			gap: '2px',
+			opacity: '0',
+			transition: 'opacity 0.12s',
+			pointerEvents: 'none',
+			zIndex: '2',
+		},
+		'.md-table th:hover .md-col-controls': {
+			opacity: '1',
+			pointerEvents: 'auto',
+		},
+		// Per-row controls (left of the first cell), revealed on row hover.
+		'.md-row-controls': {
+			position: 'absolute',
+			left: '2px',
+			top: '50%',
+			transform: 'translateY(-50%)',
+			display: 'flex',
+			flexDirection: 'column',
+			gap: '2px',
+			opacity: '0',
+			transition: 'opacity 0.12s',
+			pointerEvents: 'none',
+			zIndex: '2',
+		},
+		'.md-table tbody tr:hover .md-row-controls': {
+			opacity: '1',
+			pointerEvents: 'auto',
 		},
 
 		// Callout widget

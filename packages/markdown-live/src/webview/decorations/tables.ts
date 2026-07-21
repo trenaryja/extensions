@@ -2,7 +2,6 @@ import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
-import { toolButton } from './codeblocks'
 
 type Align = 'left' | 'center' | 'right' | null
 type TableModel = { headers: string[]; aligns: Align[]; rows: string[][]; from: number; to: number }
@@ -84,31 +83,107 @@ function serialize({ headers, aligns, rows }: TableModel) {
 	return [line(headers), separator, ...rows.map(line)].join('\n')
 }
 
-const addRow = (model: TableModel): TableModel => ({ ...model, rows: [...model.rows, model.headers.map(() => '')] })
+// ---------- Model edits (each returns a new model; the widget reserializes + dispatches) ----------
 
-const addColumn = (model: TableModel): TableModel => ({
+const replaceAt = <T>(list: T[], index: number, value: T) => list.map((item, i) => (i === index ? value : item))
+const insertAt = <T>(list: T[], index: number, value: T) => [...list.slice(0, index), value, ...list.slice(index)]
+const removeAt = <T>(list: T[], index: number) => list.filter((_, i) => i !== index)
+
+// rowIndex -1 targets the header row.
+const setCell = (model: TableModel, rowIndex: number, col: number, value: string): TableModel =>
+	rowIndex < 0
+		? { ...model, headers: replaceAt(model.headers, col, value) }
+		: { ...model, rows: replaceAt(model.rows, rowIndex, replaceAt(model.rows[rowIndex] ?? [], col, value)) }
+
+const emptyRow = (model: TableModel) => model.headers.map(() => '')
+const insertRow = (model: TableModel, at: number): TableModel => ({
 	...model,
-	headers: [...model.headers, ''],
-	aligns: [...model.aligns, null],
-	rows: model.rows.map((row) => [...row, '']),
+	rows: insertAt(model.rows, at, emptyRow(model)),
+})
+const deleteRow = (model: TableModel, at: number): TableModel => ({ ...model, rows: removeAt(model.rows, at) })
+const insertColumn = (model: TableModel, at: number): TableModel => ({
+	...model,
+	headers: insertAt(model.headers, at, ''),
+	aligns: insertAt(model.aligns, at, null),
+	rows: model.rows.map((row) => insertAt(row, at, '')),
+})
+const deleteColumn = (model: TableModel, at: number): TableModel => ({
+	...model,
+	headers: removeAt(model.headers, at),
+	aligns: removeAt(model.aligns, at),
+	rows: model.rows.map((row) => removeAt(row, at)),
+})
+
+const ALIGN_CYCLE: Align[] = [null, 'left', 'center', 'right']
+const cycleAlign = (model: TableModel, col: number): TableModel => ({
+	...model,
+	aligns: replaceAt(model.aligns, col, ALIGN_CYCLE[(ALIGN_CYCLE.indexOf(model.aligns[col] ?? null) + 1) % 4] ?? null),
 })
 
 // ---------- Widget ----------
 
-function buildTools(model: TableModel, view: EditorView) {
-	const tools = document.createElement('div')
-	tools.className = 'md-table-tools'
-	tools.contentEditable = 'false'
-	const rewrite = (next: TableModel) =>
-		view.dispatch({ changes: { from: model.from, to: model.to, insert: serialize(next) } })
-	tools.append(
-		toolButton('＋ Row', 'Add a row', () => rewrite(addRow(model))),
-		toolButton('＋ Col', 'Add a column', () => rewrite(addColumn(model))),
-		toolButton('Delete', 'Delete table', () =>
-			view.dispatch({ changes: { from: model.from, to: Math.min(model.to + 1, view.state.doc.length), insert: '' } }),
-		),
-	)
-	return tools
+const rewrite = (view: EditorView, model: TableModel, next: TableModel) =>
+	view.dispatch({ changes: { from: model.from, to: model.to, insert: serialize(next) } })
+
+// A small codicon control button whose events don't reach the cell or CodeMirror.
+function iconButton(codicon: string, title: string, onClick: () => void) {
+	const button = document.createElement('button')
+	button.type = 'button'
+	button.className = `md-table-btn codicon codicon-${codicon}`
+	button.title = title
+	button.addEventListener('mousedown', (event) => event.stopPropagation())
+	button.addEventListener('click', (event) => {
+		event.stopPropagation()
+		onClick()
+	})
+	return button
+}
+
+const ALIGN_ICON: Record<'left' | 'center' | 'right', string> = {
+	left: 'arrow-small-left',
+	center: 'arrow-both',
+	right: 'arrow-small-right',
+}
+
+// A cell renders inline markdown; on focus it swaps to its raw source (editable), and on blur commits the
+// change back to the document (which reserializes + re-renders). Enter commits; a new line is never inserted.
+function editableCell(
+	cell: HTMLElement,
+	raw: string,
+	rowIndex: number,
+	col: number,
+	model: TableModel,
+	view: EditorView,
+) {
+	cell.className = 'md-td-content'
+	cell.contentEditable = 'true'
+	appendInline(cell, raw)
+	cell.addEventListener('focusin', () => {
+		if (cell.dataset.editing) return
+		cell.dataset.editing = '1'
+		cell.textContent = raw
+		const range = document.createRange()
+		range.selectNodeContents(cell)
+		range.collapse(false)
+		const selection = window.getSelection()
+		selection?.removeAllRanges()
+		selection?.addRange(range)
+	})
+	cell.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			cell.blur()
+		}
+	})
+	cell.addEventListener('blur', () => {
+		if (!cell.dataset.editing) return
+		delete cell.dataset.editing
+		const next = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
+		if (next === raw) {
+			cell.textContent = ''
+			appendInline(cell, raw)
+		} else rewrite(view, model, setCell(model, rowIndex, col, next))
+	})
 }
 
 const tableWidget = defineWidget<TableModel>({
@@ -116,35 +191,74 @@ const tableWidget = defineWidget<TableModel>({
 		a.from === b.from &&
 		a.to === b.to &&
 		JSON.stringify([a.headers, a.aligns, a.rows]) === JSON.stringify([b.headers, b.aligns, b.rows]),
-	// Let a mousedown through so clicking the table places the cursor and reveals the source to edit.
-	ignoreEvent: (event) => event.type !== 'mousedown',
+	// Route clicks: cells + controls handle themselves (return true → CM ignores them); a click on the table
+	// chrome falls through to CM, which places the cursor and reveals the raw source.
+	ignoreEvent: (event) =>
+		!!(event.target as HTMLElement)?.closest?.(
+			'.md-td-content, .md-table-btn, .md-table-tools, .md-col-controls, .md-row-controls',
+		),
 	toDOM: (model, view) => {
 		const wrap = document.createElement('div')
 		wrap.className = 'md-table-wrap'
-		wrap.append(buildTools(model, view))
+
+		const tools = document.createElement('div')
+		tools.className = 'md-table-tools'
+		tools.contentEditable = 'false'
+		tools.append(
+			iconButton('add', 'Add row', () => rewrite(view, model, insertRow(model, model.rows.length))),
+			iconButton('trash', 'Delete table', () =>
+				view.dispatch({ changes: { from: model.from, to: Math.min(model.to + 1, view.state.doc.length), insert: '' } }),
+			),
+		)
+		wrap.append(tools)
 
 		const table = document.createElement('table')
 		table.className = 'md-table'
 
 		const headerRow = table.createTHead().insertRow()
-		model.headers.forEach((header, i) => {
+		model.headers.forEach((header, col) => {
 			const th = document.createElement('th')
-			const align = model.aligns[i]
+			const align = model.aligns[col]
 			if (align) th.style.textAlign = align
-			appendInline(th, header)
+			const controls = document.createElement('div')
+			controls.className = 'md-col-controls'
+			controls.contentEditable = 'false'
+			controls.append(
+				iconButton(align ? ALIGN_ICON[align] : 'dash', `Align: ${align ?? 'default'}`, () =>
+					rewrite(view, model, cycleAlign(model, col)),
+				),
+				iconButton('insert', 'Insert column right', () => rewrite(view, model, insertColumn(model, col + 1))),
+				iconButton('close', 'Delete column', () => rewrite(view, model, deleteColumn(model, col))),
+			)
+			th.append(controls)
+			const content = document.createElement('span')
+			editableCell(content, header, -1, col, model, view)
+			th.append(content)
 			headerRow.append(th)
 		})
 
 		const tbody = table.createTBody()
-		for (const row of model.rows) {
+		model.rows.forEach((row, rowIndex) => {
 			const tr = tbody.insertRow()
-			model.headers.forEach((_, i) => {
+			model.headers.forEach((_, col) => {
 				const td = tr.insertCell()
-				const align = model.aligns[i]
+				const align = model.aligns[col]
 				if (align) td.style.textAlign = align
-				appendInline(td, row[i] ?? '')
+				if (col === 0) {
+					const controls = document.createElement('div')
+					controls.className = 'md-row-controls'
+					controls.contentEditable = 'false'
+					controls.append(
+						iconButton('insert', 'Insert row below', () => rewrite(view, model, insertRow(model, rowIndex + 1))),
+						iconButton('close', 'Delete row', () => rewrite(view, model, deleteRow(model, rowIndex))),
+					)
+					td.append(controls)
+				}
+				const content = document.createElement('span')
+				editableCell(content, row[col] ?? '', rowIndex, col, model, view)
+				td.append(content)
 			})
-		}
+		})
 
 		wrap.append(table)
 		return wrap
@@ -189,14 +303,18 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		} else {
 			// Editing: reveal the source with monospace container chrome and keep the table rendered just below
 			// it (live preview). Only the source lines are added on reveal, so nothing collapses — no scroll jump.
-			for (let ln = lineNum; ln <= endLineNum; ln++) {
-				const cls =
-					ln === lineNum
+			for (let sourceLine = lineNum; sourceLine <= endLineNum; sourceLine++) {
+				const lineClass =
+					sourceLine === lineNum
 						? 'md-table-src md-table-src-top'
-						: ln === endLineNum
+						: sourceLine === endLineNum
 							? 'md-table-src md-table-src-bottom'
 							: 'md-table-src'
-				builder.add(doc.line(ln).from, doc.line(ln).from, Decoration.line({ attributes: { class: cls } }))
+				builder.add(
+					doc.line(sourceLine).from,
+					doc.line(sourceLine).from,
+					Decoration.line({ attributes: { class: lineClass } }),
+				)
 			}
 			builder.add(to, to, Decoration.widget({ widget: tableWidget(model), side: 1 }))
 		}
