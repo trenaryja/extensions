@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-theme="vscode">
+	<head>
+		<meta charset="utf-8" />
+		<!-- Standalone harness: loads the real webview bundle outside VS Code (the VS Code API is stubbed below)
+		     so the editor can be screenshot / scripted in a headless browser. Driven by harness/screenshot.ts. -->
+		<style>
+			/* A minimal VS Code Dark+ set of the --vscode-* vars the editor reads. */
+			:root {
+				--vscode-editor-background: #1e1e1e;
+				--vscode-editor-foreground: #d4d4d4;
+				--vscode-editor-font-family: 'SF Mono', Menlo, Consolas, monospace;
+				--vscode-editorCursor-foreground: #aeafad;
+				--vscode-editor-selectionBackground: #264f78;
+				--vscode-textCodeBlock-background: #0a0a0a;
+				--vscode-textLink-foreground: #4fc1ff;
+				--vscode-descriptionForeground: #9aa0aa;
+				--vscode-editorWidget-background: #252526;
+				--vscode-editorWidget-border: #454545;
+				--vscode-widget-border: #454545;
+				--vscode-panel-border: #2b2b2b;
+				--vscode-focusBorder: #007fd4;
+				--vscode-button-background: #0e639c;
+				--vscode-button-secondaryBackground: #3a3d41;
+				--vscode-button-secondaryForeground: #ffffff;
+				--vscode-button-border: rgba(255, 255, 255, 0.07);
+				--vscode-charts-lines: #808080;
+				--vscode-charts-blue: #4c8bf5;
+				--vscode-charts-green: #53c578;
+				--vscode-charts-orange: #ffab40;
+				--vscode-charts-purple: #b478ff;
+				--vscode-charts-red: #ff6464;
+				--vscode-charts-yellow: #ffc83c;
+				--vscode-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+			}
+		</style>
+		<link rel="stylesheet" href="../dist/codicon.css" />
+		<link rel="stylesheet" href="../dist/webview.css" />
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			html,
+			body {
+				height: 100%;
+				overflow: hidden;
+			}
+			body {
+				background: var(--vscode-editor-background);
+				color: var(--vscode-editor-foreground);
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+			}
+			#editor {
+				height: 100vh;
+				overflow-y: auto;
+			}
+			.cm-editor {
+				height: 100%;
+			}
+			.cm-scroller {
+				overflow: auto;
+			}
+		</style>
+		<script>
+			// Stub the VS Code webview API so the bundle runs standalone. Reply to the messages the webview sends
+			// the host: ready → init (content injected as window.HARNESS_CONTENT by the driver), requestShikiTheme
+			// → shikiTheme(null) which falls back to the bundled dark-plus.
+			const CONTENT = window.HARNESS_CONTENT ?? '# Harness\n\nSet content via `window.HARNESS_CONTENT`.'
+			window.acquireVsCodeApi = () => ({
+				postMessage: (msg) => {
+					if (msg.type === 'ready')
+						window.dispatchEvent(
+							new MessageEvent('message', {
+								data: {
+									type: 'init',
+									content: CONTENT,
+									settings: {
+										mermaidRenderMode: 'inline',
+										callouts: {},
+										calloutDefaultTitle: true,
+										mathExportColor: 'currentColor',
+									},
+								},
+							}),
+						)
+					else if (msg.type === 'requestShikiTheme')
+						window.dispatchEvent(new MessageEvent('message', { data: { type: 'shikiTheme', theme: null } }))
+				},
+				getState: () => undefined,
+				setState: () => undefined,
+			})
+		</script>
+	</head>
+	<body data-vscode-theme-kind="vscode-dark" data-vscode-theme-name="Dark+">
+		<div id="editor"></div>
+		<script src="../dist/webview.js"></script>
+	</body>
+</html>
