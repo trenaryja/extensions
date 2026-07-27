@@ -2,14 +2,19 @@
 
 ← [Back to test suite](test.md)
 
-Tables are a live data grid. **Click any cell** to edit it in place. **While editing**, arrow keys, Tab /
-Shift-Tab, and Enter move between cells and Esc cancels. **From the document** (not editing), arrow keys treat
-the table as a single block — the caret rests at its top/bottom edge and crosses on the next press, like any
-other block, so `↓` and `→` behave the same. **Right-click** a cell for the full menu — insert/delete rows
-and columns, set alignment, **Copy as Markdown**, or **Edit source**. Drag a column's **top grip** or a row's
-**left grip** to reorder; the **edge "+" bars** add a column or row, and the **corner** deletes the table. A
-plain click never flips the table into raw mode — the markdown stays one right-click away ("Edit source", or
-select across it).
+Tables are an Excel/Sheets-style data grid, driven by a small state machine (`document ↔ selected ↔ editing`).
+
+- **Select**: click a cell, or arrow into the table from the line above/below. **Arrow keys** move the
+  selection; at an edge they hand back to the document. **Shift+arrows** or **click-drag** select a range;
+  **Ctrl/Cmd+A** selects the whole grid.
+- **Edit**: **double-click**, press **Enter/F2**, or just **start typing** (type-to-replace). While editing,
+  **Enter/Tab** commit and move to the next cell, **Esc** cancels back to the selection.
+- **Clipboard**: **Copy/Cut/Paste** operate on the selected range as markdown; pasting a block bigger than the
+  grid **grows the table** to fit. **Delete/Backspace** clears the selection.
+- **Structure**: drag a column's **top grip** or a row's **left grip** to reorder; the **edge "+" bars** add a
+  column/row; the **corner** deletes the table. **Right-click** for the full menu.
+- **Raw markdown**: a plain click never flips the table into raw mode — select across it in the document (or
+  right-click → "Edit source") to see the source.
 
 ---
 

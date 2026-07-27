@@ -254,17 +254,45 @@ export const markdownLiveTheme = EditorView.theme(
 			whiteSpace: 'nowrap',
 			background: 'color-mix(in srgb, var(--vscode-editor-foreground, #888) 7%, transparent)',
 		},
-		// Editable cell content fills the cell (click anywhere in the cell to edit); highlighted while active.
+		// Cell content fills the cell so the whole cell is a click target. Inert until the machine edits it.
 		'.md-td-content': {
 			display: 'block',
 			padding: '0.45rem 0.8rem',
 			minHeight: '1.5em',
 			outline: 'none',
-			cursor: 'text',
+			cursor: 'cell',
 			boxSizing: 'border-box',
 		},
-		'.md-td-content[data-editing]': {
+		// The cell currently being edited (contenteditable) shows a caret + a focus ring above the selection box.
+		'.md-td-content[contenteditable="true"]': {
+			cursor: 'text',
 			boxShadow: 'inset 0 0 0 2px var(--vscode-focusBorder, #007fd4)',
+		},
+		// Hidden per-table sink that holds keyboard focus while a range is selected (and catches copy/cut/paste).
+		'.md-grid-sink': {
+			position: 'absolute',
+			top: '0',
+			left: '0',
+			width: '1px',
+			height: '1px',
+			padding: '0',
+			margin: '0',
+			border: '0',
+			opacity: '0',
+			resize: 'none',
+			overflow: 'hidden',
+			whiteSpace: 'pre',
+			pointerEvents: 'none',
+		},
+		// The selection box: one overlay over the selected cell-range's bounding rect.
+		'.md-grid-selbox': {
+			position: 'absolute',
+			display: 'none',
+			pointerEvents: 'none',
+			zIndex: '3',
+			border: '2px solid var(--vscode-focusBorder, #007fd4)',
+			borderRadius: '2px',
+			background: 'color-mix(in srgb, var(--vscode-focusBorder, #007fd4) 12%, transparent)',
 		},
 		// Drag handles: a slim grip on the top edge of each header (columns) / left edge of each row. Grab to
 		// reorder; click for the options menu. Faint on row/column hover, solid when hovered directly.

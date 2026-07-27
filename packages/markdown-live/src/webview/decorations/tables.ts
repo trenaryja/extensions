@@ -2,6 +2,7 @@ import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror
 import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionRangeTouches } from './active'
+import { type Cell, type Effect, type GridEvent, type GridState, normalizeRange, reduce } from './tableMachine'
 
 type Align = 'left' | 'center' | 'right' | null
 type TableModel = { headers: string[]; aligns: Align[]; rows: string[][]; from: number; to: number }
@@ -203,13 +204,12 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 	}
 }
 
-// Copy the table's raw markdown to the clipboard (async API, with an execCommand fallback for older webviews).
-function copyMarkdown(model: TableModel) {
-	const text = serialize(model)
-	if (navigator.clipboard?.writeText) {
-		navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
-	} else fallbackCopy(text)
+// Write to the clipboard via the async API, with an execCommand fallback for older webviews.
+function writeClipboard(text: string) {
+	if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
+	else fallbackCopy(text)
 }
+const copyMarkdown = (model: TableModel) => writeClipboard(serialize(model))
 function fallbackCopy(text: string) {
 	const area = document.createElement('textarea')
 	area.value = text
@@ -362,149 +362,360 @@ function attachHandle(
 	})
 }
 
-// ---------- Cells ----------
+// ---------- Interaction: machine runner ----------
+//
+// One module-level machine drives the *active* table (whichever is being interacted with). `reduce` (pure,
+// in tableMachine.ts) decides state + effects; the runner below executes those effects against CM + the
+// widget DOM. Because a doc edit rebuilds the widget, everything is re-derived from the current DOM each
+// dispatch (tables located by their `data-from`), so state survives rebuilds without a fragile focus queue.
 
-// A structural rewrite rebuilds the widget, so keyboard navigation records the cell to focus next and the
-// fresh widget re-focuses it after it mounts. Keyed by table `from` (stable across in-place edits).
-let pendingFocus: { from: number; row: number; col: number } | null = null
-function focusCell(table: HTMLElement, row: number, col: number) {
-	const cells = row < 0 ? table.querySelectorAll('thead th') : (table.querySelectorAll('tbody tr')[row]?.children ?? [])
-	const content = (cells[col] as HTMLElement | undefined)?.querySelector('.md-td-content')
-	if (content instanceof HTMLElement) content.focus()
+const modelOf = new WeakMap<HTMLElement, TableModel>()
+let gridState: GridState = { mode: 'document' }
+let activeFrom: number | null = null
+let activeView: EditorView | null = null
+let pendingPaste = '' // stashed by the paste handler so the pure machine can stay clipboard-free
+
+type Ctx = {
+	view: EditorView
+	from: number
+	model: TableModel
+	table: HTMLElement
+	frame: HTMLElement
+	sink: HTMLTextAreaElement
+	box: HTMLElement
 }
 
-// A cell renders inline markdown; on focus it swaps to its raw source (editable), and commits on blur. Tab /
-// Shift-Tab / Enter move between cells (grid-style); Escape cancels. A newline is never inserted into a cell.
-function editableCell(
-	cell: HTMLElement,
-	raw: string,
-	rowIndex: number,
-	col: number,
-	model: TableModel,
-	view: EditorView,
-	table: HTMLElement,
-) {
-	cell.className = 'md-td-content'
-	cell.contentEditable = 'true'
-	appendInline(cell, raw)
+function ctxFor(view: EditorView, from: number): Ctx | null {
+	const table = view.dom.querySelector(`.md-table[data-from="${from}"]`)
+	if (!(table instanceof HTMLElement)) return null
+	const model = modelOf.get(table)
+	const frame = table.closest('.md-table-frame')
+	const sink = frame?.querySelector('.md-grid-sink')
+	const box = frame?.querySelector('.md-grid-selbox')
+	if (
+		!model ||
+		!(frame instanceof HTMLElement) ||
+		!(sink instanceof HTMLTextAreaElement) ||
+		!(box instanceof HTMLElement)
+	)
+		return null
+	return { view, from, model, table, frame, sink, box }
+}
 
-	const render = () => {
-		cell.textContent = ''
-		appendInline(cell, raw)
-	}
-	// Commit the current text; returns true when it changed (and therefore dispatched a rebuild).
-	const commit = () => {
-		if (!cell.dataset.editing) return false
-		delete cell.dataset.editing
-		const next = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
-		if (next === raw) {
-			render()
-			return false
-		}
-		rewrite(view, model, setCell(model, rowIndex, col, next))
-		return true
-	}
+const cellTd = (table: HTMLElement, cell: Cell): HTMLElement | undefined => {
+	const row = cell.row < 0 ? table.querySelector('thead tr') : table.querySelectorAll('tbody tr')[cell.row]
+	return row?.children[cell.col] as HTMLElement | undefined
+}
+const cellContentEl = (table: HTMLElement, cell: Cell) =>
+	cellTd(table, cell)?.querySelector('.md-td-content') as HTMLElement | undefined
 
-	const cols = model.headers.length
-	const rows = model.rows.length
-	const nextCell = () =>
-		col < cols - 1 ? { row: rowIndex, col: col + 1 } : rowIndex < rows - 1 ? { row: rowIndex + 1, col: 0 } : null
-	const prevCell = () =>
-		col > 0 ? { row: rowIndex, col: col - 1 } : rowIndex > -1 ? { row: rowIndex - 1, col: cols - 1 } : null
-	const belowCell = () => (rowIndex < rows - 1 ? { row: rowIndex + 1, col } : null)
-	const aboveCell = () => (rowIndex > -1 ? { row: rowIndex - 1, col } : null)
+function placeCaretEnd(el: HTMLElement) {
+	const range = document.createRange()
+	range.selectNodeContents(el)
+	range.collapse(false)
+	const selection = window.getSelection()
+	selection?.removeAllRanges()
+	selection?.addRange(range)
+}
 
-	// Commit, then move focus to the target — across the rebuild when the value changed, directly otherwise.
-	const moveTo = (target: { row: number; col: number } | null) => {
-		if (!target) return cell.blur()
-		pendingFocus = { from: model.from, row: target.row, col: target.col }
-		if (!commit()) {
-			pendingFocus = null
-			focusCell(table, target.row, target.col)
-		}
-	}
+// The selection box is one overlay positioned over the range's bounding rect (relative to the frame).
+function positionBox(ctx: Ctx, anchor: Cell, focus: Cell) {
+	const a = cellTd(ctx.table, anchor)
+	const f = cellTd(ctx.table, focus)
+	if (!a || !f) return hideBox(ctx)
+	const frame = ctx.frame.getBoundingClientRect()
+	const ar = a.getBoundingClientRect()
+	const fr = f.getBoundingClientRect()
+	const top = Math.min(ar.top, fr.top) - frame.top
+	const left = Math.min(ar.left, fr.left) - frame.left
+	ctx.box.style.cssText = `display:block;top:${top}px;left:${left}px;width:${Math.max(ar.right, fr.right) - frame.left - left}px;height:${Math.max(ar.bottom, fr.bottom) - frame.top - top}px`
+}
+const hideBox = (ctx: Ctx) => {
+	ctx.box.style.display = 'none'
+}
 
-	// Caret at the very start / end of the (single-text-node) cell — the edge that spills to a neighbour.
-	const atStart = () => {
-		const selection = window.getSelection()
-		return !!selection?.isCollapsed && selection.anchorOffset === 0
-	}
-	const atEnd = () => {
-		const selection = window.getSelection()
-		return !!selection?.isCollapsed && selection.anchorOffset === (cell.textContent ?? '').length
-	}
+// Set every cell in the range to empty in one transaction.
+function clearRange(ctx: Ctx, anchor: Cell, focus: Cell) {
+	const r = normalizeRange(anchor, focus)
+	let next = ctx.model
+	for (let row = r.top; row <= r.bottom; row++)
+		for (let col = r.left; col <= r.right; col++) next = setCell(next, row, col, '')
+	rewrite(ctx.view, ctx.model, next)
+}
 
-	// Leave the grid, dropping the CM caret just above / below the table — committing any pending edit in the
-	// same transaction so the target position stays correct even when the cell's text changed.
-	const exitTable = (below: boolean) => {
-		const nextText = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
-		const changed = !!cell.dataset.editing && nextText !== raw
-		delete cell.dataset.editing
-		let tableTo = model.to
-		let changes: { from: number; to: number; insert: string } | undefined
-		if (changed) {
-			const serialized = serialize(setCell(model, rowIndex, col, nextText))
-			changes = { from: model.from, to: model.to, insert: serialized }
-			tableTo = model.from + serialized.length
-		}
-		const docLen = view.state.doc.length + (changes ? changes.insert.length - (changes.to - changes.from) : 0)
-		const anchor = below ? Math.min(tableTo + 1, docLen) : Math.max(model.from - 1, 0)
-		view.dispatch({ changes, selection: { anchor }, scrollIntoView: true })
-		view.focus()
-	}
+// ---------- Clipboard (markdown-first, forgiving) ----------
 
-	cell.addEventListener('focusin', () => {
-		if (cell.dataset.editing) return
-		cell.dataset.editing = '1'
-		// Anchor CM's caret to the table (clicks never move it) so undo/redo return here, not to the doc top.
-		const head = view.state.selection.main.head
-		if (head < model.from || head > model.to) view.dispatch({ selection: { anchor: model.from } })
-		cell.textContent = raw
-		const range = document.createRange()
-		range.selectNodeContents(cell)
-		range.collapse(false)
-		const selection = window.getSelection()
-		selection?.removeAllRanges()
-		selection?.addRange(range)
+const cellText = (model: TableModel, row: number, col: number) =>
+	(row < 0 ? model.headers[col] : model.rows[row]?.[col]) ?? ''
+
+// Pull the selected cells out as a 2-D grid of raw values.
+function sliceRange(model: TableModel, anchor: Cell, focus: Cell) {
+	const r = normalizeRange(anchor, focus)
+	const grid: string[][] = []
+	for (let row = r.top; row <= r.bottom; row++) {
+		const line: string[] = []
+		for (let col = r.left; col <= r.right; col++) line.push(cellText(model, row, col))
+		grid.push(line)
+	}
+	return grid
+}
+
+// A copied range is a self-contained markdown table (its first row acts as the header).
+function gridToMarkdown(grid: string[][]) {
+	if (!grid[0]?.length) return ''
+	const widths = grid[0].map((_, col) => Math.max(3, ...grid.map((line) => (line[col] ?? '').length)))
+	const line = (cells: string[]) => `| ${widths.map((width, i) => (cells[i] ?? '').padEnd(width)).join(' | ')} |`
+	const separator = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`
+	return [line(grid[0] ?? []), separator, ...grid.slice(1).map(line)].join('\n')
+}
+
+// Parse pasted text into a grid — a markdown table, else TSV, else one column of lines.
+function parseClipboardGrid(text: string): string[][] {
+	const trimmed = text.replace(/\r\n/g, '\n').replace(/\n+$/, '')
+	if (!trimmed) return []
+	const lines = trimmed.split('\n')
+	if (lines.every((line) => line.includes('|')) && lines.some(isSeparatorRow))
+		return lines.filter((line) => !isSeparatorRow(line)).map(parseRow)
+	if (trimmed.includes('\t')) return lines.map((line) => line.split('\t').map((cell) => cell.trim()))
+	return lines.map((line) => [line])
+}
+
+function copyRange(ctx: Ctx, anchor: Cell, focus: Cell, cut: boolean) {
+	writeClipboard(gridToMarkdown(sliceRange(ctx.model, anchor, focus)))
+	if (cut) clearRange(ctx, anchor, focus)
+}
+
+// Drop a parsed grid at `cell` (top-left), growing the table with empty rows/cols where the block overflows.
+function pasteRange(ctx: Ctx, cell: Cell) {
+	const grid = parseClipboardGrid(pendingPaste)
+	pendingPaste = ''
+	if (!grid.length) return
+	let model = ctx.model
+	const needCols = cell.col + Math.max(...grid.map((line) => line.length))
+	while (model.headers.length < needCols) model = insertColumn(model, model.headers.length)
+	const needRows = cell.row + grid.length
+	while (model.rows.length < needRows) model = insertRow(model, model.rows.length)
+	grid.forEach((line, dr) => {
+		line.forEach((value, dc) => {
+			model = setCell(model, cell.row + dr, cell.col + dc, value.replace(/[\n|]/g, ' ').trim())
+		})
 	})
-	cell.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape') {
+	rewrite(ctx.view, ctx.model, model)
+}
+
+function runEffect(effect: Effect, ctx: Ctx) {
+	switch (effect.e) {
+		case 'focusCell': {
+			const el = cellContentEl(ctx.table, effect.cell)
+			if (!el) return
+			el.contentEditable = 'true'
+			el.textContent = effect.seed ?? el.dataset.raw ?? ''
+			el.focus({ preventScroll: true })
+			placeCaretEnd(el)
+			return
+		}
+		case 'commit': {
+			const el = cellContentEl(ctx.table, effect.cell)
+			if (!el) return
+			el.contentEditable = 'false'
+			const raw = el.dataset.raw ?? ''
+			const next = (el.textContent ?? '').replace(/[\n|]/g, ' ').trim()
+			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell.row, effect.cell.col, next))
+			else {
+				el.textContent = ''
+				appendInline(el, raw)
+			}
+			return
+		}
+		case 'cancelEdit': {
+			const el = cellContentEl(ctx.table, effect.cell)
+			if (!el) return
+			el.contentEditable = 'false'
+			el.textContent = ''
+			appendInline(el, el.dataset.raw ?? '')
+			return
+		}
+		case 'exitDoc': {
+			const anchor =
+				effect.side === 'bottom'
+					? Math.min(ctx.model.to + 1, ctx.view.state.doc.length)
+					: Math.max(ctx.model.from - 1, 0)
+			ctx.view.dispatch({ selection: { anchor }, scrollIntoView: true })
+			ctx.view.focus()
+			return
+		}
+		case 'clearRange':
+			return clearRange(ctx, effect.anchor, effect.focus)
+		case 'copyRange':
+			return copyRange(ctx, effect.anchor, effect.focus, effect.cut)
+		case 'pasteAt':
+			return void pasteRange(ctx, effect.cell)
+		// showSelection / hideSelection / focusSink are derived from gridState by applyVisual — ignored here.
+	}
+}
+
+// Re-derive the visual (selection box + which element holds focus) from the current state and DOM.
+function applyVisual(ctx: Ctx | null) {
+	if (!ctx) return
+	if (gridState.mode === 'selected') {
+		positionBox(ctx, gridState.anchor, gridState.focus)
+		if (document.activeElement !== ctx.sink) ctx.sink.focus({ preventScroll: true })
+	} else hideBox(ctx)
+}
+
+// Send an event to the machine for table `from`, run its effects, then re-apply the visual to the fresh DOM.
+function dispatch(view: EditorView, from: number, event: GridEvent) {
+	// Switching tables (click/enter into a different one) — tidy up the previous grid first.
+	if ((event.t === 'click' || event.t === 'enter') && activeFrom !== null && activeFrom !== from) {
+		const previous = ctxFor(view, activeFrom)
+		if (previous) hideBox(previous)
+		gridState = { mode: 'document' }
+	}
+	const ctx = ctxFor(view, from)
+	if (!ctx) return
+	const enteringGrid = gridState.mode === 'document'
+	activeFrom = from
+	activeView = view
+	const dims = { rows: ctx.model.rows.length, cols: ctx.model.headers.length }
+	const { next, effects } = reduce(gridState, event, dims)
+	gridState = next
+	// On first entry, anchor CM's caret to the table so undo/redo return here instead of the document top.
+	// (A selection-only change keeps the widget's model equal, so ctx stays valid — no rebuild.)
+	if (enteringGrid && next.mode !== 'document') {
+		const head = view.state.selection.main.head
+		if (head < ctx.model.from || head > ctx.model.to) view.dispatch({ selection: { anchor: ctx.model.from } })
+	}
+	for (const effect of effects) runEffect(effect, ctx)
+	applyVisual(ctxFor(view, from)) // fresh ctx (a commit/clear may have rebuilt): hides the box in document
+	if (next.mode === 'document') activeFrom = null // mode, positions it + holds the sink otherwise
+}
+
+// ---------- Interaction: cell wiring ----------
+
+// A cell shows rendered inline markdown and is inert until the machine puts it into edit mode. Click selects,
+// double-click edits; while editing, Enter/Tab/Escape are routed to the machine and arrows/typing are native.
+function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorView, from: number) {
+	content.className = 'md-td-content'
+	content.dataset.raw = raw
+	content.contentEditable = 'false'
+	appendInline(content, raw)
+
+	content.addEventListener('mousedown', (event) => {
+		if (content.contentEditable === 'true') return // editing this cell → native caret placement
+		event.preventDefault()
+		dispatch(view, from, { t: 'click', cell, shift: event.shiftKey })
+	})
+	content.addEventListener('mouseenter', (event) => {
+		if (event.buttons === 1 && activeFrom === from && gridState.mode === 'selected')
+			dispatch(view, from, { t: 'dragTo', cell })
+	})
+	content.addEventListener('dblclick', (event) => {
+		event.preventDefault()
+		dispatch(view, from, { t: 'click', cell, shift: false })
+		dispatch(view, from, { t: 'beginEdit', seed: null })
+	})
+	content.addEventListener('keydown', (event) => {
+		if (content.contentEditable !== 'true') return // only meaningful while editing this cell
+		if (event.key === 'Enter') {
 			event.preventDefault()
-			delete cell.dataset.editing
-			render()
-			cell.blur()
-		} else if (event.key === 'Enter') {
-			event.preventDefault()
-			moveTo(belowCell())
+			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'up' : 'down' })
 		} else if (event.key === 'Tab') {
 			event.preventDefault()
-			moveTo(event.shiftKey ? prevCell() : nextCell())
-		} else if (event.key === 'ArrowDown') {
+			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'left' : 'right' })
+		} else if (event.key === 'Escape') {
 			event.preventDefault()
-			const target = belowCell()
-			if (target) moveTo(target)
-			else exitTable(true)
-		} else if (event.key === 'ArrowUp') {
-			event.preventDefault()
-			const target = aboveCell()
-			if (target) moveTo(target)
-			else exitTable(false)
-		} else if (event.key === 'ArrowLeft' && atStart()) {
-			event.preventDefault()
-			const target = prevCell()
-			if (target) moveTo(target)
-			else exitTable(false)
-		} else if (event.key === 'ArrowRight' && atEnd()) {
-			event.preventDefault()
-			const target = nextCell()
-			if (target) moveTo(target)
-			else exitTable(true)
+			dispatch(view, from, { t: 'escape' })
 		}
 	})
-	cell.addEventListener('blur', () => {
-		commit()
+	content.addEventListener('blur', () => {
+		if (content.contentEditable !== 'true') return
+		requestAnimationFrame(() => leaveIfOutside(view, from))
 	})
 }
+
+// If focus has left this table entirely (not just moved sink↔cell), tell the machine to exit + commit.
+function leaveIfOutside(view: EditorView, from: number) {
+	if (activeFrom !== from || gridState.mode === 'document') return
+	const active = document.activeElement
+	if (
+		active instanceof HTMLElement &&
+		(active === ctxFor(view, from)?.sink || active.closest(`.md-table[data-from="${from}"]`))
+	)
+		return
+	dispatch(view, from, { t: 'exit' })
+}
+
+// The hidden per-table sink holds keyboard focus while a range is selected (so typing, nav, and paste have a
+// target). It also captures clipboard events. Selected-mode key handling lives here; editing lives on cells.
+function makeSink(view: EditorView, from: number) {
+	const sink = document.createElement('textarea')
+	sink.className = 'md-grid-sink'
+	sink.setAttribute('aria-hidden', 'true')
+	sink.tabIndex = -1
+	const move = (dir: 'up' | 'down' | 'left' | 'right', shift: boolean) =>
+		dispatch(view, from, { t: 'move', dir, shift })
+	sink.addEventListener('keydown', (event) => {
+		const key = event.key
+		const chord = event.metaKey || event.ctrlKey
+		const lower = key.toLowerCase()
+		if (chord && lower === 'a') {
+			event.preventDefault()
+			return dispatch(view, from, { t: 'selectAll' })
+		}
+		if (chord && (lower === 'c' || lower === 'x')) {
+			event.preventDefault()
+			return dispatch(view, from, { t: lower === 'x' ? 'cut' : 'copy' })
+		}
+		if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+			event.preventDefault()
+			move(key.slice(5).toLowerCase() as 'up' | 'down' | 'left' | 'right', event.shiftKey)
+		} else if (key === 'Enter') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'up' : 'down' })
+		} else if (key === 'Tab') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'left' : 'right' })
+		} else if (key === 'Escape') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'escape' })
+		} else if (key === 'F2') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'beginEdit', seed: null })
+		} else if (key === 'Backspace' || key === 'Delete') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'clear' })
+		} else if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+			event.preventDefault()
+			dispatch(view, from, { t: 'beginEdit', seed: key })
+		}
+	})
+	sink.addEventListener('blur', () => requestAnimationFrame(() => leaveIfOutside(view, from)))
+	return sink
+}
+
+// Paste is owned at the document capture phase whenever a grid sink holds focus, ahead of CodeMirror's own
+// paste handler (which would target the atomic editor selection). Copy/cut go through the sink's keydown
+// instead — an empty sink textarea doesn't reliably emit a `copy` event.
+const gridSinkFocused = () =>
+	activeView != null &&
+	activeFrom != null &&
+	document.activeElement instanceof HTMLElement &&
+	document.activeElement.classList.contains('md-grid-sink')
+
+if (typeof document !== 'undefined')
+	document.addEventListener(
+		'paste',
+		(event) => {
+			const view = activeView
+			const from = activeFrom
+			if (!view || from == null || !gridSinkFocused()) return
+			event.preventDefault()
+			event.stopImmediatePropagation()
+			pendingPaste = event.clipboardData?.getData('text/plain') ?? ''
+			dispatch(view, from, { t: 'paste' })
+		},
+		true,
+	)
 
 // A full-edge "+" bar (Obsidian-style): add a column on the right, or a row below.
 function edgeAdd(kind: 'col' | 'row', title: string, onClick: () => void) {
@@ -530,7 +741,9 @@ const tableWidget = defineWidget<TableModel>({
 	// Every event inside the table (cells, handles, borders) is handled by our own DOM — CM never sees it, so a
 	// plain click can't move the cursor into the range and flip it to source. Raw editing is opt-in ("Edit source").
 	ignoreEvent: (event) =>
-		!!(event.target as HTMLElement)?.closest?.('.md-table, .md-table-add, .md-table-corner, .md-table-menu'),
+		!!(event.target as HTMLElement)?.closest?.(
+			'.md-table, .md-table-add, .md-table-corner, .md-table-menu, .md-grid-sink, .md-grid-selbox',
+		),
 	toDOM: (model, view) => {
 		const wrap = document.createElement('div')
 		wrap.className = 'md-table-wrap'
@@ -541,11 +754,17 @@ const tableWidget = defineWidget<TableModel>({
 
 		const table = document.createElement('table')
 		table.className = 'md-table'
+		table.dataset.from = String(model.from) // lets the interaction runner find this table's fresh DOM
+		modelOf.set(table, model)
 		frame.append(table)
 
 		const indicator = document.createElement('div')
 		indicator.className = 'md-drop-indicator'
 		frame.append(indicator)
+
+		const selBox = document.createElement('div')
+		selBox.className = 'md-grid-selbox'
+		frame.append(selBox, makeSink(view, model.from))
 
 		const showIndicator = (vertical: boolean, offset: number) => {
 			const frameRect = frame.getBoundingClientRect()
@@ -589,7 +808,7 @@ const tableWidget = defineWidget<TableModel>({
 			th.append(handle)
 
 			const content = document.createElement('span')
-			editableCell(content, header, -1, col, model, view, table)
+			gridCell(content, header, { row: -1, col }, view, model.from)
 			th.append(content)
 			th.addEventListener('contextmenu', (event) => {
 				event.preventDefault()
@@ -630,7 +849,7 @@ const tableWidget = defineWidget<TableModel>({
 					td.append(handle)
 				}
 				const content = document.createElement('span')
-				editableCell(content, row[col] ?? '', rowIndex, col, model, view, table)
+				gridCell(content, row[col] ?? '', { row: rowIndex, col }, view, model.from)
 				td.append(content)
 				td.addEventListener('contextmenu', (event) => {
 					event.preventDefault()
@@ -655,12 +874,9 @@ const tableWidget = defineWidget<TableModel>({
 		})
 		frame.append(corner)
 
-		// Grid-style keyboard navigation asked to focus a cell after this (re)build — do it once mounted.
-		if (pendingFocus?.from === model.from) {
-			const target = pendingFocus
-			pendingFocus = null
-			requestAnimationFrame(() => focusCell(table, target.row, target.col))
-		}
+		// If the interaction machine is mid-session on this table, re-apply its visual to the fresh DOM.
+		if (activeFrom === model.from && gridState.mode !== 'document')
+			requestAnimationFrame(() => applyVisual(ctxFor(view, model.from)))
 
 		return wrap
 	},
@@ -700,7 +916,8 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		const model: TableModel = { headers, aligns, rows, from, to }
 
 		if (!selectionRangeTouches(state, from, to)) {
-			builder.add(from, to, Decoration.replace({ widget: tableWidget(model) }))
+			// block: true tells CM this replaces whole lines — fixes the over-tall caret on the line above it.
+			builder.add(from, to, Decoration.replace({ widget: tableWidget(model), block: true }))
 		} else {
 			// A ranged selection touches the table (drag-select or "Edit source"): reveal just the raw markdown,
 			// styled as a monospace box, so what's highlighted is exactly what copies — no rendered duplicate.
@@ -740,36 +957,48 @@ function tableEdges(state: EditorState) {
 	return edges
 }
 
-// Vertical motion around a table should rest at both its edges — exactly like ← / → do under atomicRanges —
-// instead of CodeMirror's default of collapsing to the top edge (which reads as skipping over a tall table).
-// Only dispatches a caret move; never enters the grid (that's click + the cells' own handlers).
-function stepTableEdge(view: EditorView, down: boolean) {
+// A document-caret arrow key that would cross into an adjacent table instead enters its grid (select mode).
+// ↓ / → from the line above enter at the top; ↑ / ← from the line below enter at the bottom. Everything after
+// that (cell nav, edit, exit) is the machine's job — this is only the document→grid handoff.
+function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	const active = document.activeElement
-	if (active instanceof HTMLElement && active.closest('.md-td-content')) return false
+	if (active instanceof HTMLElement && active.closest('.md-table-frame')) return false // already inside a grid
 	const caret = view.state.selection.main
 	if (!caret.empty) return false
-	const pos = caret.head
-	const line = view.state.doc.lineAt(pos).number
+	const line = view.state.doc.lineAt(caret.head)
 	const edges = tableEdges(view.state)
-	const target = down
-		? edges.find((edge) => edge.from === pos)?.to // at the top edge → step to the bottom edge
-		: (edges.find((edge) => edge.to === pos)?.from ?? // at the bottom edge → step to the top edge
-			edges.find((edge) => view.state.doc.lineAt(edge.to).number === line - 1)?.to) // just below → bottom edge
-	if (target == null) return false
-	view.dispatch({ selection: { anchor: target }, scrollIntoView: true })
-	return true
+	if (key === 'down' || (key === 'right' && caret.head === line.to)) {
+		const table = edges.find((edge) => view.state.doc.lineAt(edge.from).number === line.number + 1)
+		if (table) {
+			dispatch(view, table.from, { t: 'enter', side: 'top' })
+			return true
+		}
+	}
+	if (key === 'up' || (key === 'left' && caret.head === line.from)) {
+		const table = edges.find((edge) => view.state.doc.lineAt(edge.to).number === line.number - 1)
+		if (table) {
+			dispatch(view, table.from, { t: 'enter', side: 'bottom' })
+			return true
+		}
+	}
+	return false
 }
 
-// Treat each rendered table as one atomic unit for cursor motion: the caret can't wander into the replaced
-// range (so → / ← don't disappear into the widget). The keymap then makes ↑ / ↓ rest at both edges too, so
-// vertical and horizontal navigation match. The grid is entered by clicking a cell (see the cells' handlers).
+// Each rendered table is one atomic range (the caret can't wander into the replaced widget). The keymap turns
+// an arrow that would cross a table edge into a grid entry; from there the interaction machine takes over.
 export const tablesPlugin = [
 	tablesField,
 	EditorView.atomicRanges.of((view) => view.state.field(tablesField)),
 	Prec.high(
 		keymap.of([
-			{ key: 'ArrowDown', run: (view) => stepTableEdge(view, true) },
-			{ key: 'ArrowUp', run: (view) => stepTableEdge(view, false) },
+			{ key: 'ArrowDown', run: (view) => enterFromDoc(view, 'down') },
+			{ key: 'ArrowUp', run: (view) => enterFromDoc(view, 'up') },
+			{ key: 'ArrowRight', run: (view) => enterFromDoc(view, 'right') },
+			{ key: 'ArrowLeft', run: (view) => enterFromDoc(view, 'left') },
 		]),
 	),
 ]
+
+// Harness-only: expose the interaction state so the headless driver can assert grid transitions.
+if (typeof window !== 'undefined' && (window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
+	(window as unknown as { __gridState?: () => unknown }).__gridState = () => ({ ...gridState, from: activeFrom })
