@@ -1,5 +1,5 @@
-import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
+import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionRangeTouches } from './active'
 
@@ -541,7 +541,6 @@ const tableWidget = defineWidget<TableModel>({
 
 		const table = document.createElement('table')
 		table.className = 'md-table'
-		table.dataset.from = String(model.from) // lets the arrow-key keymap locate this table's DOM
 		frame.append(table)
 
 		const indicator = document.createElement('div')
@@ -669,11 +668,8 @@ const tableWidget = defineWidget<TableModel>({
 
 // ---------- Builder ----------
 
-type TableScan = { models: TableModel[]; deco: DecorationSet }
-
-function scanTables(state: EditorState): TableScan {
+function buildTableDecorations(state: EditorState): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
-	const models: TableModel[] = []
 	const doc = state.doc
 
 	let lineNum = 1
@@ -703,7 +699,6 @@ function scanTables(state: EditorState): TableScan {
 		const to = doc.line(endLineNum).to
 		const model: TableModel = { headers, aligns, rows, from, to }
 
-		models.push(model)
 		if (!selectionRangeTouches(state, from, to)) {
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model) }))
 		} else {
@@ -727,48 +722,14 @@ function scanTables(state: EditorState): TableScan {
 		lineNum = endLineNum + 1
 	}
 
-	return { models, deco: builder.finish() }
+	return builder.finish()
 }
 
-const tablesField = StateField.define<TableScan>({
-	create: (state) => scanTables(state),
-	update: (value, transaction) => (docOrSelectionChanged(transaction) ? scanTables(transaction.state) : value),
-	provide: (field) => EditorView.decorations.from(field, (value) => value.deco),
+// Arrow keys are left to CodeMirror's default block navigation: the caret rests at the table's top/bottom
+// boundary and crosses on the next press — the same as any other block, and consistent between ↓ and →. The
+// grid is entered by clicking a cell; once editing, the cells' own handlers navigate between them (see above).
+export const tablesPlugin = StateField.define<DecorationSet>({
+	create: (state) => buildTableDecorations(state),
+	update: (deco, transaction) => (docOrSelectionChanged(transaction) ? buildTableDecorations(transaction.state) : deco),
+	provide: (field) => EditorView.decorations.from(field),
 })
-
-// Focus the top-left (entering from above) or bottom-left (from below) cell of a table by its doc position.
-function focusTableCell(view: EditorView, from: number, row: number) {
-	const table = view.dom.querySelector(`.md-table[data-from="${from}"]`)
-	if (table instanceof HTMLElement) focusCell(table, row, 0)
-}
-
-// ArrowUp/Down at a table's edge steps into the grid instead of skipping over the whole widget. In-grid
-// navigation lives on the cells themselves (CM ignores events there); this only handles entry from the doc.
-function enterTable(view: EditorView, down: boolean) {
-	const active = document.activeElement
-	if (active instanceof HTMLElement && active.closest('.md-td-content')) return false
-	const { state } = view
-	const caret = state.selection.main
-	if (!caret.empty) return false
-	const caretLine = state.doc.lineAt(caret.head).number
-	const table = state
-		.field(tablesField)
-		.models.find((model) =>
-			down
-				? state.doc.lineAt(model.from).number === caretLine + 1
-				: state.doc.lineAt(model.to).number === caretLine - 1,
-		)
-	if (!table) return false
-	focusTableCell(view, table.from, down ? -1 : table.rows.length - 1)
-	return true
-}
-
-export const tablesPlugin = [
-	tablesField,
-	Prec.high(
-		keymap.of([
-			{ key: 'ArrowDown', run: (view) => enterTable(view, true) },
-			{ key: 'ArrowUp', run: (view) => enterTable(view, false) },
-		]),
-	),
-]
