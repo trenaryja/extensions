@@ -222,6 +222,7 @@ function fallbackCopy(text: string) {
 
 // Reveal the raw markdown by selecting the table's range — a non-empty selection flips it into source mode.
 const revealSource = (view: EditorView, model: TableModel) => {
+	leaveGrid(view) // drop any grid selection first so its overlay doesn't linger over the revealed source
 	view.dispatch({ selection: { anchor: model.from, head: model.to } })
 	view.focus()
 }
@@ -590,6 +591,16 @@ function dispatch(view: EditorView, from: number, event: GridEvent) {
 	if (next.mode === 'document') activeFrom = null // mode, positions it + holds the sink otherwise
 }
 
+// Force the machine back to the document (hide the box, drop the binding) — used when leaving via a route the
+// machine doesn't own, e.g. the "Edit source" menu action selecting the table's range in CodeMirror.
+function leaveGrid(view: EditorView) {
+	if (activeFrom == null) return
+	const ctx = ctxFor(view, activeFrom)
+	if (ctx) hideBox(ctx)
+	gridState = { mode: 'document' }
+	activeFrom = null
+}
+
 // ---------- Interaction: cell wiring ----------
 
 // A cell shows rendered inline markdown and is inert until the machine puts it into edit mode. Click selects,
@@ -601,7 +612,9 @@ function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorVie
 	appendInline(content, raw)
 
 	content.addEventListener('mousedown', (event) => {
-		if (content.contentEditable === 'true') return // editing this cell → native caret placement
+		// Only the left button selects/drags. Right-click must NOT preventDefault here — that suppresses the
+		// contextmenu event in Electron. Editing this cell → let the browser place the caret natively.
+		if (event.button !== 0 || content.contentEditable === 'true') return
 		event.preventDefault()
 		dispatch(view, from, { t: 'click', cell, shift: event.shiftKey })
 	})
@@ -812,6 +825,7 @@ const tableWidget = defineWidget<TableModel>({
 			th.append(content)
 			th.addEventListener('contextmenu', (event) => {
 				event.preventDefault()
+				dispatch(view, model.from, { t: 'click', cell: { row: -1, col }, shift: false })
 				cellMenu(view, { x: event.clientX, y: event.clientY }, model, -1, col)
 			})
 			headerRow.append(th)
@@ -853,6 +867,7 @@ const tableWidget = defineWidget<TableModel>({
 				td.append(content)
 				td.addEventListener('contextmenu', (event) => {
 					event.preventDefault()
+					dispatch(view, model.from, { t: 'click', cell: { row: rowIndex, col }, shift: false })
 					cellMenu(view, { x: event.clientX, y: event.clientY }, model, rowIndex, col)
 				})
 			})
