@@ -1,7 +1,7 @@
 import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
-import { docOrSelectionChanged, selectionRangeTouches } from './active'
+import { docOrSelectionChanged, selectionRangeTouches, selectionTouches } from './active'
 import { type Cell, type Effect, type GridEvent, type GridState, normalizeRange, reduce } from './tableMachine'
 
 type Align = 'left' | 'center' | 'right' | null
@@ -223,6 +223,7 @@ function fallbackCopy(text: string) {
 // Reveal the raw markdown by selecting the table's range — a non-empty selection flips it into source mode.
 const revealSource = (view: EditorView, model: TableModel) => {
 	leaveGrid(view) // drop any grid selection first so its overlay doesn't linger over the revealed source
+	revealedFrom = model.from // stick in source mode while the caret stays in the table's lines
 	view.dispatch({ selection: { anchor: model.from, head: model.to } })
 	view.focus()
 }
@@ -374,6 +375,7 @@ const modelOf = new WeakMap<HTMLElement, TableModel>()
 let gridState: GridState = { mode: 'document' }
 let activeFrom: number | null = null
 let activeView: EditorView | null = null
+let revealedFrom: number | null = null // the table currently in raw-source mode (sticky while its caret stays)
 let pendingPaste = '' // stashed by the paste handler so the pure machine can stay clipboard-free
 
 type Ctx = {
@@ -930,12 +932,21 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		const to = doc.line(endLineNum).to
 		const model: TableModel = { headers, aligns, rows, from, to }
 
-		if (!selectionRangeTouches(state, from, to)) {
+		// Reveal the raw source when a ranged selection touches the table (drag-select or "Edit source"), and stay
+		// revealed while a caret lingers in its lines (sticky) so editing the source doesn't collapse it. A grid
+		// session never reveals — its parked caret would otherwise touch the range.
+		const gridActive = activeFrom === from && gridState.mode !== 'document'
+		const reveal =
+			!gridActive &&
+			(selectionRangeTouches(state, from, to) || (revealedFrom === from && selectionTouches(state, from, to)))
+		if (reveal) revealedFrom = from
+		else if (revealedFrom === from) revealedFrom = null
+
+		if (!reveal) {
 			// block: true tells CM this replaces whole lines — fixes the over-tall caret on the line above it.
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model), block: true }))
 		} else {
-			// A ranged selection touches the table (drag-select or "Edit source"): reveal just the raw markdown,
-			// styled as a monospace box, so what's highlighted is exactly what copies — no rendered duplicate.
+			// Reveal just the raw markdown, styled as a monospace box, so what's highlighted is what copies.
 			for (let sourceLine = lineNum; sourceLine <= endLineNum; sourceLine++) {
 				const lineClass =
 					sourceLine === lineNum
