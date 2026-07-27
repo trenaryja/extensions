@@ -1,5 +1,5 @@
-import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionRangeTouches } from './active'
 
@@ -725,11 +725,51 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 	return builder.finish()
 }
 
-// Arrow keys are left to CodeMirror's default block navigation: the caret rests at the table's top/bottom
-// boundary and crosses on the next press — the same as any other block, and consistent between ↓ and →. The
-// grid is entered by clicking a cell; once editing, the cells' own handlers navigate between them (see above).
-export const tablesPlugin = StateField.define<DecorationSet>({
+const tablesField = StateField.define<DecorationSet>({
 	create: (state) => buildTableDecorations(state),
 	update: (deco, transaction) => (docOrSelectionChanged(transaction) ? buildTableDecorations(transaction.state) : deco),
 	provide: (field) => EditorView.decorations.from(field),
 })
+
+// The [from, to] range of each *rendered* (atomic) table. Revealed tables carry only zero-width line
+// decorations (from === to), so filtering to from < to leaves just the block-replaced tables.
+function tableEdges(state: EditorState) {
+	const edges: { from: number; to: number }[] = []
+	for (const iter = state.field(tablesField).iter(); iter.value; iter.next())
+		if (iter.to > iter.from) edges.push({ from: iter.from, to: iter.to })
+	return edges
+}
+
+// Vertical motion around a table should rest at both its edges — exactly like ← / → do under atomicRanges —
+// instead of CodeMirror's default of collapsing to the top edge (which reads as skipping over a tall table).
+// Only dispatches a caret move; never enters the grid (that's click + the cells' own handlers).
+function stepTableEdge(view: EditorView, down: boolean) {
+	const active = document.activeElement
+	if (active instanceof HTMLElement && active.closest('.md-td-content')) return false
+	const caret = view.state.selection.main
+	if (!caret.empty) return false
+	const pos = caret.head
+	const line = view.state.doc.lineAt(pos).number
+	const edges = tableEdges(view.state)
+	const target = down
+		? edges.find((edge) => edge.from === pos)?.to // at the top edge → step to the bottom edge
+		: (edges.find((edge) => edge.to === pos)?.from ?? // at the bottom edge → step to the top edge
+			edges.find((edge) => view.state.doc.lineAt(edge.to).number === line - 1)?.to) // just below → bottom edge
+	if (target == null) return false
+	view.dispatch({ selection: { anchor: target }, scrollIntoView: true })
+	return true
+}
+
+// Treat each rendered table as one atomic unit for cursor motion: the caret can't wander into the replaced
+// range (so → / ← don't disappear into the widget). The keymap then makes ↑ / ↓ rest at both edges too, so
+// vertical and horizontal navigation match. The grid is entered by clicking a cell (see the cells' handlers).
+export const tablesPlugin = [
+	tablesField,
+	EditorView.atomicRanges.of((view) => view.state.field(tablesField)),
+	Prec.high(
+		keymap.of([
+			{ key: 'ArrowDown', run: (view) => stepTableEdge(view, true) },
+			{ key: 'ArrowUp', run: (view) => stepTableEdge(view, false) },
+		]),
+	),
+]

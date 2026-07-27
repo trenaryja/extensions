@@ -197,6 +197,9 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 			try {
 				view = createEditor(msg.content)
 				view.focus()
+				// Harness-only: expose the view so the headless driver can assert caret/selection state.
+				if ((window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
+					(window as unknown as { __mdView?: EditorView }).__mdView = view
 			} catch (err) {
 				const container = document.getElementById('editor')
 				if (container) {
