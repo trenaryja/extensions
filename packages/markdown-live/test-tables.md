@@ -2,11 +2,13 @@
 
 ← [Back to test suite](test.md)
 
-Tables are a live data grid. **Click any cell** to edit it in place; **Tab / Shift-Tab / Enter** move between
-cells and **Esc** cancels. **Right-click** a cell for the full menu — insert/delete rows and columns, set
-alignment, **Copy as Markdown**, or **Edit source**. Drag a column's **top grip** or a row's **left grip** to
-reorder; the **edge "+" bars** add a column or row, and the **corner** deletes the table. A plain click never
-flips the table into raw mode — the markdown stays one right-click away ("Edit source", or select across it).
+Tables are a live data grid. **Click any cell** to edit it in place. **Arrow keys** move between cells and
+step out of the grid at its edges (so navigating past the table works like any other block); **Tab /
+Shift-Tab / Enter** also move between cells and **Esc** cancels. **Right-click** a cell for the full menu —
+insert/delete rows and columns, set alignment, **Copy as Markdown**, or **Edit source**. Drag a column's
+**top grip** or a row's **left grip** to reorder; the **edge "+" bars** add a column or row, and the
+**corner** deletes the table. A plain click never flips the table into raw mode — the markdown stays one
+right-click away ("Edit source", or select across it).
 
 ---
 

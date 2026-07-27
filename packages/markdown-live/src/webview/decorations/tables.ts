@@ -1,5 +1,5 @@
-import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionRangeTouches } from './active'
 
@@ -412,6 +412,7 @@ function editableCell(
 	const prevCell = () =>
 		col > 0 ? { row: rowIndex, col: col - 1 } : rowIndex > -1 ? { row: rowIndex - 1, col: cols - 1 } : null
 	const belowCell = () => (rowIndex < rows - 1 ? { row: rowIndex + 1, col } : null)
+	const aboveCell = () => (rowIndex > -1 ? { row: rowIndex - 1, col } : null)
 
 	// Commit, then move focus to the target — across the rebuild when the value changed, directly otherwise.
 	const moveTo = (target: { row: number; col: number } | null) => {
@@ -423,9 +424,41 @@ function editableCell(
 		}
 	}
 
+	// Caret at the very start / end of the (single-text-node) cell — the edge that spills to a neighbour.
+	const atStart = () => {
+		const selection = window.getSelection()
+		return !!selection?.isCollapsed && selection.anchorOffset === 0
+	}
+	const atEnd = () => {
+		const selection = window.getSelection()
+		return !!selection?.isCollapsed && selection.anchorOffset === (cell.textContent ?? '').length
+	}
+
+	// Leave the grid, dropping the CM caret just above / below the table — committing any pending edit in the
+	// same transaction so the target position stays correct even when the cell's text changed.
+	const exitTable = (below: boolean) => {
+		const nextText = (cell.textContent ?? '').replace(/[\n|]/g, ' ').trim()
+		const changed = !!cell.dataset.editing && nextText !== raw
+		delete cell.dataset.editing
+		let tableTo = model.to
+		let changes: { from: number; to: number; insert: string } | undefined
+		if (changed) {
+			const serialized = serialize(setCell(model, rowIndex, col, nextText))
+			changes = { from: model.from, to: model.to, insert: serialized }
+			tableTo = model.from + serialized.length
+		}
+		const docLen = view.state.doc.length + (changes ? changes.insert.length - (changes.to - changes.from) : 0)
+		const anchor = below ? Math.min(tableTo + 1, docLen) : Math.max(model.from - 1, 0)
+		view.dispatch({ changes, selection: { anchor }, scrollIntoView: true })
+		view.focus()
+	}
+
 	cell.addEventListener('focusin', () => {
 		if (cell.dataset.editing) return
 		cell.dataset.editing = '1'
+		// Anchor CM's caret to the table (clicks never move it) so undo/redo return here, not to the doc top.
+		const head = view.state.selection.main.head
+		if (head < model.from || head > model.to) view.dispatch({ selection: { anchor: model.from } })
 		cell.textContent = raw
 		const range = document.createRange()
 		range.selectNodeContents(cell)
@@ -446,6 +479,26 @@ function editableCell(
 		} else if (event.key === 'Tab') {
 			event.preventDefault()
 			moveTo(event.shiftKey ? prevCell() : nextCell())
+		} else if (event.key === 'ArrowDown') {
+			event.preventDefault()
+			const target = belowCell()
+			if (target) moveTo(target)
+			else exitTable(true)
+		} else if (event.key === 'ArrowUp') {
+			event.preventDefault()
+			const target = aboveCell()
+			if (target) moveTo(target)
+			else exitTable(false)
+		} else if (event.key === 'ArrowLeft' && atStart()) {
+			event.preventDefault()
+			const target = prevCell()
+			if (target) moveTo(target)
+			else exitTable(false)
+		} else if (event.key === 'ArrowRight' && atEnd()) {
+			event.preventDefault()
+			const target = nextCell()
+			if (target) moveTo(target)
+			else exitTable(true)
 		}
 	})
 	cell.addEventListener('blur', () => {
@@ -488,6 +541,7 @@ const tableWidget = defineWidget<TableModel>({
 
 		const table = document.createElement('table')
 		table.className = 'md-table'
+		table.dataset.from = String(model.from) // lets the arrow-key keymap locate this table's DOM
 		frame.append(table)
 
 		const indicator = document.createElement('div')
@@ -615,8 +669,11 @@ const tableWidget = defineWidget<TableModel>({
 
 // ---------- Builder ----------
 
-function buildTableDecorations(state: EditorState): DecorationSet {
+type TableScan = { models: TableModel[]; deco: DecorationSet }
+
+function scanTables(state: EditorState): TableScan {
 	const builder = new RangeSetBuilder<Decoration>()
+	const models: TableModel[] = []
 	const doc = state.doc
 
 	let lineNum = 1
@@ -646,11 +703,12 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		const to = doc.line(endLineNum).to
 		const model: TableModel = { headers, aligns, rows, from, to }
 
+		models.push(model)
 		if (!selectionRangeTouches(state, from, to)) {
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model) }))
 		} else {
-			// Editing: reveal the source with monospace container chrome and keep the table rendered just below
-			// it (live preview). Only the source lines are added on reveal, so nothing collapses — no scroll jump.
+			// A ranged selection touches the table (drag-select or "Edit source"): reveal just the raw markdown,
+			// styled as a monospace box, so what's highlighted is exactly what copies — no rendered duplicate.
 			for (let sourceLine = lineNum; sourceLine <= endLineNum; sourceLine++) {
 				const lineClass =
 					sourceLine === lineNum
@@ -664,24 +722,53 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 					Decoration.line({ attributes: { class: lineClass } }),
 				)
 			}
-			builder.add(to, to, Decoration.widget({ widget: tableWidget(model), side: 1 }))
 		}
 
 		lineNum = endLineNum + 1
 	}
 
-	return builder.finish()
+	return { models, deco: builder.finish() }
 }
 
-export const tablesPlugin = StateField.define<DecorationSet>({
-	create(state) {
-		return buildTableDecorations(state)
-	},
-	update(decorations, transaction) {
-		if (!docOrSelectionChanged(transaction)) return decorations
-		return buildTableDecorations(transaction.state)
-	},
-	provide(field) {
-		return EditorView.decorations.from(field)
-	},
+const tablesField = StateField.define<TableScan>({
+	create: (state) => scanTables(state),
+	update: (value, transaction) => (docOrSelectionChanged(transaction) ? scanTables(transaction.state) : value),
+	provide: (field) => EditorView.decorations.from(field, (value) => value.deco),
 })
+
+// Focus the top-left (entering from above) or bottom-left (from below) cell of a table by its doc position.
+function focusTableCell(view: EditorView, from: number, row: number) {
+	const table = view.dom.querySelector(`.md-table[data-from="${from}"]`)
+	if (table instanceof HTMLElement) focusCell(table, row, 0)
+}
+
+// ArrowUp/Down at a table's edge steps into the grid instead of skipping over the whole widget. In-grid
+// navigation lives on the cells themselves (CM ignores events there); this only handles entry from the doc.
+function enterTable(view: EditorView, down: boolean) {
+	const active = document.activeElement
+	if (active instanceof HTMLElement && active.closest('.md-td-content')) return false
+	const { state } = view
+	const caret = state.selection.main
+	if (!caret.empty) return false
+	const caretLine = state.doc.lineAt(caret.head).number
+	const table = state
+		.field(tablesField)
+		.models.find((model) =>
+			down
+				? state.doc.lineAt(model.from).number === caretLine + 1
+				: state.doc.lineAt(model.to).number === caretLine - 1,
+		)
+	if (!table) return false
+	focusTableCell(view, table.from, down ? -1 : table.rows.length - 1)
+	return true
+}
+
+export const tablesPlugin = [
+	tablesField,
+	Prec.high(
+		keymap.of([
+			{ key: 'ArrowDown', run: (view) => enterTable(view, true) },
+			{ key: 'ArrowUp', run: (view) => enterTable(view, false) },
+		]),
+	),
+]
