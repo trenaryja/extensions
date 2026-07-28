@@ -13,7 +13,8 @@ export type GridState =
 	| { mode: 'editing'; cell: Cell } // one cell's text is being edited
 
 export type GridEvent =
-	| { t: 'enter'; side: 'top' | 'bottom' } // arrow crossed the table boundary from the document
+	// arrow crossed the table boundary from the document; the corner is the cell it lands on
+	| { t: 'enter'; corner: 'top-left' | 'bottom-left' | 'bottom-right' }
 	| { t: 'move'; dir: Dir; shift: boolean } // arrow while selected (shift = grow the range)
 	| { t: 'commitMove'; dir: Dir } // Enter=down, Shift+Enter=up, Tab=right, Shift+Tab=left
 	| { t: 'beginEdit'; seed: string | null } // F2/double-click (seed null) or type-to-replace (seed = char)
@@ -105,8 +106,16 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 	}
 
 	if (state.mode === 'document') {
-		if (event.t === 'enter')
-			return select(event.side === 'top' ? { row: HEADER_ROW, col: 0 } : { row: dims.rows - 1, col: 0 })
+		if (event.t === 'enter') {
+			const bottom = dims.rows - 1
+			const cell: Cell =
+				event.corner === 'top-left'
+					? { row: HEADER_ROW, col: 0 }
+					: event.corner === 'bottom-left'
+						? { row: bottom, col: 0 }
+						: { row: bottom, col: dims.cols - 1 } // bottom-right
+			return select(cell)
+		}
 		if (event.t === 'click') return select(event.cell)
 		return { next: state, effects: [] }
 	}

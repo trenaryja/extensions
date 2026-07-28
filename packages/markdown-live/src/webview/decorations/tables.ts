@@ -767,11 +767,18 @@ const tableWidget = defineWidget<TableModel>({
 		frame.className = 'md-table-frame'
 		wrap.append(frame)
 
+		// The table scrolls horizontally inside its own box so wide tables stay contained, while the add "+"
+		// bars sit just *outside* the frame (absolute) — that keeps the widget's resting height equal to the
+		// table's, so the document's blank line lands right below it instead of below an unreachable bar band.
+		const scroll = document.createElement('div')
+		scroll.className = 'md-table-scroll'
+		frame.append(scroll)
+
 		const table = document.createElement('table')
 		table.className = 'md-table'
 		table.dataset.from = String(model.from) // lets the interaction runner find this table's fresh DOM
 		modelOf.set(table, model)
-		frame.append(table)
+		scroll.append(table)
 
 		const indicator = document.createElement('div')
 		indicator.className = 'md-drop-indicator'
@@ -994,16 +1001,18 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	const line = view.state.doc.lineAt(caret.head)
 	const edges = tableEdges(view.state)
 	if (key === 'down' || (key === 'right' && caret.head === line.to)) {
+		// ↓ / → into the top of the table → top-left cell.
 		const table = edges.find((edge) => view.state.doc.lineAt(edge.from).number === line.number + 1)
 		if (table) {
-			dispatch(view, table.from, { t: 'enter', side: 'top' })
+			dispatch(view, table.from, { t: 'enter', corner: 'top-left' })
 			return true
 		}
 	}
 	if (key === 'up' || (key === 'left' && caret.head === line.from)) {
+		// ↑ enters the bottom-left; ← wraps into the bottom-right (last) cell, like leftward text motion.
 		const table = edges.find((edge) => view.state.doc.lineAt(edge.to).number === line.number - 1)
 		if (table) {
-			dispatch(view, table.from, { t: 'enter', side: 'bottom' })
+			dispatch(view, table.from, { t: 'enter', corner: key === 'left' ? 'bottom-right' : 'bottom-left' })
 			return true
 		}
 	}

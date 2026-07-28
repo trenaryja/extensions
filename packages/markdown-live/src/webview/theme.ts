@@ -205,17 +205,22 @@ export const markdownLiveTheme = EditorView.theme(
 		// Table widget
 		'.md-table-wrap': {
 			display: 'block',
-			overflowX: 'auto',
+			// Visible overflow so the add "+" bars (absolute, just outside the frame) aren't clipped. The table
+			// itself scrolls inside .md-table-scroll, so wide tables stay contained.
+			overflow: 'visible',
 			padding: '2px 0',
 		},
-		// A grid frame around the table: the table sits top-left, the "+" add bars fill the right and bottom
-		// tracks, and the delete-table button fills the corner. Content-sized so the add bars hug the edges.
+		// Content-sized frame around the table; the add bars are positioned just outside it so they add no
+		// resting height/width. position: relative anchors the selection box + drop indicator.
 		'.md-table-frame': {
-			display: 'inline-grid',
-			gridTemplateColumns: 'auto auto',
-			gridTemplateRows: 'auto auto',
+			display: 'inline-block',
 			position: 'relative',
+			maxWidth: '100%',
 			verticalAlign: 'top',
+		},
+		'.md-table-scroll': {
+			overflowX: 'auto',
+			maxWidth: '100%',
 		},
 		// Source revealed while editing — a monospace container like a code block, so the pipes line up.
 		'.md-table-src': {
@@ -353,14 +358,20 @@ export const markdownLiveTheme = EditorView.theme(
 			transition: 'opacity 0.12s',
 		},
 		'.md-table-add-col': {
-			gridArea: '1 / 2',
-			width: '1.4rem',
+			position: 'absolute',
+			top: '0',
+			bottom: '0',
+			left: '100%',
 			marginLeft: '4px',
+			width: '1.4rem',
 		},
 		'.md-table-add-row': {
-			gridArea: '2 / 1',
-			height: '1.4rem',
+			position: 'absolute',
+			top: '100%',
+			left: '0',
+			right: '0',
 			marginTop: '4px',
+			height: '1.4rem',
 		},
 		'.md-table-frame:hover .md-table-add': {
 			opacity: '1',
@@ -370,15 +381,17 @@ export const markdownLiveTheme = EditorView.theme(
 			background: 'var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.2))',
 			color: 'var(--vscode-editor-foreground)',
 		},
-		// Corner button (bottom-right of the grid): delete the whole table.
+		// Corner button (just past the bottom-right of the table): delete the whole table.
 		'.md-table-corner': {
-			gridArea: '2 / 2',
+			position: 'absolute',
+			top: '100%',
+			left: '100%',
+			margin: '4px 0 0 4px',
 			display: 'flex',
 			alignItems: 'center',
 			justifyContent: 'center',
 			width: '1.4rem',
 			height: '1.4rem',
-			margin: '4px 0 0 4px',
 			background: 'transparent',
 			border: 'none',
 			borderRadius: '4px',

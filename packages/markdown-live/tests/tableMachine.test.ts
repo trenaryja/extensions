@@ -7,13 +7,18 @@ const selected = (a: Cell, f: Cell = a): GridState => ({ mode: 'selected', ancho
 const editing = (c: Cell): GridState => ({ mode: 'editing', cell: c })
 
 describe('entry from the document', () => {
-	test('enter top → header, first column', () => {
-		const { next, effects } = reduce({ mode: 'document' }, { t: 'enter', side: 'top' }, dims)
+	test('enter top-left → header, first column', () => {
+		const { next, effects } = reduce({ mode: 'document' }, { t: 'enter', corner: 'top-left' }, dims)
 		expect(next).toEqual(selected(cell(-1, 0)))
 		expect(effects).toEqual([{ e: 'showSelection', anchor: cell(-1, 0), focus: cell(-1, 0) }, { e: 'focusSink' }])
 	})
-	test('enter bottom → last data row, first column', () => {
-		expect(reduce({ mode: 'document' }, { t: 'enter', side: 'bottom' }, dims).next).toEqual(selected(cell(2, 0)))
+	test('enter bottom-left → last data row, first column', () => {
+		expect(reduce({ mode: 'document' }, { t: 'enter', corner: 'bottom-left' }, dims).next).toEqual(selected(cell(2, 0)))
+	})
+	test('enter bottom-right → last data row, last column', () => {
+		expect(reduce({ mode: 'document' }, { t: 'enter', corner: 'bottom-right' }, dims).next).toEqual(
+			selected(cell(2, 1)),
+		)
 	})
 	test('click selects the clicked cell', () => {
 		expect(reduce({ mode: 'document' }, { t: 'click', cell: cell(1, 1), shift: false }, dims).next).toEqual(
