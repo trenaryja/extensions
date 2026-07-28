@@ -1033,10 +1033,67 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	return false
 }
 
+// ---------- Format on collapse ----------
+
+// When a table stops being shown as raw source (the caret left its lines), pretty-align it — like Prettier's
+// format-on-save, but only for the table you just finished editing. The caret has already left, so there's no
+// in-table caret to preserve. Toggled by markdownLive.formatTablesOnEdit.
+let formatTablesOnEdit = true
+export const setFormatTablesOnEdit = (on: boolean) => {
+	formatTablesOnEdit = on
+}
+
+// Re-serialize the raw source at [from, to] into an aligned table, replacing it only if that changes anything.
+// Bails when the range no longer parses as a table (an abandoned mid-edit) so a malformed source isn't clobbered.
+function reformatTable(view: EditorView, from: number, to: number) {
+	if (to > view.state.doc.length) return
+	const text = view.state.doc.sliceString(from, to)
+	const lines = text.split('\n')
+	if (lines.length < 2 || !isSeparatorRow(lines[1] ?? '')) return
+	const headers = parseRow(lines[0] ?? '')
+	const aligns = parseAligns(lines[1] ?? '', headers.length)
+	const rows = lines
+		.slice(2)
+		.filter((line) => line.includes('|'))
+		.map(parseRow)
+	const formatted = serialize({ headers, aligns, rows, from, to })
+	if (formatted !== text) view.dispatch({ changes: { from, to, insert: formatted } })
+}
+
+// Reformat only a table you actually edited (not one you merely viewed): remember the `from` of a revealed
+// table once an edit lands inside it, and when that table stops being revealed (collapses to the rendered
+// widget) reformat it — deferred, so we don't dispatch mid-update.
+let dirtyFrom: number | null = null // doc position of a revealed, edited table awaiting reformat
+const formatOnCollapse = EditorView.updateListener.of((update) => {
+	if (!formatTablesOnEdit) {
+		dirtyFrom = null
+		return
+	}
+	if (dirtyFrom !== null) dirtyFrom = update.changes.mapPos(dirtyFrom)
+	const revealed = update.state.field(tablesField).raw
+	if (update.docChanged)
+		for (const range of revealed) {
+			let edited = false
+			update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
+				if (fromB <= range.to && toB >= range.from) edited = true
+			})
+			if (edited) dirtyFrom = range.from
+		}
+	if (dirtyFrom === null) return
+	if (revealed.some((range) => range.from === dirtyFrom)) return // still being edited
+	const table = tableEdges(update.state).find((edge) => edge.from === dirtyFrom)
+	dirtyFrom = null
+	if (table) {
+		const { from, to } = table
+		queueMicrotask(() => reformatTable(update.view, from, to))
+	}
+})
+
 // Each rendered table is one atomic range (the caret can't wander into the replaced widget). The keymap turns
 // an arrow that would cross a table edge into a grid entry; from there the interaction machine takes over.
 export const tablesPlugin = [
 	tablesField,
+	formatOnCollapse,
 	EditorView.atomicRanges.of((view) => view.state.field(tablesField).deco),
 	Prec.high(
 		keymap.of([

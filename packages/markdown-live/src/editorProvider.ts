@@ -17,6 +17,7 @@ const readSettings = () => ({
 	callouts: getConfig('markdownLive.callouts'),
 	calloutDefaultTitle: getConfig('markdownLive.calloutDefaultTitle'),
 	mathExportColor: getConfig('markdownLive.mathExportColor'),
+	formatTablesOnEdit: getConfig('markdownLive.formatTablesOnEdit'),
 })
 
 // The most recently active Markdown Live editor — the target for insert commands, since custom editors

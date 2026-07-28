@@ -9,6 +9,7 @@ import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
 import { copyMathAtCursor, setMathExportColor } from './decorations/math'
+import { setFormatTablesOnEdit } from './decorations/tables'
 import { CURSOR } from '../snippets'
 import type { CalloutConfig } from '../callouts.data'
 import { type MermaidRenderMode, refreshMermaidTheme } from './decorations/mermaid'
@@ -48,6 +49,7 @@ type Settings = {
 	callouts: CalloutConfig
 	calloutDefaultTitle: boolean
 	mathExportColor: string
+	formatTablesOnEdit: boolean
 }
 
 type InitMessage = { type: 'init'; content: string; settings: Settings }
@@ -69,6 +71,7 @@ let currentSettings: Settings = {
 	callouts: {},
 	calloutDefaultTitle: true,
 	mathExportColor: 'currentColor',
+	formatTablesOnEdit: true,
 }
 let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
@@ -190,6 +193,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 	if (msg.type === 'init') {
 		currentSettings = msg.settings
 		setMathExportColor(currentSettings.mathExportColor)
+		setFormatTablesOnEdit(currentSettings.formatTablesOnEdit)
 		if (view) {
 			// Already have an editor — just update content and settings
 			applyExternalUpdate(msg.content)
@@ -225,6 +229,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 	if (msg.type === 'settingsUpdate') {
 		currentSettings = msg.settings
 		setMathExportColor(currentSettings.mathExportColor)
+		setFormatTablesOnEdit(currentSettings.formatTablesOnEdit)
 		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
 	}
 })

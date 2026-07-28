@@ -36,6 +36,11 @@ export const configSchema = z.object({
 			'Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.',
 		scope: 'window',
 	}),
+	'markdownLive.formatTablesOnEdit': setting(z.boolean().default(true), {
+		markdownDescription:
+			'Pretty-align a table (pad its columns to equal widths) when you leave its raw source after editing it — like Prettier’s format-on-save, but only for tables. Turn off to keep your hand-tuned spacing.',
+		scope: 'window',
+	}),
 })
 
 export type Config = z.infer<typeof configSchema>
