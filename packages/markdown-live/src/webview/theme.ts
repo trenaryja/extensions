@@ -242,8 +242,21 @@ export const markdownLiveTheme = EditorView.theme(
 			borderBottomLeftRadius: '6px',
 			borderBottomRightRadius: '6px',
 		},
+		// In revealed source, neutralize inline rendering (code/bold/italic/…) — the extra font-size, padding,
+		// and weight would break the monospace column alignment. The raw text stays plain and lined up.
+		'.md-table-src .md-code-inline, .md-table-src .md-bold, .md-table-src .md-italic, .md-table-src .md-strikethrough, .md-table-src .md-link-text':
+			{
+				fontFamily: 'inherit',
+				fontSize: 'inherit',
+				fontWeight: 'inherit',
+				fontStyle: 'inherit',
+				color: 'inherit',
+				background: 'none',
+				padding: '0',
+				borderRadius: '0',
+				textDecoration: 'none',
+			},
 		'.md-table': {
-			gridArea: '1 / 1',
 			borderCollapse: 'collapse',
 			fontSize: '0.875em',
 			textAlign: 'left',

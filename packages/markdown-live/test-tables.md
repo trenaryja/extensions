@@ -20,9 +20,9 @@ Tables are an Excel/Sheets-style data grid, driven by a small state machine (`do
 
 ## Extension Settings
 
-| Setting             | Type     | Default  | Description                       |
+| Setting             | Default  | Type     | Description                       |
 | ------------------- | -------- | -------- | --------------------------------- |
-| `mermaidRenderMode` | `string` | `inline` | How Mermaid diagrams are rendered |
+| `mermaidRenderMode` | `inline` | `string` | How Mermaid diagrams are rendered |
 
 ---
 
@@ -48,7 +48,7 @@ Tables are an Excel/Sheets-style data grid, driven by a small state machine (`do
 
 | Left  |    Center    |                       Right |
 | :---- | :----------: | --------------------------: |
-| apple |    banana    |                      cherry |
+| apple |    banana    |                 cherry |
 | 1     |      2       |                           3 |
 | short | a bit longer | the longest cell value here |
 
