@@ -223,11 +223,14 @@ export const markdownLiveTheme = EditorView.theme(
 			maxWidth: '100%',
 		},
 		// Source revealed while editing — a monospace container like a code block, so the pipes line up.
+		// white-space: pre overrides the editor's line wrapping so a wide table's row keeps its column
+		// alignment and scrolls horizontally (like a code block) instead of wrapping into an unreadable mess.
 		'.md-table-src': {
 			fontFamily: "var(--vscode-editor-font-family, 'SF Mono', Menlo, Consolas, monospace)",
 			fontSize: '0.9em',
 			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
 			padding: '0 1rem',
+			whiteSpace: 'pre',
 		},
 		'.md-table-src-top': {
 			paddingTop: '0.4rem',
