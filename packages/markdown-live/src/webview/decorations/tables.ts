@@ -1,7 +1,13 @@
 import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
-import { docOrSelectionChanged, selectionRangeTouches, selectionTouches } from './active'
+import {
+	docOrSelectionChanged,
+	rawSourceRanges,
+	selectionRangeTouches,
+	selectionTouches,
+	type SourceRange,
+} from './active'
 import { type Cell, type Effect, type GridEvent, type GridState, normalizeRange, reduce } from './tableMachine'
 
 type Align = 'left' | 'center' | 'right' | null
@@ -685,8 +691,9 @@ function makeSink(view: EditorView, from: number) {
 			event.preventDefault()
 			move(key.slice(5).toLowerCase() as 'up' | 'down' | 'left' | 'right', event.shiftKey)
 		} else if (key === 'Enter') {
+			// Enter on a selected cell edits it (like F2); Enter while *editing* commits + moves down (cell handler).
 			event.preventDefault()
-			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'up' : 'down' })
+			dispatch(view, from, { t: 'beginEdit', seed: null })
 		} else if (key === 'Tab') {
 			event.preventDefault()
 			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'left' : 'right' })
@@ -908,8 +915,11 @@ const tableWidget = defineWidget<TableModel>({
 
 // ---------- Builder ----------
 
-function buildTableDecorations(state: EditorState): DecorationSet {
+type TableScan = { deco: DecorationSet; raw: SourceRange[] }
+
+function buildTableDecorations(state: EditorState): TableScan {
 	const builder = new RangeSetBuilder<Decoration>()
+	const raw: SourceRange[] = []
 	const doc = state.doc
 
 	let lineNum = 1
@@ -954,6 +964,7 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model), block: true }))
 		} else {
 			// Reveal just the raw markdown, styled as a monospace box, so what's highlighted is what copies.
+			raw.push({ from, to }) // other plugins skip this range → the source stays byte-accurate
 			for (let sourceLine = lineNum; sourceLine <= endLineNum; sourceLine++) {
 				const lineClass =
 					sourceLine === lineNum
@@ -972,20 +983,23 @@ function buildTableDecorations(state: EditorState): DecorationSet {
 		lineNum = endLineNum + 1
 	}
 
-	return builder.finish()
+	return { deco: builder.finish(), raw }
 }
 
-const tablesField = StateField.define<DecorationSet>({
+const tablesField = StateField.define<TableScan>({
 	create: (state) => buildTableDecorations(state),
-	update: (deco, transaction) => (docOrSelectionChanged(transaction) ? buildTableDecorations(transaction.state) : deco),
-	provide: (field) => EditorView.decorations.from(field),
+	update: (scan, transaction) => (docOrSelectionChanged(transaction) ? buildTableDecorations(transaction.state) : scan),
+	provide: (field) => [
+		EditorView.decorations.from(field, (scan) => scan.deco),
+		rawSourceRanges.from(field, (scan) => scan.raw),
+	],
 })
 
 // The [from, to] range of each *rendered* (atomic) table. Revealed tables carry only zero-width line
 // decorations (from === to), so filtering to from < to leaves just the block-replaced tables.
 function tableEdges(state: EditorState) {
 	const edges: { from: number; to: number }[] = []
-	for (const iter = state.field(tablesField).iter(); iter.value; iter.next())
+	for (const iter = state.field(tablesField).deco.iter(); iter.value; iter.next())
 		if (iter.to > iter.from) edges.push({ from: iter.from, to: iter.to })
 	return edges
 }
@@ -1023,7 +1037,7 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 // an arrow that would cross a table edge into a grid entry; from there the interaction machine takes over.
 export const tablesPlugin = [
 	tablesField,
-	EditorView.atomicRanges.of((view) => view.state.field(tablesField)),
+	EditorView.atomicRanges.of((view) => view.state.field(tablesField).deco),
 	Prec.high(
 		keymap.of([
 			{ key: 'ArrowDown', run: (view) => enterFromDoc(view, 'down') },

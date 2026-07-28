@@ -1,4 +1,15 @@
-import type { EditorState, Transaction } from '@codemirror/state'
+import { type EditorState, Facet, type Transaction } from '@codemirror/state'
+
+export type SourceRange = { from: number; to: number }
+
+// Ranges currently shown as raw markdown source (e.g. a revealed table). Decoration plugins read this and
+// skip these ranges, so the source stays byte-accurate — no inline styling, no hidden syntax delimiters.
+export const rawSourceRanges = Facet.define<readonly SourceRange[], readonly SourceRange[]>({
+	combine: (values) => values.flat(),
+})
+
+export const inRawSource = (ranges: readonly SourceRange[], from: number, to: number) =>
+	ranges.some((range) => from < range.to && to > range.from)
 
 /**
  * Whether any selection range touches `[from, to]`. Used as the "reveal to edit" test: when the

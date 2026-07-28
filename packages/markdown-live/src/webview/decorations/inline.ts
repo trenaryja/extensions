@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { inRawSource, rawSourceRanges } from './active'
 
 // Strikethrough isn't in the CommonMark tree (it's GFM), so it stays a lightweight regex pass.
 const STRIKE_RE = /~~(.+?)~~/g
@@ -27,6 +28,8 @@ function buildInline(view: EditorView): DecorationSet {
 	const add = (from: number, to: number, deco: Decoration) => {
 		if (to > from) ranges.push({ from, to, deco })
 	}
+	// Revealed table source is shown raw — skip it so backticks/asterisks stay visible and widths are exact.
+	const rawRanges = view.state.facet(rawSourceRanges)
 
 	const tree = syntaxTree(view.state)
 	for (const visible of view.visibleRanges) {
@@ -34,6 +37,7 @@ function buildInline(view: EditorView): DecorationSet {
 			from: visible.from,
 			to: visible.to,
 			enter: (node) => {
+				if (inRawSource(rawRanges, node.from, node.to)) return false
 				const spec = INLINE[node.name]
 				if (spec) {
 					// getChildren returns only this node's own marks — nested emphasis is visited separately,
@@ -88,7 +92,7 @@ function buildInline(view: EditorView): DecorationSet {
 		const end = doc.lineAt(visible.to).number
 		for (let lineNum = start; lineNum <= end; lineNum++) {
 			const line = doc.line(lineNum)
-			if (line.text.startsWith('```')) continue
+			if (line.text.startsWith('```') || inRawSource(rawRanges, line.from, line.to)) continue
 			for (const match of line.text.matchAll(STRIKE_RE)) {
 				const from = line.from + match.index!
 				const to = from + match[0].length

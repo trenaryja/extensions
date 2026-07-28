@@ -231,6 +231,9 @@ export const markdownLiveTheme = EditorView.theme(
 			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
 			padding: '0 1rem',
 			whiteSpace: 'pre',
+			// Grow to the line's content width so the box background covers the whole (overflowing) row.
+			width: 'max-content',
+			minWidth: '100%',
 		},
 		'.md-table-src-top': {
 			paddingTop: '0.4rem',
@@ -242,20 +245,6 @@ export const markdownLiveTheme = EditorView.theme(
 			borderBottomLeftRadius: '6px',
 			borderBottomRightRadius: '6px',
 		},
-		// In revealed source, neutralize inline rendering (code/bold/italic/…) — the extra font-size, padding,
-		// and weight would break the monospace column alignment. The raw text stays plain and lined up.
-		'.md-table-src .md-code-inline, .md-table-src .md-bold, .md-table-src .md-italic, .md-table-src .md-strikethrough, .md-table-src .md-link-text':
-			{
-				fontFamily: 'inherit',
-				fontSize: 'inherit',
-				fontWeight: 'inherit',
-				fontStyle: 'inherit',
-				color: 'inherit',
-				background: 'none',
-				padding: '0',
-				borderRadius: '0',
-				textDecoration: 'none',
-			},
 		'.md-table': {
 			borderCollapse: 'collapse',
 			fontSize: '0.875em',
