@@ -339,14 +339,22 @@ export const markdownLiveTheme = EditorView.theme(
 			opacity: '1',
 			background: 'var(--vscode-focusBorder, #007fd4)',
 		},
-		// The drop indicator drawn while dragging a column/row (a line at the target boundary).
-		'.md-drop-indicator': {
-			position: 'absolute',
+		// While a column/row is being dragged: grabbing cursor everywhere, no text selection, keep the grip lit.
+		'.md-dragging-col, .md-dragging-row, .md-dragging-col *, .md-dragging-row *': {
+			cursor: 'grabbing !important',
+			userSelect: 'none',
+		},
+		'.md-dragging-col .md-col-handle, .md-dragging-row .md-row-handle': {
+			opacity: '1',
 			background: 'var(--vscode-focusBorder, #007fd4)',
-			borderRadius: '1px',
-			opacity: '0',
-			pointerEvents: 'none',
-			zIndex: '4',
+		},
+		// The grabbed column/row: lifted above the sliding others, tinted so you can see what you're moving.
+		'.md-drag-lift': {
+			position: 'relative',
+			zIndex: '6',
+			background:
+				'color-mix(in srgb, var(--vscode-focusBorder, #007fd4) 16%, var(--vscode-editor-background, #1e1e1e))',
+			boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
 		},
 		// Edge "+" bars: add a column on the right, a row below. Revealed on hover of the frame.
 		'.md-table-add': {

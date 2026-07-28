@@ -341,29 +341,107 @@ const dropIndexAt = (bounds: { start: number; end: number }[], pos: number) => {
 	return bounds.length
 }
 
-// A handle can be dragged (reorder) or clicked (open menu). A small movement threshold separates the two.
-function attachHandle(
+type DragItem = { cells: HTMLElement[]; start: number; size: number }
+
+// Every column (header cell + its data cells) or every data row, with its position along the drag axis.
+// Captured at drag start — a drag makes no document edit until the drop, so the widget DOM is frozen and we
+// can animate it freely with transforms.
+function collectDragItems(table: HTMLElement, axis: 'col' | 'row'): DragItem[] {
+	const rows = [...table.querySelectorAll('tbody tr')] as HTMLElement[]
+	if (axis === 'row')
+		return rows.map((tr) => {
+			const rect = tr.getBoundingClientRect()
+			return { cells: [tr], start: rect.top, size: rect.height }
+		})
+	const headers = [...table.querySelectorAll('thead th')] as HTMLElement[]
+	return headers.map((th, col) => {
+		const cells = [th, ...rows.map((tr) => tr.children[col])].filter(Boolean) as HTMLElement[]
+		const rect = th.getBoundingClientRect()
+		return { cells, start: rect.left, size: rect.width }
+	})
+}
+
+// Each item's target start after moving `from` before `to`, laid out edge-to-edge from the first item's start.
+function targetStarts(starts: number[], sizes: number[], from: number, to: number) {
+	const order = moveAt([...starts.keys()], from, to)
+	const result = new Array<number>(starts.length)
+	let cursor = starts[0] ?? 0
+	for (const idx of order) {
+		result[idx] = cursor
+		cursor += sizes[idx] ?? 0
+	}
+	return result
+}
+
+const offsetCells = (cells: HTMLElement[], axis: 'col' | 'row', offset: number, animate: boolean) => {
+	for (const cell of cells) {
+		cell.style.transition = animate ? 'transform 0.16s ease' : 'none'
+		cell.style.transform = offset ? (axis === 'col' ? `translateX(${offset}px)` : `translateY(${offset}px)`) : ''
+	}
+}
+
+// A grip either reorders its column/row or opens its menu. Dragging lifts the grabbed item to follow the
+// pointer, slides the others aside to open a gap where it will land, and settles it into the gap on release —
+// then commits the markdown rewrite (whose rebuilt DOM matches the settled layout, so there's no flash).
+function attachReorder(
 	handle: HTMLElement,
+	axis: 'col' | 'row',
+	index: number,
+	frame: HTMLElement,
+	table: HTMLElement,
 	onClick: () => void,
-	drag: (event: PointerEvent, first: boolean) => void,
-	onDrop: () => void,
+	commit: (to: number) => void,
 ) {
 	handle.addEventListener('pointerdown', (down) => {
 		down.preventDefault()
 		down.stopPropagation()
 		handle.setPointerCapture(down.pointerId)
+		const axisPos = (event: PointerEvent) => (axis === 'col' ? event.clientX : event.clientY)
+		const origin = axisPos(down)
 		let dragging = false
+		let items: DragItem[] = []
+		let starts: number[] = []
+		let sizes: number[] = []
+		let drop = index
+
 		const move = (event: PointerEvent) => {
-			if (!dragging && Math.abs(event.clientX - down.clientX) + Math.abs(event.clientY - down.clientY) < 4) return
-			drag(event, !dragging)
-			dragging = true
+			if (!dragging) {
+				if (Math.abs(event.clientX - down.clientX) + Math.abs(event.clientY - down.clientY) < 4) return
+				dragging = true
+				items = collectDragItems(table, axis)
+				starts = items.map((item) => item.start)
+				sizes = items.map((item) => item.size)
+				frame.classList.add(`md-dragging-${axis}`)
+				for (const cell of items[index]?.cells ?? []) cell.classList.add('md-drag-lift')
+			}
+			offsetCells(items[index]?.cells ?? [], axis, axisPos(event) - origin, false) // grabbed item tracks the pointer
+			drop = dropIndexAt(
+				items.map((item) => ({ start: item.start, end: item.start + item.size })),
+				axisPos(event),
+			)
+			const targets = targetStarts(starts, sizes, index, drop)
+			items.forEach((item, i) => {
+				if (i !== index) offsetCells(item.cells, axis, (targets[i] ?? item.start) - item.start, true)
+			})
 		}
 		const up = () => {
 			handle.removeEventListener('pointermove', move)
 			handle.removeEventListener('pointerup', up)
 			handle.releasePointerCapture(down.pointerId)
-			if (dragging) onDrop()
-			else onClick()
+			if (!dragging) return onClick()
+			const targets = targetStarts(starts, sizes, index, drop)
+			offsetCells(items[index]?.cells ?? [], axis, (targets[index] ?? 0) - (starts[index] ?? 0), true) // settle into the gap
+			const moved = drop !== index && drop !== index + 1
+			setTimeout(() => {
+				frame.classList.remove(`md-dragging-${axis}`)
+				if (moved) return commit(drop) // rewrite: the rebuilt DOM already matches the settled layout
+				for (const item of items)
+					for (const cell of item.cells) {
+						cell.style.transform = ''
+						cell.style.transition = ''
+						cell.classList.remove('md-drag-lift')
+					}
+			}, 170)
 		}
 		handle.addEventListener('pointermove', move)
 		handle.addEventListener('pointerup', up)
@@ -820,26 +898,9 @@ const tableWidget = defineWidget<TableModel>({
 		modelOf.set(table, model)
 		scroll.append(table)
 
-		const indicator = document.createElement('div')
-		indicator.className = 'md-drop-indicator'
-		frame.append(indicator)
-
 		const selBox = document.createElement('div')
 		selBox.className = 'md-grid-selbox'
 		frame.append(selBox, makeSink(view, model.from))
-
-		const showIndicator = (vertical: boolean, offset: number) => {
-			const frameRect = frame.getBoundingClientRect()
-			indicator.style.opacity = '1'
-			if (vertical) {
-				indicator.style.cssText = `opacity:1;top:0;height:${table.offsetHeight}px;width:2px;left:${offset - frameRect.left}px`
-			} else {
-				indicator.style.cssText = `opacity:1;left:0;width:${table.offsetWidth}px;height:2px;top:${offset - frameRect.top}px`
-			}
-		}
-		const hideIndicator = () => {
-			indicator.style.cssText = ''
-		}
 
 		const headerRow = table.createTHead().insertRow()
 		model.headers.forEach((header, col) => {
@@ -849,23 +910,14 @@ const tableWidget = defineWidget<TableModel>({
 			const handle = document.createElement('div')
 			handle.className = 'md-col-handle'
 			handle.title = 'Drag to move · click for options'
-			let dropIndex = col
-			attachHandle(
+			attachReorder(
 				handle,
+				'col',
+				col,
+				frame,
+				table,
 				() => columnMenu(view, handle, model, col),
-				(event) => {
-					const cells = [...table.querySelectorAll('thead th')].map((cell) => {
-						const rect = cell.getBoundingClientRect()
-						return { start: rect.left, end: rect.right }
-					})
-					dropIndex = dropIndexAt(cells, event.clientX)
-					const edge = dropIndex < cells.length ? cells[dropIndex]?.start : cells.at(-1)?.end
-					if (edge != null) showIndicator(true, edge)
-				},
-				() => {
-					hideIndicator()
-					if (dropIndex !== col && dropIndex !== col + 1) rewrite(view, model, moveColumn(model, col, dropIndex))
-				},
+				(to) => rewrite(view, model, moveColumn(model, col, to)),
 			)
 			th.append(handle)
 
@@ -890,24 +942,14 @@ const tableWidget = defineWidget<TableModel>({
 					const handle = document.createElement('div')
 					handle.className = 'md-row-handle'
 					handle.title = 'Drag to move · click for options'
-					let dropIndex = rowIndex
-					attachHandle(
+					attachReorder(
 						handle,
+						'row',
+						rowIndex,
+						frame,
+						table,
 						() => rowMenu(view, handle, model, rowIndex),
-						(event) => {
-							const cells = [...table.querySelectorAll('tbody tr')].map((cell) => {
-								const rect = cell.getBoundingClientRect()
-								return { start: rect.top, end: rect.bottom }
-							})
-							dropIndex = dropIndexAt(cells, event.clientY)
-							const edge = dropIndex < cells.length ? cells[dropIndex]?.start : cells.at(-1)?.end
-							if (edge != null) showIndicator(false, edge)
-						},
-						() => {
-							hideIndicator()
-							if (dropIndex !== rowIndex && dropIndex !== rowIndex + 1)
-								rewrite(view, model, moveRow(model, rowIndex, dropIndex))
-						},
+						(to) => rewrite(view, model, moveRow(model, rowIndex, to)),
 					)
 					td.append(handle)
 				}
