@@ -418,34 +418,30 @@ const cellTd = (table: HTMLElement, cell: Cell): HTMLElement | undefined => {
 const cellContentEl = (table: HTMLElement, cell: Cell) =>
 	cellTd(table, cell)?.querySelector('.md-td-content') as HTMLElement | undefined
 
-function placeCaretEnd(el: HTMLElement) {
+const placeCaret = (el: HTMLElement, toStart: boolean) => {
 	const range = document.createRange()
 	range.selectNodeContents(el)
-	range.collapse(false)
+	range.collapse(toStart)
 	const selection = window.getSelection()
 	selection?.removeAllRanges()
 	selection?.addRange(range)
 }
+const placeCaretEnd = (el: HTMLElement) => placeCaret(el, false)
+const placeCaretStart = (el: HTMLElement) => placeCaret(el, true)
 
-// Is the caret at the very start / end of this (single-text-node) editing cell? — the edge that spills over.
-const caretAtStart = (el: HTMLElement) => {
+// Is the caret at the very start / end of this editing cell? Range-based, so it holds regardless of whether the
+// browser anchored the caret in the text node or on the element (e.g. right after we collapse it to the end).
+const caretAtEdge = (el: HTMLElement, atStart: boolean) => {
 	const selection = window.getSelection()
-	return (
-		!!selection?.isCollapsed &&
-		!!selection.anchorNode &&
-		el.contains(selection.anchorNode) &&
-		selection.anchorOffset === 0
-	)
+	if (!selection?.isCollapsed || !selection.anchorNode || !el.contains(selection.anchorNode)) return false
+	const range = document.createRange()
+	range.selectNodeContents(el)
+	if (atStart) range.setEnd(selection.anchorNode, selection.anchorOffset)
+	else range.setStart(selection.anchorNode, selection.anchorOffset)
+	return range.toString().length === 0 // nothing between the caret and that edge
 }
-const caretAtEnd = (el: HTMLElement) => {
-	const selection = window.getSelection()
-	return (
-		!!selection?.isCollapsed &&
-		!!selection.anchorNode &&
-		el.contains(selection.anchorNode) &&
-		selection.anchorOffset === (el.textContent ?? '').length
-	)
-}
+const caretAtStart = (el: HTMLElement) => caretAtEdge(el, true)
+const caretAtEnd = (el: HTMLElement) => caretAtEdge(el, false)
 
 // The selection box is one overlay positioned over the range's bounding rect (relative to the frame).
 function positionBox(ctx: Ctx, anchor: Cell, focus: Cell) {
@@ -535,12 +531,14 @@ function pasteRange(ctx: Ctx, cell: Cell) {
 function runEffect(effect: Effect, ctx: Ctx) {
 	switch (effect.e) {
 		case 'focusCell': {
-			const el = cellContentEl(ctx.table, effect.cell)
+			// A preceding `commit` in the same event may have rebuilt the widget → resolve against the fresh DOM.
+			const el = cellContentEl(ctxFor(ctx.view, ctx.from)?.table ?? ctx.table, effect.cell)
 			if (!el) return
 			el.contentEditable = 'true'
 			el.textContent = effect.seed ?? el.dataset.raw ?? ''
 			el.focus({ preventScroll: true })
-			placeCaretEnd(el)
+			if (effect.caret === 'start') placeCaretStart(el)
+			else placeCaretEnd(el)
 			return
 		}
 		case 'commit': {
@@ -565,10 +563,9 @@ function runEffect(effect: Effect, ctx: Ctx) {
 			return
 		}
 		case 'exitDoc': {
+			const model = ctxFor(ctx.view, ctx.from)?.model ?? ctx.model // fresh: a preceding commit may have resized it
 			const anchor =
-				effect.side === 'bottom'
-					? Math.min(ctx.model.to + 1, ctx.view.state.doc.length)
-					: Math.max(ctx.model.from - 1, 0)
+				effect.side === 'bottom' ? Math.min(model.to + 1, ctx.view.state.doc.length) : Math.max(model.from - 1, 0)
 			ctx.view.dispatch({ selection: { anchor }, scrollIntoView: true })
 			ctx.view.focus()
 			return

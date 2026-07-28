@@ -31,7 +31,7 @@ export type GridEvent =
 
 export type Effect =
 	| { e: 'focusSink' } // park focus on the hidden key/paste sink (selected mode)
-	| { e: 'focusCell'; cell: Cell; seed: string | null } // enter editing; seed replaces content, null = edit as-is
+	| { e: 'focusCell'; cell: Cell; seed: string | null; caret?: 'start' | 'end' } // enter editing (caret defaults to end)
 	| { e: 'commit'; cell: Cell } // read the editing cell's DOM text → write it to the document
 	| { e: 'cancelEdit'; cell: Cell } // discard the editing cell's DOM text → re-render from the model
 	| { e: 'showSelection'; anchor: Cell; focus: Cell }
@@ -174,17 +174,15 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 					}
 		}
 		case 'edgeStep': {
-			// The caret reached the cell's start/end — spill to the neighbouring cell (committing first), landing
-			// selected. Clamps at the row's ends (no wrap) so a stray arrow can't jump rows.
-			const col = event.dir === 'right' ? state.cell.col + 1 : state.cell.col - 1
-			if (col < 0 || col >= dims.cols) return { next: state, effects: [] }
-			const target: Cell = { row: state.cell.row, col }
+			// The caret reached the cell's start/end — keep traversing the source: commit, then edit the next cell
+			// (→ lands at its start, ← at its end), wrapping across rows and exiting the table at the far ends.
+			const target = commitStep(state.cell, event.dir, dims)
+			if (target === 'top' || target === 'bottom') return exitDoc(target, [{ e: 'commit', cell: state.cell }])
 			return {
-				next: { mode: 'selected', anchor: target, focus: target },
+				next: { mode: 'editing', cell: target },
 				effects: [
 					{ e: 'commit', cell: state.cell },
-					{ e: 'showSelection', anchor: target, focus: target },
-					{ e: 'focusSink' },
+					{ e: 'focusCell', cell: target, seed: null, caret: event.dir === 'right' ? 'start' : 'end' },
 				],
 			}
 		}
