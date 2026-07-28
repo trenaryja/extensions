@@ -157,6 +157,20 @@ describe('entering / leaving edit', () => {
 	test('edgeStep left at the header first cell exits above', () => {
 		expect(reduce(editing(cell(-1, 0)), { t: 'edgeStep', dir: 'left' }, dims).next).toEqual({ mode: 'document' })
 	})
+	test('edgeStep down → edits the cell below at its start', () => {
+		const { next, effects } = reduce(editing(cell(0, 0)), { t: 'edgeStep', dir: 'down' }, dims)
+		expect(next).toEqual(editing(cell(1, 0)))
+		expect(effects[1]).toEqual({ e: 'focusCell', cell: cell(1, 0), seed: null, caret: 'start' })
+	})
+	test('edgeStep up → edits the cell above at its end (into the header)', () => {
+		const { next, effects } = reduce(editing(cell(0, 0)), { t: 'edgeStep', dir: 'up' }, dims)
+		expect(next).toEqual(editing(cell(-1, 0)))
+		expect(effects[1]).toEqual({ e: 'focusCell', cell: cell(-1, 0), seed: null, caret: 'end' })
+	})
+	test('edgeStep down at the last row exits below; up at the header exits above', () => {
+		expect(reduce(editing(cell(2, 0)), { t: 'edgeStep', dir: 'down' }, dims).next).toEqual({ mode: 'document' })
+		expect(reduce(editing(cell(-1, 0)), { t: 'edgeStep', dir: 'up' }, dims).next).toEqual({ mode: 'document' })
+	})
 	test('arrows/typing inside a cell are native no-ops', () => {
 		expect(reduce(editing(cell(0, 0)), { t: 'move', dir: 'left', shift: false }, dims)).toEqual({
 			next: editing(cell(0, 0)),

@@ -665,12 +665,20 @@ function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorVie
 			event.preventDefault()
 			dispatch(view, from, { t: 'escape' })
 		} else if (event.key === 'ArrowRight' && caretAtEnd(content)) {
-			// Caret at the text edge → spill to the neighbouring cell; mid-text, let the browser move the caret.
+			// Horizontal: spill only at the text edge; mid-text, let the browser move the caret.
 			event.preventDefault()
 			dispatch(view, from, { t: 'edgeStep', dir: 'right' })
 		} else if (event.key === 'ArrowLeft' && caretAtStart(content)) {
 			event.preventDefault()
 			dispatch(view, from, { t: 'edgeStep', dir: 'left' })
+		} else if (event.key === 'ArrowDown') {
+			// Vertical: a cell is a single line, so ↑/↓ always move to the neighbouring row (and must be caught —
+			// the native caret would otherwise escape the cell and blur out of the table).
+			event.preventDefault()
+			dispatch(view, from, { t: 'edgeStep', dir: 'down' })
+		} else if (event.key === 'ArrowUp') {
+			event.preventDefault()
+			dispatch(view, from, { t: 'edgeStep', dir: 'up' })
 		}
 	})
 	content.addEventListener('blur', () => {

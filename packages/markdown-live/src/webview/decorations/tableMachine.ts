@@ -17,7 +17,7 @@ export type GridEvent =
 	| { t: 'enter'; corner: 'top-left' | 'bottom-left' | 'bottom-right' }
 	| { t: 'move'; dir: Dir; shift: boolean } // arrow while selected (shift = grow the range)
 	| { t: 'commitMove'; dir: Dir } // Enter=down, Shift+Enter=up, Tab=right, Shift+Tab=left
-	| { t: 'edgeStep'; dir: 'left' | 'right' } // arrow at a cell's text edge while editing → adjacent cell
+	| { t: 'edgeStep'; dir: Dir } // arrow leaving a cell while editing → the adjacent cell (traverse the source)
 	| { t: 'beginEdit'; seed: string | null } // F2/double-click (seed null) or type-to-replace (seed = char)
 	| { t: 'escape' }
 	| { t: 'click'; cell: Cell; shift: boolean }
@@ -174,15 +174,17 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 					}
 		}
 		case 'edgeStep': {
-			// The caret reached the cell's start/end — keep traversing the source: commit, then edit the next cell
-			// (→ lands at its start, ← at its end), wrapping across rows and exiting the table at the far ends.
+			// The caret left the cell (a text edge for ← →, always for ↑ ↓) — keep traversing the source: commit,
+			// then edit the adjacent cell (forward → its start, backward → its end), wrapping across rows for ← →
+			// and exiting the table at the far ends.
 			const target = commitStep(state.cell, event.dir, dims)
 			if (target === 'top' || target === 'bottom') return exitDoc(target, [{ e: 'commit', cell: state.cell }])
+			const forward = event.dir === 'right' || event.dir === 'down'
 			return {
 				next: { mode: 'editing', cell: target },
 				effects: [
 					{ e: 'commit', cell: state.cell },
-					{ e: 'focusCell', cell: target, seed: null, caret: event.dir === 'right' ? 'start' : 'end' },
+					{ e: 'focusCell', cell: target, seed: null, caret: forward ? 'start' : 'end' },
 				],
 			}
 		}
