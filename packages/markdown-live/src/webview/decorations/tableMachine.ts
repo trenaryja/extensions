@@ -17,6 +17,7 @@ export type GridEvent =
 	| { t: 'enter'; corner: 'top-left' | 'bottom-left' | 'bottom-right' }
 	| { t: 'move'; dir: Dir; shift: boolean } // arrow while selected (shift = grow the range)
 	| { t: 'commitMove'; dir: Dir } // Enter=down, Shift+Enter=up, Tab=right, Shift+Tab=left
+	| { t: 'edgeStep'; dir: 'left' | 'right' } // arrow at a cell's text edge while editing → adjacent cell
 	| { t: 'beginEdit'; seed: string | null } // F2/double-click (seed null) or type-to-replace (seed = char)
 	| { t: 'escape' }
 	| { t: 'click'; cell: Cell; shift: boolean }
@@ -171,6 +172,21 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 							{ e: 'focusSink' },
 						],
 					}
+		}
+		case 'edgeStep': {
+			// The caret reached the cell's start/end — spill to the neighbouring cell (committing first), landing
+			// selected. Clamps at the row's ends (no wrap) so a stray arrow can't jump rows.
+			const col = event.dir === 'right' ? state.cell.col + 1 : state.cell.col - 1
+			if (col < 0 || col >= dims.cols) return { next: state, effects: [] }
+			const target: Cell = { row: state.cell.row, col }
+			return {
+				next: { mode: 'selected', anchor: target, focus: target },
+				effects: [
+					{ e: 'commit', cell: state.cell },
+					{ e: 'showSelection', anchor: target, focus: target },
+					{ e: 'focusSink' },
+				],
+			}
 		}
 		case 'escape':
 			return {

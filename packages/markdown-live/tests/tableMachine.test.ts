@@ -130,6 +130,24 @@ describe('entering / leaving edit', () => {
 		expect(next).toEqual(selected(cell(2, 1)))
 		expect(effects[0]).toEqual({ e: 'commit', cell: cell(0, 0) })
 	})
+	test('edgeStep spills to the neighbouring cell (selected) and commits', () => {
+		const { next, effects } = reduce(editing(cell(0, 0)), { t: 'edgeStep', dir: 'right' }, dims)
+		expect(next).toEqual(selected(cell(0, 1)))
+		expect(effects[0]).toEqual({ e: 'commit', cell: cell(0, 0) })
+	})
+	test('edgeStep left goes to the previous cell', () => {
+		expect(reduce(editing(cell(0, 1)), { t: 'edgeStep', dir: 'left' }, dims).next).toEqual(selected(cell(0, 0)))
+	})
+	test('edgeStep clamps at the row ends (no wrap, stays editing)', () => {
+		expect(reduce(editing(cell(0, 1)), { t: 'edgeStep', dir: 'right' }, dims)).toEqual({
+			next: editing(cell(0, 1)),
+			effects: [],
+		})
+		expect(reduce(editing(cell(0, 0)), { t: 'edgeStep', dir: 'left' }, dims)).toEqual({
+			next: editing(cell(0, 0)),
+			effects: [],
+		})
+	})
 	test('arrows/typing inside a cell are native no-ops', () => {
 		expect(reduce(editing(cell(0, 0)), { t: 'move', dir: 'left', shift: false }, dims)).toEqual({
 			next: editing(cell(0, 0)),

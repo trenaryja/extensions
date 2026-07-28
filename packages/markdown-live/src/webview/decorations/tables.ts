@@ -427,6 +427,26 @@ function placeCaretEnd(el: HTMLElement) {
 	selection?.addRange(range)
 }
 
+// Is the caret at the very start / end of this (single-text-node) editing cell? — the edge that spills over.
+const caretAtStart = (el: HTMLElement) => {
+	const selection = window.getSelection()
+	return (
+		!!selection?.isCollapsed &&
+		!!selection.anchorNode &&
+		el.contains(selection.anchorNode) &&
+		selection.anchorOffset === 0
+	)
+}
+const caretAtEnd = (el: HTMLElement) => {
+	const selection = window.getSelection()
+	return (
+		!!selection?.isCollapsed &&
+		!!selection.anchorNode &&
+		el.contains(selection.anchorNode) &&
+		selection.anchorOffset === (el.textContent ?? '').length
+	)
+}
+
 // The selection box is one overlay positioned over the range's bounding rect (relative to the frame).
 function positionBox(ctx: Ctx, anchor: Cell, focus: Cell) {
 	const a = cellTd(ctx.table, anchor)
@@ -612,7 +632,8 @@ function leaveGrid(view: EditorView) {
 // ---------- Interaction: cell wiring ----------
 
 // A cell shows rendered inline markdown and is inert until the machine puts it into edit mode. Click selects,
-// double-click edits; while editing, Enter/Tab/Escape are routed to the machine and arrows/typing are native.
+// double-click edits; while editing, Enter/Tab/Escape and edge arrows route to the machine, mid-text arrows and
+// typing are native (the caret only spills to a neighbour once it reaches the cell's start/end).
 function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorView, from: number) {
 	content.className = 'md-td-content'
 	content.dataset.raw = raw
@@ -646,6 +667,13 @@ function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorVie
 		} else if (event.key === 'Escape') {
 			event.preventDefault()
 			dispatch(view, from, { t: 'escape' })
+		} else if (event.key === 'ArrowRight' && caretAtEnd(content)) {
+			// Caret at the text edge → spill to the neighbouring cell; mid-text, let the browser move the caret.
+			event.preventDefault()
+			dispatch(view, from, { t: 'edgeStep', dir: 'right' })
+		} else if (event.key === 'ArrowLeft' && caretAtStart(content)) {
+			event.preventDefault()
+			dispatch(view, from, { t: 'edgeStep', dir: 'left' })
 		}
 	})
 	content.addEventListener('blur', () => {
