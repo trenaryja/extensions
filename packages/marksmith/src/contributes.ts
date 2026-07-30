@@ -21,6 +21,32 @@ export const customEditors = [
 	},
 ]
 
+/** Get Started walkthrough — surfaced in VS Code's welcome area on install (non-obtrusive), fed via `extra`. */
+export const walkthroughs = [
+	{
+		id: 'marksmith.gettingStarted',
+		title: 'Get Started with Marksmith',
+		description: 'A live markdown editor that treats your notes like a craft.',
+		steps: [
+			{
+				id: 'playground',
+				title: 'Open the playground',
+				description:
+					'Marksmith renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:marksmith.openPlayground)',
+				media: { markdown: 'assets/walkthrough/playground.md' },
+				completionEvents: ['onCommand:marksmith.openPlayground'],
+			},
+			{
+				id: 'editing',
+				title: "It's your markdown editor now",
+				description:
+					'Marksmith is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).',
+				media: { markdown: 'assets/walkthrough/editing.md' },
+			},
+		],
+	},
+]
+
 // Tracks each document's current mode so the toggle command can flip between the live editor and raw text.
 const modeMap = new Map<string, 'preview' | 'raw'>()
 
@@ -97,6 +123,25 @@ export const commands = defineCommands([
 		category: 'Marksmith',
 		menus: PALETTE_MD,
 		handler: async () => (await import('./editorProvider')).copyMathFromActiveEditor(),
+	},
+	{
+		command: 'marksmith.openPlayground',
+		title: 'Open Playground',
+		category: 'Marksmith',
+		icon: '$(rocket)',
+		// No `menus` → always available in the palette, even with no markdown file open (that's the whole point).
+		handler: async ({ vscode, context }) => {
+			const source = vscode.Uri.joinPath(context.extensionUri, 'assets', 'playground.md')
+			const scratch = vscode.Uri.joinPath(context.globalStorageUri, 'Marksmith Playground.md')
+			// Seed an editable scratch copy on first open (never in the user's workspace); keep their edits afterward.
+			await vscode.workspace.fs.createDirectory(context.globalStorageUri)
+			const exists = await vscode.workspace.fs.stat(scratch).then(
+				() => true,
+				() => false,
+			)
+			if (!exists) await vscode.workspace.fs.copy(source, scratch)
+			await vscode.commands.executeCommand('vscode.openWith', scratch, EDITOR_VIEW_TYPE)
+		},
 	},
 ] as const)
 

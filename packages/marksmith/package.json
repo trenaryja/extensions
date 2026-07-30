@@ -60,6 +60,34 @@
 	],
 	"activationEvents": [],
 	"contributes": {
+		"walkthroughs": [
+			{
+				"id": "marksmith.gettingStarted",
+				"title": "Get Started with Marksmith",
+				"description": "A live markdown editor that treats your notes like a craft.",
+				"steps": [
+					{
+						"id": "playground",
+						"title": "Open the playground",
+						"description": "Marksmith renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:marksmith.openPlayground)",
+						"media": {
+							"markdown": "assets/walkthrough/playground.md"
+						},
+						"completionEvents": [
+							"onCommand:marksmith.openPlayground"
+						]
+					},
+					{
+						"id": "editing",
+						"title": "It's your markdown editor now",
+						"description": "Marksmith is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).",
+						"media": {
+							"markdown": "assets/walkthrough/editing.md"
+						}
+					}
+				]
+			}
+		],
 		"commands": [
 			{
 				"command": "marksmith.toggle",
@@ -86,6 +114,12 @@
 				"command": "marksmith.copyMathSvg",
 				"title": "Copy Equation as SVG",
 				"category": "Marksmith"
+			},
+			{
+				"command": "marksmith.openPlayground",
+				"title": "Open Playground",
+				"category": "Marksmith",
+				"icon": "$(rocket)"
 			}
 		],
 		"keybindings": [
