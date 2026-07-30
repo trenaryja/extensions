@@ -102,11 +102,20 @@ const moveAt = <T>(list: T[], from: number, to: number) => {
 	return insertAt(removeAt(list, from), to > from ? to - 1 : to, value)
 }
 
+// Write `value` at `col`, padding a ragged row with empty cells so `col` is addressable. GFM lets a row hold
+// fewer cells than the header, yet the grid renders (and lets you edit) the full width — without the pad, an
+// edit to one of those phantom cells would map over a too-short row, no-op, and serialize away silently.
+const withCell = (row: string[], col: number, value: string) => {
+	const next = col < row.length ? [...row] : [...row, ...Array<string>(col - row.length + 1).fill('')]
+	next[col] = value
+	return next
+}
+
 // rowIndex -1 targets the header row.
 const setCell = (model: TableModel, rowIndex: number, col: number, value: string): TableModel =>
 	rowIndex < 0
 		? { ...model, headers: replaceAt(model.headers, col, value) }
-		: { ...model, rows: replaceAt(model.rows, rowIndex, replaceAt(model.rows[rowIndex] ?? [], col, value)) }
+		: { ...model, rows: replaceAt(model.rows, rowIndex, withCell(model.rows[rowIndex] ?? [], col, value)) }
 
 const emptyRow = (model: TableModel) => model.headers.map(() => '')
 const insertRow = (model: TableModel, at: number): TableModel => ({
@@ -424,27 +433,41 @@ function attachReorder(
 				if (i !== index) offsetCells(item.cells, axis, (targets[i] ?? item.start) - item.start, true)
 			})
 		}
-		const up = () => {
+		const finishListeners = () => {
 			handle.removeEventListener('pointermove', move)
 			handle.removeEventListener('pointerup', up)
-			handle.releasePointerCapture(down.pointerId)
+			handle.removeEventListener('pointercancel', cancel)
+			if (handle.hasPointerCapture(down.pointerId)) handle.releasePointerCapture(down.pointerId)
+		}
+		const clearDrag = () => {
+			frame.classList.remove(`md-dragging-${axis}`)
+			for (const item of items)
+				for (const cell of item.cells) {
+					cell.style.transform = ''
+					cell.style.transition = ''
+					cell.classList.remove('md-drag-lift')
+				}
+		}
+		// A drag can end without a pointerup — a touch/gesture interruption or the browser stealing the capture.
+		// Reset so the widget isn't stranded in drag-visual state with the move/up listeners still attached.
+		const cancel = () => {
+			finishListeners()
+			if (dragging) clearDrag()
+		}
+		const up = () => {
+			finishListeners()
 			if (!dragging) return onClick()
 			const targets = targetStarts(starts, sizes, index, drop)
 			offsetCells(items[index]?.cells ?? [], axis, (targets[index] ?? 0) - (starts[index] ?? 0), true) // settle into the gap
 			const moved = drop !== index && drop !== index + 1
 			setTimeout(() => {
-				frame.classList.remove(`md-dragging-${axis}`)
 				if (moved) return commit(drop) // rewrite: the rebuilt DOM already matches the settled layout
-				for (const item of items)
-					for (const cell of item.cells) {
-						cell.style.transform = ''
-						cell.style.transition = ''
-						cell.classList.remove('md-drag-lift')
-					}
+				clearDrag()
 			}, 170)
 		}
 		handle.addEventListener('pointermove', move)
 		handle.addEventListener('pointerup', up)
+		handle.addEventListener('pointercancel', cancel)
 	})
 }
 
@@ -658,21 +681,35 @@ function runEffect(effect: Effect, ctx: Ctx) {
 	}
 }
 
-// Re-derive the visual (selection box + which element holds focus) from the current state and DOM.
+// Re-derive the visual (selection box + which element holds focus) from the current state and DOM. Only the
+// *active* table drives focus: every rebuilt widget schedules a deferred applyVisual, so without this guard a
+// non-active table rebuilding while another is selected would steal the sink focus back to itself.
 function applyVisual(ctx: Ctx | null) {
 	if (!ctx) return
-	if (gridState.mode === 'selected') {
+	if (gridState.mode === 'selected' && ctx.from === activeFrom) {
 		positionBox(ctx, gridState.anchor, gridState.focus)
 		if (document.activeElement !== ctx.sink) ctx.sink.focus({ preventScroll: true })
 	} else hideBox(ctx)
 }
 
+const dimsOf = (model: TableModel) => ({ rows: model.rows.length, cols: model.headers.length })
+
 // Send an event to the machine for table `from`, run its effects, then re-apply the visual to the fresh DOM.
-function dispatch(view: EditorView, from: number, event: GridEvent) {
-	// Switching tables (click/enter into a different one) — tidy up the previous grid first.
+function dispatch(view: EditorView, initialFrom: number, event: GridEvent) {
+	let from = initialFrom
+	// Switching tables (click/enter into a different one) — commit any in-progress edit on the previous grid
+	// before leaving it (else the uncommitted text is silently lost), then tidy it up.
 	if ((event.t === 'click' || event.t === 'enter') && activeFrom !== null && activeFrom !== from) {
 		const previous = ctxFor(view, activeFrom)
-		if (previous) hideBox(previous)
+		if (previous) {
+			const lengthBefore = view.state.doc.length
+			for (const effect of reduce(gridState, { t: 'exit' }, dimsOf(previous.model)).effects) runEffect(effect, previous)
+			// A commit that reflowed the previous table shifts every position after it — including our target
+			// `from` when the clicked table sits below the one we just left.
+			if (activeFrom < from) from += view.state.doc.length - lengthBefore
+			const settled = ctxFor(view, activeFrom)
+			if (settled) hideBox(settled)
+		}
 		gridState = { mode: 'document' }
 	}
 	const ctx = ctxFor(view, from)
@@ -680,7 +717,7 @@ function dispatch(view: EditorView, from: number, event: GridEvent) {
 	const enteringGrid = gridState.mode === 'document'
 	activeFrom = from
 	activeView = view
-	const dims = { rows: ctx.model.rows.length, cols: ctx.model.headers.length }
+	const dims = dimsOf(ctx.model)
 	const { next, effects } = reduce(gridState, event, dims)
 	gridState = next
 	// On first entry, anchor CM's caret to the table so undo/redo return here instead of the document top.

@@ -45,7 +45,6 @@ export type Result = { next: GridState; effects: Effect[] }
 
 const HEADER_ROW = -1
 
-export const cellEq = (a: Cell, b: Cell) => a.row === b.row && a.col === b.col
 export const normalizeRange = (anchor: Cell, focus: Cell) => ({
 	top: Math.min(anchor.row, focus.row),
 	bottom: Math.max(anchor.row, focus.row),
@@ -125,7 +124,10 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 		switch (event.t) {
 			case 'move': {
 				const target = step(state.focus, event.dir, dims)
-				if (target === 'top' || target === 'bottom') return exitDoc(target)
+				if (target === 'top' || target === 'bottom')
+					// A bare arrow off the edge exits to the document; Shift+arrow would collapse the range being
+					// built, so clamp (keep the current selection) like a spreadsheet does.
+					return event.shift ? extend(state.anchor, state.focus) : exitDoc(target)
 				return event.shift ? extend(state.anchor, target) : select(target)
 			}
 			case 'commitMove': {

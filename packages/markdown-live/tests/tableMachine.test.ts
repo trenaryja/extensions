@@ -66,6 +66,15 @@ describe('arrow movement while selected', () => {
 		const { next } = reduce(selected(cell(0, 0)), { t: 'move', dir: 'down', shift: true }, dims)
 		expect(next).toEqual(selected(cell(0, 0), cell(1, 0)))
 	})
+	test('shift+move off the edge clamps and keeps the range (spreadsheet-style)', () => {
+		// Shift+Down on the last row must not collapse the multi-cell selection and dump a bare caret in the doc.
+		expect(reduce(selected(cell(0, 0), cell(2, 0)), { t: 'move', dir: 'down', shift: true }, dims).next).toEqual(
+			selected(cell(0, 0), cell(2, 0)),
+		)
+		expect(reduce(selected(cell(0, 0), cell(-1, 0)), { t: 'move', dir: 'up', shift: true }, dims).next).toEqual(
+			selected(cell(0, 0), cell(-1, 0)),
+		)
+	})
 	test('non-shift move collapses an existing range', () => {
 		expect(reduce(selected(cell(0, 0), cell(2, 1)), { t: 'move', dir: 'up', shift: false }, dims).next).toEqual(
 			selected(cell(1, 1)),
