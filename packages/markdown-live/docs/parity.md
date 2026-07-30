@@ -88,7 +88,7 @@ Legend: ✅ done · 🟡 partial · 🔜 queued · ❌ not yet · ⛔ not planne
 
 | Feature          | Status                                                                       |
 | ---------------- | ---------------------------------------------------------------------------- |
-| Tables           | ✅ (Excel-style grid: select/edit tiers, keyboard nav, range select, markdown copy/paste) |
+| Tables           | ✅ (Excel-style grid: select/edit tiers, keyboard nav, range select, markdown copy/paste, drag-reorder rows/cols, live source editing) |
 | Strikethrough    | ✅                                                                           |
 | Task lists       | ✅                                                                           |
 | Alerts (5 types) | ✅ (covered by the callouts superset)                                        |
