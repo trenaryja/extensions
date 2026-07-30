@@ -1,5 +1,5 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { getClosestTailwindColor, isDark, palette } from '@trenaryja/ui'
+import { getClosestTailwindColor, isDark, tailwindPalette } from '@trenaryja/ui'
 import chroma from 'chroma-js'
 import { format } from 'date-fns'
 import * as R from 'remeda'
@@ -144,7 +144,7 @@ export const commands = defineCommands([
 		handler: createCommand({
 			type: 'quick-pick',
 			parseFn: (selection: string) => {
-				const tw = R.find(palette, (c) => c.fullName === selection)
+				const tw = R.find(tailwindPalette, (c) => c.fullName === selection)
 				if (tw) return chroma(tw.oklch)
 				if (!chroma.valid(selection)) return null
 				return chroma(selection)

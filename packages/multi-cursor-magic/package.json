@@ -23,7 +23,7 @@
 		"vscode:prepublish": "bun run build"
 	},
 	"dependencies": {
-		"@trenaryja/ui": "0.0.1-31",
+		"@trenaryja/ui": "0.0.1-36",
 		"chroma-js": "^3.2.0",
 		"date-fns": "^4.1.0",
 		"remeda": "^2.32.0"
