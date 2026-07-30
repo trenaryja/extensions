@@ -1,6 +1,7 @@
-import { type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
+import { Annotation, type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
+import { formatterProfile } from './tableFormat'
 import {
 	docOrSelectionChanged,
 	rawSourceRanges,
@@ -15,12 +16,25 @@ type TableModel = { headers: string[]; aligns: Align[]; rows: string[][]; from: 
 
 const isSeparatorRow = (text: string) => /^\|?[\s\-|:]+\|[\s\-|:]*$/.test(text) && text.includes('-')
 
-const parseRow = (text: string) =>
-	text
-		.replace(/^\|/, '')
-		.replace(/\|$/, '')
-		.split('|')
-		.map((cell) => cell.trim())
+// Split a `| a | b |` row into cells, honoring GFM's `\|` escape (a literal pipe inside a cell). Each cell is
+// trimmed and unescaped, so the model holds a literal `|`; `serialize` re-escapes it on the way out.
+export function parseRow(text: string) {
+	const inner = text.replace(/^\s*\|/, '').replace(/\|\s*$/, '')
+	const cells: string[] = []
+	let cell = ''
+	for (let i = 0; i < inner.length; i++) {
+		const ch = inner[i]
+		if (ch === '\\' && i + 1 < inner.length) {
+			cell += ch + inner[i + 1]
+			i++
+		} else if (ch === '|') {
+			cells.push(cell)
+			cell = ''
+		} else cell += ch
+	}
+	cells.push(cell)
+	return cells.map((c) => c.trim().replace(/\\\|/g, '|'))
+}
 
 const parseAligns = (separator: string, count: number): Align[] => {
 	const cells = parseRow(separator)
@@ -62,32 +76,33 @@ function appendInline(parent: HTMLElement, text: string) {
 	if (last < text.length) parent.append(text.slice(last))
 }
 
-// ---------- Serialization (normalizes/pretty-aligns; makes structural edits trivial) ----------
+// ---------- Serialization ----------
+// Minimal, valid GFM: single-space cells, one-char alignment markers, `\|`-escaped pipes. Column display width is
+// deliberately NOT computed here — the debounced prettier pass (or the user's own formatter) owns alignment, so we
+// never hand-maintain Unicode display-width parity with prettier. `serialize` is the instant, transient write.
 
-function pad(text: string, width: number, align: Align) {
-	if (align === 'right') return text.padStart(width)
-	if (align === 'center') {
-		const total = Math.max(0, width - text.length)
-		const left = Math.floor(total / 2)
-		return ' '.repeat(left) + text + ' '.repeat(total - left)
-	}
-	return text.padEnd(width)
-}
+const escapeCell = (cell: string) => cell.replace(/\|/g, '\\|')
+const minMarker = (align: Align) =>
+	align === 'center' ? ':-:' : align === 'right' ? '-:' : align === 'left' ? ':-' : '-'
 
-function marker(align: Align, width: number) {
-	const dashes = (count: number) => '-'.repeat(Math.max(1, count))
-	if (align === 'center') return `:${dashes(width - 2)}:`
-	if (align === 'right') return `${dashes(width - 1)}:`
-	if (align === 'left') return `:${dashes(width - 1)}`
-	return dashes(width)
-}
-
-function serialize({ headers, aligns, rows }: TableModel) {
-	const widths = headers.map((header, i) => Math.max(3, header.length, ...rows.map((row) => (row[i] ?? '').length)))
-	const line = (cells: string[]) =>
-		`| ${headers.map((_, i) => pad(cells[i] ?? '', widths[i] ?? 3, aligns[i] ?? null)).join(' | ')} |`
-	const separator = `| ${widths.map((width, i) => marker(aligns[i] ?? null, width)).join(' | ')} |`
+export function serialize({ headers, aligns, rows }: TableModel) {
+	const line = (cells: string[]) => `| ${headers.map((_, i) => escapeCell(cells[i] ?? '')).join(' | ')} |`
+	const separator = `| ${headers.map((_, i) => minMarker(aligns[i] ?? null)).join(' | ')} |`
 	return [line(headers), separator, ...rows.map(line)].join('\n')
+}
+
+// Parse a table's markdown text into a model, or null if it isn't a table. Inverse of `serialize`; used by the
+// finalizer's guard and exercised directly by the round-trip tests.
+export function parseTable(text: string, from = 0, to = 0): TableModel | null {
+	const lines = text.split('\n')
+	if (lines.length < 2 || !isSeparatorRow(lines[1] ?? '')) return null
+	const headers = parseRow(lines[0] ?? '')
+	const aligns = parseAligns(lines[1] ?? '', headers.length)
+	const rows = lines
+		.slice(2)
+		.filter((line) => line.includes('|'))
+		.map(parseRow)
+	return { headers, aligns, rows, from, to }
 }
 
 // ---------- Model edits (each returns a new model; the widget reserializes + dispatches) ----------
@@ -623,7 +638,7 @@ function pasteRange(ctx: Ctx, cell: Cell) {
 	while (model.rows.length < needRows) model = insertRow(model, model.rows.length)
 	grid.forEach((line, dr) => {
 		line.forEach((value, dc) => {
-			model = setCell(model, cell.row + dr, cell.col + dc, value.replace(/[\n|]/g, ' ').trim())
+			model = setCell(model, cell.row + dr, cell.col + dc, value.replace(/[\r\n]+/g, ' ').trim())
 		})
 	})
 	rewrite(ctx.view, ctx.model, model)
@@ -647,7 +662,7 @@ function runEffect(effect: Effect, ctx: Ctx) {
 			if (!el) return
 			el.contentEditable = 'false'
 			const raw = el.dataset.raw ?? ''
-			const next = (el.textContent ?? '').replace(/[\n|]/g, ' ').trim()
+			const next = (el.textContent ?? '').replace(/[\r\n]+/g, ' ').trim()
 			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell.row, effect.cell.col, next))
 			else {
 				el.textContent = ''
@@ -1145,67 +1160,101 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	return false
 }
 
-// ---------- Format on collapse ----------
+// ---------- Prettier finalizer ----------
 
-// When a table stops being shown as raw source (the caret left its lines), pretty-align it — like Prettier's
-// format-on-save, but only for the table you just finished editing. The caret has already left, so there's no
-// in-table caret to preserve. Toggled by markdownLive.formatTablesOnEdit.
+// A table edit (grid commit, paste, structural op, or raw-source edit) leaves only a minimal serialization in the
+// doc. A debounced pass then runs the active formatter profile (prettier) over the table's range, so the file ends
+// up byte-identical to what the user's own prettier would produce — which is why `serialize` never hand-matches
+// prettier's Unicode display-width alignment. Only edited tables are touched, and only once they're back to a plain
+// rendered widget: a table that's still being source-edited (revealed) or is the live grid the user is in gets
+// deferred until that session ends, so the async reflow never yanks the caret/focus mid-edit. Toggled by
+// markdownLive.formatTablesOnEdit; when off, the minimal serialization stands for the user's own formatter to align.
 let formatTablesOnEdit = true
+
+// Marks the finalizer's own dispatch so the update listener doesn't re-queue it as a fresh edit (prettier is
+// idempotent so it would converge anyway — this just avoids the redundant extra pass).
+const formatPass = Annotation.define<boolean>()
+const dirty = new Set<number>() // `from` of each edited table awaiting the prettier pass
+let formatTimer: ReturnType<typeof setTimeout> | null = null
+
 export const setFormatTablesOnEdit = (on: boolean) => {
 	formatTablesOnEdit = on
+	if (!on) dirty.clear()
 }
 
-// Re-serialize the raw source at [from, to] into an aligned table, replacing it only if that changes anything.
-// Bails when the range no longer parses as a table (an abandoned mid-edit) so a malformed source isn't clobbered.
-function reformatTable(view: EditorView, from: number, to: number) {
-	if (to > view.state.doc.length) return
-	const text = view.state.doc.sliceString(from, to)
+const armFormat = (view: EditorView) => {
+	if (formatTimer) clearTimeout(formatTimer)
+	formatTimer = setTimeout(() => {
+		formatTimer = null
+		void flushFormat(view)
+	}, 300)
+}
+
+const isTableText = (text: string) => {
 	const lines = text.split('\n')
-	if (lines.length < 2 || !isSeparatorRow(lines[1] ?? '')) return
-	const headers = parseRow(lines[0] ?? '')
-	const aligns = parseAligns(lines[1] ?? '', headers.length)
-	const rows = lines
-		.slice(2)
-		.filter((line) => line.includes('|'))
-		.map(parseRow)
-	const formatted = serialize({ headers, aligns, rows, from, to })
-	if (formatted !== text) view.dispatch({ changes: { from, to, insert: formatted } })
+	return lines.length >= 2 && isSeparatorRow(lines[1] ?? '')
 }
 
-// Reformat only a table you actually edited (not one you merely viewed): remember the `from` of a revealed
-// table once an edit lands inside it, and when that table stops being revealed (collapses to the rendered
-// widget) reformat it — deferred, so we don't dispatch mid-update.
-let dirtyFrom: number | null = null // doc position of a revealed, edited table awaiting reformat
-const formatOnCollapse = EditorView.updateListener.of((update) => {
-	if (!formatTablesOnEdit) {
-		dirtyFrom = null
+// Format one ready table per cycle. The resulting dispatch re-arms the listener for any others, which keeps the
+// tracked `from`s correctly remapped between reflows (each reflow shifts the tables below it).
+async function flushFormat(view: EditorView) {
+	const revealed = new Set(view.state.field(tablesField).raw.map((range) => range.from))
+	const edges = tableEdges(view.state)
+	// Ready = a rendered widget the user isn't currently editing (not revealed, not the active grid).
+	const from = [...dirty].find((f) => !revealed.has(f) && activeFrom !== f && edges.some((edge) => edge.from === f))
+	if (from === undefined) return
+	dirty.delete(from)
+	const edge = edges.find((entry) => entry.from === from)
+	if (!edge) return
+	const text = view.state.doc.sliceString(edge.from, edge.to)
+	if (!isTableText(text)) return
+	let formatted: string
+	try {
+		formatted = await formatterProfile.formatTable(text)
+	} catch {
 		return
 	}
-	if (dirtyFrom !== null) dirtyFrom = update.changes.mapPos(dirtyFrom)
-	const revealed = update.state.field(tablesField).raw
-	if (update.docChanged)
-		for (const range of revealed) {
-			let edited = false
-			update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
-				if (fromB <= range.to && toB >= range.from) edited = true
-			})
-			if (edited) dirtyFrom = range.from
-		}
-	if (dirtyFrom === null) return
-	if (revealed.some((range) => range.from === dirtyFrom)) return // still being edited
-	const table = tableEdges(update.state).find((edge) => edge.from === dirtyFrom)
-	dirtyFrom = null
-	if (table) {
-		const { from, to } = table
-		queueMicrotask(() => reformatTable(update.view, from, to))
+	if (formatted === text) {
+		if (dirty.size) armFormat(view)
+		return
 	}
+	// The doc may have changed during the await (the user kept typing) — bail and retry if this table moved/changed.
+	const fresh = tableEdges(view.state).find((entry) => entry.from === from)
+	if (!fresh || view.state.doc.sliceString(fresh.from, fresh.to) !== text) {
+		dirty.add(from)
+		armFormat(view)
+		return
+	}
+	view.dispatch({ changes: { from: fresh.from, to: fresh.to, insert: formatted }, annotations: formatPass.of(true) })
+}
+
+const formatOnEdit = EditorView.updateListener.of((update) => {
+	if (!formatTablesOnEdit) {
+		dirty.clear()
+		return
+	}
+	if (update.docChanged && dirty.size) {
+		const mapped = [...dirty].map((from) => update.changes.mapPos(from))
+		dirty.clear()
+		for (const from of mapped) dirty.add(from)
+	}
+	const isFormatPass = update.transactions.some((tr) => tr.annotation(formatPass))
+	if (update.docChanged && !isFormatPass)
+		for (const edge of [...tableEdges(update.state), ...update.state.field(tablesField).raw]) {
+			let touched = false
+			update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
+				if (fromB <= edge.to && toB >= edge.from) touched = true
+			})
+			if (touched) dirty.add(edge.from)
+		}
+	if (dirty.size) armFormat(update.view)
 })
 
 // Each rendered table is one atomic range (the caret can't wander into the replaced widget). The keymap turns
 // an arrow that would cross a table edge into a grid entry; from there the interaction machine takes over.
 export const tablesPlugin = [
 	tablesField,
-	formatOnCollapse,
+	formatOnEdit,
 	EditorView.atomicRanges.of((view) => view.state.field(tablesField).deco),
 	Prec.high(
 		keymap.of([
