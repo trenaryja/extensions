@@ -6,9 +6,9 @@ import { CODICON_ICONS } from './codicons.data'
 // (emoji / raw <svg>). The permissive branch keeps those valid; VS Code offers the enum from the other branch.
 const iconField = z.union([z.enum(CODICON_ICONS), z.string()]).optional()
 
-/** Single source of truth for Markdown Live settings — generates `contributes.configuration` and the typed accessor. */
+/** Single source of truth for Marksmith settings — generates `contributes.configuration` and the typed accessor. */
 export const configSchema = z.object({
-	'markdownLive.mermaidRenderMode': setting(z.enum(['inline', 'below', 'disabled']).default('inline'), {
+	'marksmith.mermaidRenderMode': setting(z.enum(['inline', 'below', 'disabled']).default('inline'), {
 		markdownDescription:
 			'How Mermaid diagrams are rendered. `inline` replaces the code block with the diagram, `below` shows the diagram beneath the source, `disabled` leaves the code block as-is.',
 		enumDescriptions: [
@@ -18,7 +18,7 @@ export const configSchema = z.object({
 		],
 		scope: 'window',
 	}),
-	'markdownLive.callouts': setting(
+	'marksmith.callouts': setting(
 		z.record(z.string(), z.object({ icon: iconField, color: z.string().optional() })).default({}),
 		{
 			markdownDescription:
@@ -26,17 +26,17 @@ export const configSchema = z.object({
 			scope: 'window',
 		},
 	),
-	'markdownLive.calloutDefaultTitle': setting(z.boolean().default(true), {
+	'marksmith.calloutDefaultTitle': setting(z.boolean().default(true), {
 		markdownDescription:
 			'Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.',
 		scope: 'window',
 	}),
-	'markdownLive.mathExportColor': setting(z.string().default('currentColor'), {
+	'marksmith.mathExportColor': setting(z.string().default('currentColor'), {
 		markdownDescription:
 			'Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.',
 		scope: 'window',
 	}),
-	'markdownLive.formatTablesOnEdit': setting(z.boolean().default(true), {
+	'marksmith.formatTablesOnEdit': setting(z.boolean().default(true), {
 		markdownDescription:
 			'Pretty-align a table (pad its columns to equal widths) when you leave its raw source after editing it — like Prettier’s format-on-save, but only for tables. Turn off to keep your hand-tuned spacing.',
 		scope: 'window',

@@ -130,7 +130,7 @@ journey
 
 ```mermaid
 gantt
-    title Markdown Live milestones
+    title Marksmith milestones
     dateFormat YYYY-MM-DD
     section Foundation
         SSOT registry      :done, f1, 2026-06-01, 7d
@@ -161,7 +161,7 @@ pie title Webview bundle breakdown
 
 ```mermaid
 mindmap
-    root((Markdown Live))
+    root((Marksmith))
         Writing
             WYSIWYG
             Zen mode
@@ -181,7 +181,7 @@ mindmap
 
 ```mermaid
 timeline
-    title Markdown Live roadmap
+    title Marksmith roadmap
     v1.0 : Live preview : Code blocks : Callouts
     v1.1 : Tables : Mermaid chrome
     v1.2 : Zen mode : Slash menu

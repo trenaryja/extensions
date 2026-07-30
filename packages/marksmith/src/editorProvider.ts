@@ -13,26 +13,26 @@ type WebviewMessage =
 	| { type: 'mathSvgCopied'; ok: boolean }
 
 const readSettings = () => ({
-	mermaidRenderMode: getConfig('markdownLive.mermaidRenderMode'),
-	callouts: getConfig('markdownLive.callouts'),
-	calloutDefaultTitle: getConfig('markdownLive.calloutDefaultTitle'),
-	mathExportColor: getConfig('markdownLive.mathExportColor'),
-	formatTablesOnEdit: getConfig('markdownLive.formatTablesOnEdit'),
+	mermaidRenderMode: getConfig('marksmith.mermaidRenderMode'),
+	callouts: getConfig('marksmith.callouts'),
+	calloutDefaultTitle: getConfig('marksmith.calloutDefaultTitle'),
+	mathExportColor: getConfig('marksmith.mathExportColor'),
+	formatTablesOnEdit: getConfig('marksmith.formatTablesOnEdit'),
 })
 
-// The most recently active Markdown Live editor — the target for insert commands, since custom editors
+// The most recently active Marksmith editor — the target for insert commands, since custom editors
 // don't set vscode.window.activeTextEditor. It persists while a picker is open (which deactivates the webview).
 let activePanel: vscode.WebviewPanel | null = null
 
 export const insertIntoActiveEditor = (text: string) => {
 	const panel = activePanel
-	if (!panel) return void vscode.window.showWarningMessage('Markdown Live: open a markdown file to insert into.')
+	if (!panel) return void vscode.window.showWarningMessage('Marksmith: open a markdown file to insert into.')
 	panel.webview.postMessage({ type: 'insert', text })
 }
 
 export const copyMathFromActiveEditor = () => {
 	const panel = activePanel
-	if (!panel) return void vscode.window.showWarningMessage('Markdown Live: open a markdown file first.')
+	if (!panel) return void vscode.window.showWarningMessage('Marksmith: open a markdown file first.')
 	panel.webview.postMessage({ type: 'copyMathSvg' })
 }
 
@@ -57,7 +57,7 @@ const getHtml = (context: vscode.ExtensionContext, webview: vscode.Webview) =>
 		],
 		cspAddons: ' font-src data:;',
 		htmlAttrs: 'data-theme="vscode"',
-		title: 'Markdown Live',
+		title: 'Marksmith',
 		headStyles,
 		bodyHtml: '<div id="editor"></div>',
 	})
@@ -94,7 +94,7 @@ const resolveEditor = (
 
 		if (msg.type === 'mathSvgCopied')
 			return void vscode.window.showInformationMessage(
-				msg.ok ? 'Copied equation as SVG.' : 'Markdown Live: place the cursor in an equation first.',
+				msg.ok ? 'Copied equation as SVG.' : 'Marksmith: place the cursor in an equation first.',
 			)
 
 		if (msg.type === 'edit') {
@@ -110,14 +110,14 @@ const resolveEditor = (
 		}
 
 		if (msg.type === 'webviewError') {
-			vscode.window.showErrorMessage(`Markdown Live (webview): ${msg.message}`)
-			return console.error('[Markdown Live] Webview error:', msg.message, msg.stack)
+			vscode.window.showErrorMessage(`Marksmith (webview): ${msg.message}`)
+			return console.error('[Marksmith] Webview error:', msg.message, msg.stack)
 		}
 
 		if (msg.type === 'navigate') {
 			if (/^https?:\/\//i.test(msg.url)) return vscode.env.openExternal(vscode.Uri.parse(msg.url))
 			const resolved = vscode.Uri.joinPath(document.uri, '..', msg.url)
-			// Open .md targets in Markdown Live; everything else (images, etc.) with the default editor/viewer.
+			// Open .md targets in Marksmith; everything else (images, etc.) with the default editor/viewer.
 			if (/\.md$/i.test(resolved.path))
 				return vscode.commands.executeCommand('vscode.openWith', resolved, EDITOR_VIEW_TYPE)
 			return vscode.commands.executeCommand('vscode.open', resolved)
@@ -130,7 +130,7 @@ const resolveEditor = (
 		sendUpdate()
 	})
 	const configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
-		if (e.affectsConfiguration('markdownLive'))
+		if (e.affectsConfiguration('marksmith'))
 			webviewPanel.webview.postMessage({ type: 'settingsUpdate', settings: readSettings() })
 	})
 	// Backup for committed theme changes (the webview also drives this live via requestShikiTheme).
@@ -149,8 +149,8 @@ const resolveEditor = (
 	})
 }
 
-/** Register the Markdown Live custom editor — a plain object implementing the provider interface, no class. */
-export const registerMarkdownLiveEditor = (context: vscode.ExtensionContext) =>
+/** Register the Marksmith custom editor — a plain object implementing the provider interface, no class. */
+export const registerMarksmithEditor = (context: vscode.ExtensionContext) =>
 	vscode.window.registerCustomEditorProvider(
 		EDITOR_VIEW_TYPE,
 		{ resolveCustomTextEditor: (document, webviewPanel) => resolveEditor(context, document, webviewPanel) },

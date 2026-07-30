@@ -1,4 +1,4 @@
-# Markdown Live
+# Marksmith
 
 Obsidian-style live preview markdown editor for VS Code.
 
@@ -10,6 +10,6 @@ Obsidian-style live preview markdown editor for VS Code.
 
 ## Usage
 
-Markdown Live registers as the default editor for `*.md` files. Open any markdown file to use it.
+Marksmith registers as the default editor for `*.md` files. Open any markdown file to use it.
 
 To switch to raw text editing, press `Cmd+Shift+M`. Press again to return to live preview.

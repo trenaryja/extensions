@@ -9,7 +9,7 @@ type CalloutDef = { icon: string; color: string; aliases?: string[] }
  * Built-in callout types. The primary/alias taxonomy follows Obsidian's "Supported types" so Obsidian docs
  * render identically — aliases render exactly like their primary. (This is NOT GitHub's 5-type alert set;
  * where they diverge — GitHub's `important`/`caution` are their own types — we follow Obsidian, and users can
- * override via the `markdownLive.callouts` setting.) Icons are VS Code codicons; `color` is applied inline as
+ * override via the `marksmith.callouts` setting.) Icons are VS Code codicons; `color` is applied inline as
  * `--callout-color`, which is the single source of truth for a callout's accent (no per-type CSS).
  */
 export const CALLOUTS: Record<string, CalloutDef> = {

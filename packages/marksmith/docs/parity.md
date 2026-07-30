@@ -1,6 +1,6 @@
 # Markdown Isn't One Language
 
-_A living reference for **Markdown Live** — and a primer on why "just render markdown" is deceptively deep._
+_A living reference for **Marksmith** — and a primer on why "just render markdown" is deceptively deep._
 _(Kept up to date as we close gaps; also drafted with an eventual blog post in mind.)_
 
 ---
@@ -59,8 +59,8 @@ And they **conflict**:
 
 The `+`/`-` **fold markers are Obsidian-only** — not CommonMark, not GFM, not GitHub Alerts.
 
-Markdown Live follows **Obsidian's taxonomy** (our migration target) and makes the divergent types
-user-overridable via the `markdownLive.callouts` setting.
+Marksmith follows **Obsidian's taxonomy** (our migration target) and makes the divergent types
+user-overridable via the `marksmith.callouts` setting.
 
 ---
 
@@ -135,7 +135,7 @@ cover essentially every note you'll open.
 
 ## Architecture note
 
-Markdown Live renders in CodeMirror 6 via decorations. **Inline** styling reads CM's CommonMark syntax
+Marksmith renders in CodeMirror 6 via decorations. **Inline** styling reads CM's CommonMark syntax
 tree; **block** features (tables, task lists, callouts, mermaid) are hand-rolled per-plugin. That's why
 some "block-in-block" cases (a list _inside_ a callout) are still gaps — the block plugins match at line
 start and don't yet see past a `>` prefix.

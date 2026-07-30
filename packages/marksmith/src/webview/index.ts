@@ -4,7 +4,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { syntaxTree } from '@codemirror/language'
-import { markdownLiveTheme } from './theme'
+import { marksmithTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
@@ -107,7 +107,7 @@ function createEditor(content: string): EditorView {
 			keymap.of([...defaultKeymap, ...historyKeymap]),
 			EditorView.lineWrapping,
 			markdown({ base: markdownLanguage, codeLanguages: languages }),
-			markdownLiveTheme,
+			marksmithTheme,
 			...createDecorationExtensions(getMermaidMode),
 			EditorView.domEventHandlers({
 				// Cmd/Ctrl+click a link to follow it. A plain click just places the cursor (and reveals the

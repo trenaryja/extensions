@@ -1,10 +1,10 @@
 ---
-title: Markdown Live — Test Suite
+title: Marksmith — Test Suite
 date: 2026-06-09
 tags: [test, markdown, vscode]
 ---
 
-# Markdown Live Test Suite
+# Marksmith Test Suite
 
 Feature-specific tests:
 
@@ -94,7 +94,7 @@ console.log(greet('world'))
 
 ```json
 {
-	"name": "markdown-live",
+	"name": "marksmith",
 	"version": "0.0.1"
 }
 ```

@@ -53,7 +53,7 @@ Built-in types follow Obsidian's taxonomy: each **primary** owns an icon + color
 ## Default title (untitled → type name)
 
 With no title after the tag, the heading shows the capitalized type name (Obsidian behavior).
-Toggle with the `markdownLive.calloutDefaultTitle` setting.
+Toggle with the `marksmith.calloutDefaultTitle` setting.
 
 > [!warning]
 > Heading reads "Warning" above this line.

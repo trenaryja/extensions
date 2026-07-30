@@ -9,13 +9,13 @@ const PALETTE_MD = [{ id: 'commandPalette' as const, when: 'resourceExtname == .
 type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
 
 /** Custom-editor view type — the id VS Code opens `.md` files with. */
-export const EDITOR_VIEW_TYPE = 'markdownLive.editor'
+export const EDITOR_VIEW_TYPE = 'marksmith.editor'
 
 /** Static `contributes.customEditors` entry, fed to the codegen alongside the command registry. */
 export const customEditors = [
 	{
 		viewType: EDITOR_VIEW_TYPE,
-		displayName: 'Markdown Live',
+		displayName: 'Marksmith',
 		selector: [{ filenamePattern: '*.md' }],
 		priority: 'default',
 	},
@@ -27,9 +27,9 @@ const modeMap = new Map<string, 'preview' | 'raw'>()
 /** The command registry — the single source of truth for commands, keybindings, and menu placements. */
 export const commands = defineCommands([
 	{
-		command: 'markdownLive.toggle',
+		command: 'marksmith.toggle',
 		title: 'Toggle Raw/Preview',
-		category: 'Markdown Live',
+		category: 'Marksmith',
 		icon: '$(book)',
 		key: 'ctrl+shift+m',
 		mac: 'cmd+shift+m',
@@ -49,9 +49,9 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'markdownLive.insertCodeBlock',
+		command: 'marksmith.insertCodeBlock',
 		title: 'Insert Code Block',
-		category: 'Markdown Live',
+		category: 'Marksmith',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const lang = await vscode.window.showQuickPick(CODE_LANGUAGES, { placeHolder: 'Code block language' })
@@ -60,12 +60,12 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'markdownLive.insertCallout',
+		command: 'marksmith.insertCallout',
 		title: 'Insert Callout',
-		category: 'Markdown Live',
+		category: 'Marksmith',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
-			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markdownLive.callouts') ?? {}
+			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('marksmith.callouts') ?? {}
 			const types = [...new Set([...CALLOUT_PRIMARIES, ...Object.keys(config)])].filter((t) => t !== 'default')
 			const items: CalloutPickItem[] = types.map((type) => {
 				const icon = resolveCallout(config, type).icon.trim()
@@ -80,9 +80,9 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'markdownLive.insertMermaid',
+		command: 'marksmith.insertMermaid',
 		title: 'Insert Mermaid Diagram',
-		category: 'Markdown Live',
+		category: 'Marksmith',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const choice = await vscode.window.showQuickPick(Object.keys(MERMAID_EXAMPLES), { placeHolder: 'Diagram type' })
@@ -92,9 +92,9 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'markdownLive.copyMathSvg',
+		command: 'marksmith.copyMathSvg',
 		title: 'Copy Equation as SVG',
-		category: 'Markdown Live',
+		category: 'Marksmith',
 		menus: PALETTE_MD,
 		handler: async () => (await import('./editorProvider')).copyMathFromActiveEditor(),
 	},

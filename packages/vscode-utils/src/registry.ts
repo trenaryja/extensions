@@ -28,7 +28,7 @@ export type CommandApi = {
 }
 
 export type CommandEntry = {
-	/** Fully-qualified command id, e.g. `markdownLive.toggle`. */
+	/** Fully-qualified command id, e.g. `marksmith.toggle`. */
 	command: string
 	title: string
 	category?: string

@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view'
 
-export const markdownLiveTheme = EditorView.theme(
+export const marksmithTheme = EditorView.theme(
 	{
 		'&': {
 			height: '100%',

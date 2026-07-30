@@ -1168,7 +1168,7 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 // prettier's Unicode display-width alignment. Only edited tables are touched, and only once they're back to a plain
 // rendered widget: a table that's still being source-edited (revealed) or is the live grid the user is in gets
 // deferred until that session ends, so the async reflow never yanks the caret/focus mid-edit. Toggled by
-// markdownLive.formatTablesOnEdit; when off, the minimal serialization stands for the user's own formatter to align.
+// marksmith.formatTablesOnEdit; when off, the minimal serialization stands for the user's own formatter to align.
 let formatTablesOnEdit = true
 
 // Marks the finalizer's own dispatch so the update listener doesn't re-queue it as a fresh edit (prettier is

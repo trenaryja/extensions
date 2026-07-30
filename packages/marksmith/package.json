@@ -1,6 +1,6 @@
 {
-	"name": "markdown-live",
-	"displayName": "Markdown Live",
+	"name": "marksmith",
+	"displayName": "Marksmith",
 	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
 	"version": "0.0.1",
 	"publisher": "trenaryja",
@@ -62,35 +62,35 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "markdownLive.toggle",
+				"command": "marksmith.toggle",
 				"title": "Toggle Raw/Preview",
-				"category": "Markdown Live",
+				"category": "Marksmith",
 				"icon": "$(book)"
 			},
 			{
-				"command": "markdownLive.insertCodeBlock",
+				"command": "marksmith.insertCodeBlock",
 				"title": "Insert Code Block",
-				"category": "Markdown Live"
+				"category": "Marksmith"
 			},
 			{
-				"command": "markdownLive.insertCallout",
+				"command": "marksmith.insertCallout",
 				"title": "Insert Callout",
-				"category": "Markdown Live"
+				"category": "Marksmith"
 			},
 			{
-				"command": "markdownLive.insertMermaid",
+				"command": "marksmith.insertMermaid",
 				"title": "Insert Mermaid Diagram",
-				"category": "Markdown Live"
+				"category": "Marksmith"
 			},
 			{
-				"command": "markdownLive.copyMathSvg",
+				"command": "marksmith.copyMathSvg",
 				"title": "Copy Equation as SVG",
-				"category": "Markdown Live"
+				"category": "Marksmith"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "markdownLive.toggle",
+				"command": "marksmith.toggle",
 				"key": "ctrl+shift+m",
 				"mac": "cmd+shift+m",
 				"when": "resourceExtname == .md"
@@ -99,34 +99,34 @@
 		"menus": {
 			"editor/title": [
 				{
-					"command": "markdownLive.toggle",
+					"command": "marksmith.toggle",
 					"group": "navigation",
 					"when": "resourceExtname == .md"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "markdownLive.insertCodeBlock",
+					"command": "marksmith.insertCodeBlock",
 					"when": "resourceExtname == .md"
 				},
 				{
-					"command": "markdownLive.insertCallout",
+					"command": "marksmith.insertCallout",
 					"when": "resourceExtname == .md"
 				},
 				{
-					"command": "markdownLive.insertMermaid",
+					"command": "marksmith.insertMermaid",
 					"when": "resourceExtname == .md"
 				},
 				{
-					"command": "markdownLive.copyMathSvg",
+					"command": "marksmith.copyMathSvg",
 					"when": "resourceExtname == .md"
 				}
 			]
 		},
 		"customEditors": [
 			{
-				"viewType": "markdownLive.editor",
-				"displayName": "Markdown Live",
+				"viewType": "marksmith.editor",
+				"displayName": "Marksmith",
 				"selector": [
 					{
 						"filenamePattern": "*.md"
@@ -136,9 +136,9 @@
 			}
 		],
 		"configuration": {
-			"title": "Markdown Live",
+			"title": "Marksmith",
 			"properties": {
-				"markdownLive.mermaidRenderMode": {
+				"marksmith.mermaidRenderMode": {
 					"default": "inline",
 					"markdownDescription": "How Mermaid diagrams are rendered. `inline` replaces the code block with the diagram, `below` shows the diagram beneath the source, `disabled` leaves the code block as-is.",
 					"enumDescriptions": [
@@ -154,7 +154,7 @@
 						"disabled"
 					]
 				},
-				"markdownLive.callouts": {
+				"marksmith.callouts": {
 					"default": {},
 					"markdownDescription": "Override callout icons/colors or add custom types. Each entry is `{ \"icon\"?: …, \"color\"?: … }`. An `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>`. Omit `icon` to keep the built-in and only change the color. A `\"default\"` entry sets the fallback icon for any unlisted type.",
 					"scope": "window",
@@ -832,19 +832,19 @@
 						}
 					}
 				},
-				"markdownLive.calloutDefaultTitle": {
+				"marksmith.calloutDefaultTitle": {
 					"default": true,
 					"markdownDescription": "Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.",
 					"scope": "window",
 					"type": "boolean"
 				},
-				"markdownLive.mathExportColor": {
+				"marksmith.mathExportColor": {
 					"default": "currentColor",
 					"markdownDescription": "Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.",
 					"scope": "window",
 					"type": "string"
 				},
-				"markdownLive.formatTablesOnEdit": {
+				"marksmith.formatTablesOnEdit": {
 					"default": true,
 					"markdownDescription": "Pretty-align a table (pad its columns to equal widths) when you leave its raw source after editing it — like Prettier’s format-on-save, but only for tables. Turn off to keep your hand-tuned spacing.",
 					"scope": "window",
