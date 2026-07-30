@@ -1,5 +1,4 @@
-# Build outputs
-**/dist/
-
-# markdown-live keeps its docs/fixtures hand-formatted (mirrors the package's own .prettierignore `*.md`)
+# markdown-live intentionally hand-formats its docs/fixtures (see its own .prettierignore `*.md`).
+# Prettier only reads the ignore file in its CWD, so the root `check`'s `prettier -c .` can't see that
+# nested ignore — restate it here. (dist/ etc. are already skipped via .gitignore, which prettier 3 honors.)
 packages/markdown-live/**/*.md
