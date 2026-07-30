@@ -1,0 +1,5 @@
+# Build outputs
+**/dist/
+
+# markdown-live keeps its docs/fixtures hand-formatted (mirrors the package's own .prettierignore `*.md`)
+packages/markdown-live/**/*.md
