@@ -96,10 +96,6 @@ const INLINE_MATH_RE = /(?<![\\$])\$(?!\s)((?:[^$\\]|\\.)+?)(?<!\s)\$(?!\d)/g
 const FENCE_MATH_RE = /^```(math|latex|tex)\s*$/i
 const FENCE_RE = /^```/
 
-type MathRegion = { from: number; to: number; latex: string; display: boolean }
-// Last-built regions, for the "copy at cursor" command.
-let mathRegions: MathRegion[] = []
-
 // Parse a `$$…$$` block starting at `startNum`; returns the end line and inner LaTeX, or null.
 function parseBlockDollar(doc: EditorState['doc'], startNum: number) {
 	const trimmed = doc.line(startNum).text.trim()
@@ -124,12 +120,10 @@ function parseBlockDollar(doc: EditorState['doc'], startNum: number) {
 function buildMathDecorations(state: EditorState): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
 	const doc = state.doc
-	const regions: MathRegion[] = []
 
 	// A block equation: replace with the SVG when the cursor is away; reveal the source with the SVG rendered
 	// just below while editing (live preview, like mermaid).
 	const addBlock = (from: number, to: number, latex: string) => {
-		regions.push({ from, to, latex, display: true })
 		if (selectionTouches(state, from, to))
 			builder.add(to, to, Decoration.widget({ widget: blockMathWidget({ latex }), side: 1 }))
 		else builder.add(from, to, Decoration.replace({ widget: blockMathWidget({ latex }) }))
@@ -197,7 +191,6 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 			const from = line.from + match.index
 			const to = from + match[0].length
 			const latex = match[1] ?? ''
-			regions.push({ from, to, latex, display: false })
 			if (!selectionTouches(state, from, to))
 				builder.add(from, to, Decoration.replace({ widget: inlineMathWidget({ latex }) }))
 		}
@@ -205,17 +198,7 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 		lineNum++
 	}
 
-	mathRegions = regions
 	return builder.finish()
-}
-
-/** Copy the equation under the cursor as SVG. Returns false if the cursor isn't in an equation. */
-export function copyMathAtCursor(view: EditorView) {
-	const { from, to } = view.state.selection.main
-	const region = mathRegions.find((r) => from <= r.to && to >= r.from)
-	if (!region) return false
-	navigator.clipboard.writeText(exportSvg(region.latex))
-	return true
 }
 
 export const mathPlugin = StateField.define<DecorationSet>({

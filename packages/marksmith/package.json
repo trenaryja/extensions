@@ -131,11 +131,6 @@
 				"category": "Marksmith"
 			},
 			{
-				"command": "marksmith.copyMathSvg",
-				"title": "Copy Equation as SVG",
-				"category": "Marksmith"
-			},
-			{
 				"command": "marksmith.openPlayground",
 				"title": "Open Playground",
 				"category": "Marksmith",
@@ -169,10 +164,6 @@
 				},
 				{
 					"command": "marksmith.insertMermaid",
-					"when": "resourceExtname == .md"
-				},
-				{
-					"command": "marksmith.copyMathSvg",
 					"when": "resourceExtname == .md"
 				}
 			]
