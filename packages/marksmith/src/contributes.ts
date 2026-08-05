@@ -118,13 +118,6 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'marksmith.copyMathSvg',
-		title: 'Copy Equation as SVG',
-		category: 'Marksmith',
-		menus: PALETTE_MD,
-		handler: async () => (await import('./editorProvider')).copyMathFromActiveEditor(),
-	},
-	{
 		command: 'marksmith.openPlayground',
 		title: 'Open Playground',
 		category: 'Marksmith',

@@ -8,7 +8,7 @@ import { marksmithTheme } from './theme'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
-import { copyMathAtCursor, setMathExportColor } from './decorations/math'
+import { setMathExportColor } from './decorations/math'
 import { setFormatTablesOnEdit } from './decorations/tables'
 import { CURSOR } from '../snippets'
 import type { CalloutConfig } from '../callouts.data'
@@ -57,14 +57,7 @@ type UpdateMessage = { type: 'update'; content: string }
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
 type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | null }
 type InsertMessage = { type: 'insert'; text: string }
-type CopyMathMessage = { type: 'copyMathSvg' }
-type ExtensionMessage =
-	| InitMessage
-	| UpdateMessage
-	| SettingsUpdateMessage
-	| ShikiThemeMessage
-	| InsertMessage
-	| CopyMathMessage
+type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
 
 let currentSettings: Settings = {
 	mermaidRenderMode: 'inline',
@@ -166,11 +159,6 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 
 	if (msg.type === 'shikiTheme') {
 		setShikiTheme(msg.theme)
-		return
-	}
-
-	if (msg.type === 'copyMathSvg') {
-		vscode.postMessage({ type: 'mathSvgCopied', ok: view ? copyMathAtCursor(view) : false })
 		return
 	}
 
