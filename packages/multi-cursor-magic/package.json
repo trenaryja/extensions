@@ -5,6 +5,15 @@
 	"version": "0.0.4",
 	"publisher": "trenaryja",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/vscode-extensions.git",
+		"directory": "packages/multi-cursor-magic"
+	},
+	"bugs": {
+		"url": "https://github.com/trenaryja/vscode-extensions/issues"
+	},
+	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/multi-cursor-magic",
 	"icon": "images/icon.png",
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",
@@ -18,8 +27,8 @@
 		"contribute": "bun ./scripts/contribute.ts",
 		"contribute:check": "bun ./scripts/contribute.ts --check",
 		"vsce:login": "vsce login trenaryja",
-		"vsce:package": "vsce package --no-dependencies --allow-missing-repository",
-		"vsce:publish": "vsce publish --no-dependencies --allow-missing-repository",
+		"vsce:package": "vsce package --no-dependencies",
+		"vsce:publish": "vsce publish --no-dependencies",
 		"vscode:prepublish": "bun run build"
 	},
 	"dependencies": {
