@@ -5,6 +5,15 @@
 	"version": "0.0.1",
 	"publisher": "trenaryja",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/vscode-extensions.git",
+		"directory": "packages/marksmith"
+	},
+	"bugs": {
+		"url": "https://github.com/trenaryja/vscode-extensions/issues"
+	},
+	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/marksmith",
 	"changelog": true,
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",
@@ -17,6 +26,9 @@
 		"fix": "bun run contribute && prettier -w .",
 		"check": "bun run contribute:check && tsc && prettier -c . && bun run build",
 		"test": "bun test",
+		"vsce:login": "vsce login trenaryja",
+		"vsce:package": "vsce package --no-dependencies",
+		"vsce:publish": "vsce publish --no-dependencies",
 		"vscode:prepublish": "bun run build"
 	},
 	"dependencies": {
@@ -50,13 +62,21 @@
 		"vscode": "^1.100.0"
 	},
 	"categories": [
+		"Formatters",
+		"Visualization",
 		"Other"
 	],
 	"keywords": [
 		"markdown",
 		"wysiwyg",
 		"live preview",
-		"editor"
+		"editor",
+		"obsidian",
+		"callouts",
+		"tables",
+		"math",
+		"mermaid",
+		"notes"
 	],
 	"activationEvents": [],
 	"contributes": {
