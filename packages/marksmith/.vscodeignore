@@ -1,5 +1,4 @@
 .turbo/**
-docs/**
 harness/**
 node_modules/**
 scripts/**
@@ -7,7 +6,6 @@ src/**
 tests/**
 .gitignore
 .prettierignore
-test*.md
 tsconfig.json
 *.vsix
 

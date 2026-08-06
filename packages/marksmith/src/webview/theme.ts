@@ -74,9 +74,6 @@ export const marksmithTheme = EditorView.theme(
 			fontWeight: '600',
 			opacity: '0.85',
 		},
-		'.md-heading-marker': {
-			display: 'none',
-		},
 
 		// Bold / italic / strikethrough / inline code
 		'.md-bold': {
@@ -96,7 +93,7 @@ export const marksmithTheme = EditorView.theme(
 			padding: '0.1em 0.35em',
 		},
 
-		// Code blocks (model C+): the fenced block stays editable text; these paint the container,
+		// Code blocks: the fenced block stays editable text; these paint the container,
 		// dim the ``` fence lines, and place the copy/delete tools. Shiki colors come from inline styles.
 		'.md-cb': {
 			background: 'var(--vscode-textCodeBlock-background, rgba(128,128,128,0.1))',
@@ -181,10 +178,6 @@ export const marksmithTheme = EditorView.theme(
 			fontSize: '0.85em',
 		},
 
-		// Widgets
-		'.md-widget': {
-			display: 'block',
-		},
 		// Inline-block + vertical-align keeps the rule's line at its natural height (no extra vertical space).
 		'.md-hr': {
 			display: 'inline-block',

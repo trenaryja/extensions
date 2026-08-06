@@ -21,11 +21,11 @@ You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clic
 - Unordered lists
   - nest as deep as you like
     - really, as deep as you like
-- Ordered lists renumber themselves:
+- Ordered lists too:
 
 1. First
-1. Second
-1. Third
+2. Second
+3. Third
 
 - [x] Task lists work
 - [ ] …and you can check them off

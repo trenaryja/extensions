@@ -42,5 +42,3 @@ export const configSchema = z.object({
 		scope: 'window',
 	}),
 })
-
-export type Config = z.infer<typeof configSchema>

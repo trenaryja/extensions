@@ -137,5 +137,3 @@ export const commands = defineCommands([
 		},
 	},
 ] as const)
-
-export type CommandId = (typeof commands)[number]['command']

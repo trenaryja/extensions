@@ -80,7 +80,7 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 			continue
 		}
 
-		// --- Fenced code blocks — owned entirely by codeblocksPlugin ---
+		// --- Fenced code blocks — owned by the tree renderer (treeBlocks) and codeblocks' hover tools ---
 		if (text.startsWith('```')) {
 			inCodeBlock = !inCodeBlock
 			continue

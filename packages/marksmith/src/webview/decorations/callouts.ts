@@ -4,7 +4,7 @@ import { type CalloutConfig, resolveCallout } from '../../callouts.data'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
 
-// Style-in-place (model C): callout lines stay editable text — line decorations paint the container, the
+// Style-in-place: callout lines stay editable text — line decorations paint the container, the
 // `>`/`[!type]` syntax is hidden and revealed per active line, and the content keeps live inline markdown.
 // Callouts nest: a `> > [!x]` inside a `> [!y]` renders an indented inner container inside the outer one.
 // A StateField (not a ViewPlugin) so it can emit the multi-line block decoration that hides folded content.
