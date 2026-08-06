@@ -8,7 +8,8 @@
 		"./build": "./src/build.ts",
 		"./registry": "./src/registry.ts",
 		"./config": "./src/config.ts",
-		"./contribute": "./src/contribute.ts"
+		"./contribute": "./src/contribute.ts",
+		"./headless": "./src/headless.ts"
 	},
 	"files": [
 		"src/**/*"
@@ -22,6 +23,7 @@
 		"@types/node": "^26.1.1",
 		"@types/vscode": "^1.107.0",
 		"esbuild": "^0.27.0",
+		"playwright-core": "^1.61.1",
 		"prettier": "^3.8.3"
 	},
 	"dependencies": {
