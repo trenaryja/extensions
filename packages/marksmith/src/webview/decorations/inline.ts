@@ -49,6 +49,16 @@ function buildInline(view: EditorView): DecorationSet {
 					if (!isActive(view, node.from, node.to)) for (const mark of marks) add(mark.from, mark.to, hide)
 					return
 				}
+				if (node.name === 'URL' && node.node.parent?.name !== 'Link' && node.node.parent?.name !== 'Image') {
+					// GFM bare autolink — the parser emits a standalone URL node with no Link wrapper.
+					const url = view.state.sliceDoc(node.from, node.to)
+					add(
+						node.from,
+						node.to,
+						Decoration.mark({ class: 'md-link-text', attributes: { title: `⌘/Ctrl-click to open · ${url}` } }),
+					)
+					return
+				}
 				if (node.name === 'Link') {
 					// Only style navigable links (`[text](url)`). A URL-less `[text]` — e.g. a callout's `[!type]`
 					// tag, which the parser also reads as a Link — isn't a real link, so leave it as plain text.
