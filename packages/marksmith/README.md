@@ -4,7 +4,7 @@ A beautiful live-preview markdown editor for VS Code — write without ever leav
 
 Marksmith renders markdown live and in place, Obsidian-style: headings render large, tables become editable grids, callouts get their icons, math and diagrams draw themselves. Your file stays plain markdown on disk — Marksmith is an editor, not a format.
 
-<!-- TODO: hero GIF once branding/media lands -->
+![Live editing in Marksmith](media/editing.gif)
 
 ## Features
 
@@ -15,6 +15,8 @@ Marksmith renders markdown live and in place, Obsidian-style: headings render la
 - YAML frontmatter stays visible but dimmed
 - Code blocks are syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Find & replace with `Cmd+F` / `Cmd+Alt+F` — match count, case/word/regex toggles, in a VS Code-style widget
+
+![Find in Marksmith](media/find.gif)
 
 ### Tables
 
@@ -45,6 +47,8 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 
 - ` ```mermaid ` blocks render live, theme-matched
 - Render inline, below the source, or not at all (`marksmith.mermaidRenderMode`)
+
+![Math and mermaid rendering live](media/blocks.gif)
 
 ## Usage
 

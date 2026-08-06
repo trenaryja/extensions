@@ -1,5 +1,6 @@
 .turbo/**
 harness/**
+media/**
 node_modules/**
 scripts/**
 src/**
