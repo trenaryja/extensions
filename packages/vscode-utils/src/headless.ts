@@ -38,6 +38,11 @@ export async function withPage<T>(options: HeadlessPageOptions, run: (page: Page
 	const browser = await chromium.launch({ executablePath: findChromium(), headless: true })
 	try {
 		const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor, recordVideo })
+		// Headless contexts deny navigator.clipboard by default; pages that copy shouldn't silently fail.
+		await page
+			.context()
+			.grantPermissions(['clipboard-read', 'clipboard-write'])
+			.catch(() => {})
 		return await run(page)
 	} finally {
 		await browser.close()
@@ -53,26 +58,77 @@ export type RecordGifOptions = Omit<HeadlessPageOptions, 'recordVideo'> & {
 	gifWidth?: number
 	/** gifski quality, 1–100. */
 	quality?: number
-	/** Render a visible cursor that follows the mouse (headless Chromium draws none). */
+	/** Input visualization: a visible cursor, click ripples, and a keystroke HUD for shortcuts. */
 	pointer?: boolean
 }
 
-// A fake cursor: headless Chromium renders no pointer, so mouse-driven demos read as telekinesis
-// without one. Follows pointer events (capture phase, so app handlers can't hide it) and shrinks
-// while a button is down.
+// Input visualization: headless Chromium renders no pointer, so mouse-driven demos read as
+// telekinesis without one. A soft cursor follows pointer events (capture phase, so app handlers
+// can't hide it), presses shrink it and emit an expanding ripple, and modifier chords (plus
+// Tab/Escape) surface as a bottom-center keystroke pill — plain typing stays silent.
 const POINTER_OVERLAY = `(() => {
 	const ready = () => {
+		const style = document.createElement('style')
+		style.textContent =
+			'@keyframes __hlripple{from{transform:translate(-50%,-50%) scale(.4);opacity:.85}to{transform:translate(-50%,-50%) scale(2.6);opacity:0}}' +
+			'@keyframes __hlpill{0%{opacity:0;transform:translate(-50%,6px) scale(.94)}12%{opacity:1;transform:translate(-50%,0) scale(1)}78%{opacity:1}100%{opacity:0;transform:translate(-50%,0) scale(1)}}'
+		document.head.appendChild(style)
+
 		const dot = document.createElement('div')
-		dot.style.cssText = 'position:fixed;top:0;left:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.7);z-index:2147483647;pointer-events:none;opacity:0;transition:opacity .15s'
+		dot.style.cssText =
+			'position:fixed;top:0;left:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;' +
+			'background:rgba(140,140,150,.32);border:1.5px solid rgba(255,255,255,.95);' +
+			'box-shadow:0 0 0 1px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4);' +
+			'z-index:2147483647;pointer-events:none;opacity:0;transition:opacity .18s,scale .12s ease-out'
 		document.body.appendChild(dot)
-		let scale = 1
+		let last = { x: 0, y: 0 }
 		const place = (x, y) => {
-			dot.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')'
+			last = { x, y }
+			dot.style.transform = 'translate(' + x + 'px,' + y + 'px)'
 			dot.style.opacity = '1'
 		}
 		document.addEventListener('pointermove', (e) => place(e.clientX, e.clientY), true)
-		document.addEventListener('pointerdown', (e) => { scale = 0.7; place(e.clientX, e.clientY) }, true)
-		document.addEventListener('pointerup', (e) => { scale = 1; place(e.clientX, e.clientY) }, true)
+		document.addEventListener('pointerdown', (e) => {
+			place(e.clientX, e.clientY)
+			dot.style.scale = '0.72'
+			const ripple = document.createElement('div')
+			ripple.style.cssText =
+				'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;width:34px;height:34px;border-radius:50%;' +
+				'border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.35);' +
+				'z-index:2147483646;pointer-events:none;animation:__hlripple .5s ease-out forwards'
+			document.body.appendChild(ripple)
+			ripple.addEventListener('animationend', () => ripple.remove())
+		}, true)
+		document.addEventListener('pointerup', (e) => {
+			dot.style.scale = '1'
+			place(e.clientX, e.clientY)
+		}, true)
+
+		const KEY_LABELS = {
+			Escape: 'esc', Tab: 'tab', Backspace: '\\u232B', Enter: '\\u21A9',
+			ArrowUp: '\\u2191', ArrowDown: '\\u2193', ArrowLeft: '\\u2190', ArrowRight: '\\u2192',
+		}
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift') return
+			const chorded = e.metaKey || e.ctrlKey || e.altKey
+			if (!chorded && e.key !== 'Tab' && e.key !== 'Escape') return
+			let label = ''
+			if (e.ctrlKey) label += '\\u2303'
+			if (e.altKey) label += '\\u2325'
+			if (e.shiftKey && chorded) label += '\\u21E7'
+			if (e.metaKey) label += '\\u2318'
+			label += KEY_LABELS[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
+			const pill = document.createElement('div')
+			pill.textContent = label
+			pill.style.cssText =
+				'position:fixed;bottom:30px;left:50%;padding:8px 14px;border-radius:9px;' +
+				'background:rgba(22,22,28,.88);color:#fff;border:1px solid rgba(255,255,255,.22);' +
+				'font:600 14px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;' +
+				'box-shadow:0 4px 14px rgba(0,0,0,.4);z-index:2147483647;pointer-events:none;' +
+				'animation:__hlpill 1.3s ease forwards'
+			document.body.appendChild(pill)
+			pill.addEventListener('animationend', () => pill.remove())
+		}, true)
 	}
 	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready)
 	else ready()
