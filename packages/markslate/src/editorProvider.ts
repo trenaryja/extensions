@@ -12,20 +12,20 @@ type WebviewMessage =
 	| { type: 'requestShikiTheme'; name: string }
 
 const readSettings = () => ({
-	mermaidRenderMode: getConfig('marksmith.mermaidRenderMode'),
-	callouts: getConfig('marksmith.callouts'),
-	calloutDefaultTitle: getConfig('marksmith.calloutDefaultTitle'),
-	mathExportColor: getConfig('marksmith.mathExportColor'),
-	formatTablesOnEdit: getConfig('marksmith.formatTablesOnEdit'),
+	mermaidRenderMode: getConfig('markslate.mermaidRenderMode'),
+	callouts: getConfig('markslate.callouts'),
+	calloutDefaultTitle: getConfig('markslate.calloutDefaultTitle'),
+	mathExportColor: getConfig('markslate.mathExportColor'),
+	formatTablesOnEdit: getConfig('markslate.formatTablesOnEdit'),
 })
 
-// The most recently active Marksmith editor — the target for insert commands, since custom editors
+// The most recently active MarkSlate editor — the target for insert commands, since custom editors
 // don't set vscode.window.activeTextEditor. It persists while a picker is open (which deactivates the webview).
 let activePanel: vscode.WebviewPanel | null = null
 
 export const insertIntoActiveEditor = (text: string) => {
 	const panel = activePanel
-	if (!panel) return void vscode.window.showWarningMessage('Marksmith: open a markdown file to insert into.')
+	if (!panel) return void vscode.window.showWarningMessage('MarkSlate: open a markdown file to insert into.')
 	panel.webview.postMessage({ type: 'insert', text })
 }
 
@@ -50,7 +50,7 @@ const getHtml = (context: vscode.ExtensionContext, webview: vscode.Webview) =>
 		],
 		cspAddons: ' font-src data:;',
 		htmlAttrs: 'data-theme="vscode"',
-		title: 'Marksmith',
+		title: 'MarkSlate',
 		headStyles,
 		bodyHtml: '<div id="editor"></div>',
 	})
@@ -98,14 +98,14 @@ const resolveEditor = (
 		}
 
 		if (msg.type === 'webviewError') {
-			vscode.window.showErrorMessage(`Marksmith (webview): ${msg.message}`)
-			return console.error('[Marksmith] Webview error:', msg.message, msg.stack)
+			vscode.window.showErrorMessage(`MarkSlate (webview): ${msg.message}`)
+			return console.error('[MarkSlate] Webview error:', msg.message, msg.stack)
 		}
 
 		if (msg.type === 'navigate') {
 			if (/^https?:\/\//i.test(msg.url)) return vscode.env.openExternal(vscode.Uri.parse(msg.url))
 			const resolved = vscode.Uri.joinPath(document.uri, '..', msg.url)
-			// Open .md targets in Marksmith; everything else (images, etc.) with the default editor/viewer.
+			// Open .md targets in MarkSlate; everything else (images, etc.) with the default editor/viewer.
 			if (/\.md$/i.test(resolved.path))
 				return vscode.commands.executeCommand('vscode.openWith', resolved, EDITOR_VIEW_TYPE)
 			return vscode.commands.executeCommand('vscode.open', resolved)
@@ -118,7 +118,7 @@ const resolveEditor = (
 		sendUpdate()
 	})
 	const configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
-		if (e.affectsConfiguration('marksmith'))
+		if (e.affectsConfiguration('markslate'))
 			webviewPanel.webview.postMessage({ type: 'settingsUpdate', settings: readSettings() })
 	})
 	// Backup for committed theme changes (the webview also drives this live via requestShikiTheme).
@@ -137,8 +137,8 @@ const resolveEditor = (
 	})
 }
 
-/** Register the Marksmith custom editor — a plain object implementing the provider interface, no class. */
-export const registerMarksmithEditor = (context: vscode.ExtensionContext) =>
+/** Register the MarkSlate custom editor — a plain object implementing the provider interface, no class. */
+export const registerMarkSlateEditor = (context: vscode.ExtensionContext) =>
 	vscode.window.registerCustomEditorProvider(
 		EDITOR_VIEW_TYPE,
 		{ resolveCustomTextEditor: (document, webviewPanel) => resolveEditor(context, document, webviewPanel) },

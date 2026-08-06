@@ -1,11 +1,11 @@
 ---
-title: Welcome to Marksmith
+title: Welcome to MarkSlate
 tags: [playground, welcome]
 ---
 
-# Welcome to Marksmith M§
+# Welcome to MarkSlate M§
 
-This is your **playground** — a scratch copy, so poke at anything and break everything. Your edits stay here and never touch your projects. Reopen it anytime with **Marksmith: Open Playground**.
+This is your **playground** — a scratch copy, so poke at anything and break everything. Your edits stay here and never touch your projects. Reopen it anytime with **MarkSlate: Open Playground**.
 
 > [!TIP] Everything below is live and editable.
 > There's no separate preview pane — what you see _is_ the markdown. Click into any block and start typing.
@@ -14,7 +14,7 @@ This is your **playground** — a scratch copy, so poke at anything and break ev
 
 ## The basics
 
-You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the Marksmith repo](https://github.com/trenaryja/vscode-extensions) to open it. Bare URLs autolink too: https://commonmark.org.
+You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the MarkSlate repo](https://github.com/trenaryja/vscode-extensions) to open it. Bare URLs autolink too: https://commonmark.org.
 
 > A blockquote, for when you're quoting someone wiser than yourself.
 
@@ -34,7 +34,7 @@ You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clic
 
 ## Tables are a data grid
 
-Stop counting pipes. **Click any cell to edit it in place**, and **drag the row/column handles to reorder**. When you're done, Marksmith writes the table exactly the way Prettier would — so your formatter never fights you.
+Stop counting pipes. **Click any cell to edit it in place**, and **drag the row/column handles to reorder**. When you're done, MarkSlate writes the table exactly the way Prettier would — so your formatter never fights you.
 
 | Feature  |  Flavor  | Ships |
 | :------- | :------: | ----: |
@@ -60,7 +60,7 @@ Stop counting pipes. **Click any cell to edit it in place**, and **drag the row/
 > > [!INFO] A callout inside a callout,
 > > with **lists**, `code`, and even math inside if you like.
 
-Override any type's icon or color with the `marksmith.callouts` setting.
+Override any type's icon or color with the `markslate.callouts` setting.
 
 ---
 
@@ -82,7 +82,7 @@ Syntax highlighting tracks your VS Code theme (powered by Shiki):
 
 ```ts
 const greet = (name: string) => `Hello, ${name}!`
-console.log(greet('Marksmith'))
+console.log(greet('MarkSlate'))
 ```
 
 ```python
@@ -112,7 +112,7 @@ flowchart LR
 
 Images render inline, and their URLs are clickable:
 
-![The M§ seal](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/marksmith/assets/icon.png)
+![The M§ seal](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/assets/icon.png)
 
 And a thematic break closes us out:
 

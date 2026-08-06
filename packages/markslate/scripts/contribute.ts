@@ -8,7 +8,7 @@ const check = process.argv.includes('--check')
 
 await syncContributes(
 	packageJsonPath,
-	{ commands, customEditors, config: { schema: configSchema, title: 'Marksmith' }, extra: { walkthroughs } },
+	{ commands, customEditors, config: { schema: configSchema, title: 'MarkSlate' }, extra: { walkthroughs } },
 	{ check },
 )
 

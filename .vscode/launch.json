@@ -2,16 +2,16 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Ext: Marksmith",
+			"name": "Ext: MarkSlate",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"${workspaceFolder}/packages/marksmith",
-				"--extensionDevelopmentPath=${workspaceFolder}/packages/marksmith",
+				"${workspaceFolder}/packages/markslate",
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/markslate",
 				"--disable-extensions"
 			],
-			"preLaunchTask": "build: marksmith"
+			"preLaunchTask": "build: markslate"
 		},
 		{
 			"name": "Ext: Multi-Cursor Magic",

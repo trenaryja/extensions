@@ -157,7 +157,7 @@ const SCENARIOS: Scenario[] = [
 		doc: '',
 		run: async (page) => {
 			await page.waitForTimeout(600)
-			await line(page, '# Marksmith')
+			await line(page, '# MarkSlate')
 			await page.keyboard.press('Enter')
 			await page.waitForTimeout(500)
 			await line(page, 'Everything renders **live** — as you _type_.')
@@ -284,7 +284,7 @@ const SCENARIOS: Scenario[] = [
 			await page.waitForTimeout(500)
 			await line(page, '```ts')
 			await line(page, 'const greet = (name: string) => `Hello, ${name}!`')
-			await line(page, "console.log(greet('Marksmith'))")
+			await line(page, "console.log(greet('MarkSlate'))")
 			await type(page, '```')
 			await page.keyboard.press('Enter')
 			await page.waitForTimeout(1600)

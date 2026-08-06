@@ -9,13 +9,13 @@ const PALETTE_MD = [{ id: 'commandPalette' as const, when: 'resourceExtname == .
 type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
 
 /** Custom-editor view type — the id VS Code opens `.md` files with. */
-export const EDITOR_VIEW_TYPE = 'marksmith.editor'
+export const EDITOR_VIEW_TYPE = 'markslate.editor'
 
 /** Static `contributes.customEditors` entry, fed to the codegen alongside the command registry. */
 export const customEditors = [
 	{
 		viewType: EDITOR_VIEW_TYPE,
-		displayName: 'Marksmith',
+		displayName: 'MarkSlate',
 		selector: [{ filenamePattern: '*.md' }],
 		priority: 'default',
 	},
@@ -24,23 +24,23 @@ export const customEditors = [
 /** Get Started walkthrough — surfaced in VS Code's welcome area on install (non-obtrusive), fed via `extra`. */
 export const walkthroughs = [
 	{
-		id: 'marksmith.gettingStarted',
-		title: 'Get Started with Marksmith',
+		id: 'markslate.gettingStarted',
+		title: 'Get Started with MarkSlate',
 		description: 'A live markdown editor that treats your notes like a craft.',
 		steps: [
 			{
 				id: 'playground',
 				title: 'Open the playground',
 				description:
-					'Marksmith renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:marksmith.openPlayground)',
+					'MarkSlate renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:markslate.openPlayground)',
 				media: { markdown: 'assets/walkthrough/playground.md' },
-				completionEvents: ['onCommand:marksmith.openPlayground'],
+				completionEvents: ['onCommand:markslate.openPlayground'],
 			},
 			{
 				id: 'editing',
 				title: "It's your markdown editor now",
 				description:
-					'Marksmith is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).',
+					'MarkSlate is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).',
 				media: { markdown: 'assets/walkthrough/editing.md' },
 			},
 		],
@@ -53,9 +53,9 @@ const modeMap = new Map<string, 'preview' | 'raw'>()
 /** The command registry — the single source of truth for commands, keybindings, and menu placements. */
 export const commands = defineCommands([
 	{
-		command: 'marksmith.toggle',
+		command: 'markslate.toggle',
 		title: 'Toggle Raw/Preview',
-		category: 'Marksmith',
+		category: 'MarkSlate',
 		icon: '$(book)',
 		key: 'ctrl+shift+m',
 		mac: 'cmd+shift+m',
@@ -75,9 +75,9 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'marksmith.insertCodeBlock',
+		command: 'markslate.insertCodeBlock',
 		title: 'Insert Code Block',
-		category: 'Marksmith',
+		category: 'MarkSlate',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const lang = await vscode.window.showQuickPick(CODE_LANGUAGES, { placeHolder: 'Code block language' })
@@ -86,12 +86,12 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'marksmith.insertCallout',
+		command: 'markslate.insertCallout',
 		title: 'Insert Callout',
-		category: 'Marksmith',
+		category: 'MarkSlate',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
-			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('marksmith.callouts') ?? {}
+			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markslate.callouts') ?? {}
 			const types = [...new Set([...CALLOUT_PRIMARIES, ...Object.keys(config)])].filter((t) => t !== 'default')
 			const items: CalloutPickItem[] = types.map((type) => {
 				const icon = resolveCallout(config, type).icon.trim()
@@ -106,9 +106,9 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'marksmith.insertMermaid',
+		command: 'markslate.insertMermaid',
 		title: 'Insert Mermaid Diagram',
-		category: 'Marksmith',
+		category: 'MarkSlate',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
 			const choice = await vscode.window.showQuickPick(Object.keys(MERMAID_EXAMPLES), { placeHolder: 'Diagram type' })
@@ -118,14 +118,14 @@ export const commands = defineCommands([
 		},
 	},
 	{
-		command: 'marksmith.openPlayground',
+		command: 'markslate.openPlayground',
 		title: 'Open Playground',
-		category: 'Marksmith',
+		category: 'MarkSlate',
 		icon: '$(rocket)',
 		// No `menus` → always available in the palette, even with no markdown file open (that's the whole point).
 		handler: async ({ vscode, context }) => {
 			const source = vscode.Uri.joinPath(context.extensionUri, 'assets', 'playground.md')
-			const scratch = vscode.Uri.joinPath(context.globalStorageUri, 'Marksmith Playground.md')
+			const scratch = vscode.Uri.joinPath(context.globalStorageUri, 'MarkSlate Playground.md')
 			// Seed an editable scratch copy on first open (never in the user's workspace); keep their edits afterward.
 			await vscode.workspace.fs.createDirectory(context.globalStorageUri)
 			const exists = await vscode.workspace.fs.stat(scratch).then(

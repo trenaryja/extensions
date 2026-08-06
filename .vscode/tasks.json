@@ -2,11 +2,11 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "build: marksmith",
+			"label": "build: markslate",
 			"type": "shell",
 			"command": "bun run build",
 			"options": {
-				"cwd": "${workspaceFolder}/packages/marksmith"
+				"cwd": "${workspaceFolder}/packages/markslate"
 			},
 			"group": "build",
 			"presentation": {

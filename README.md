@@ -4,7 +4,7 @@ Justin Trenary's VS Code extensions, in one Turborepo.
 
 ## Extensions
 
-- [`marksmith`](packages/marksmith) — a live-preview markdown editor: tables, callouts, math, and mermaid diagrams, all editable in place
+- [`markslate`](packages/markslate) — a live-preview markdown editor: tables, callouts, math, and mermaid diagrams, all editable in place
 - [`multi-cursor-magic`](packages/multi-cursor-magic) — multi-cursor transformation tools for dates, numbers, geographic data, and more · [Marketplace](https://marketplace.visualstudio.com/items?itemName=trenaryja.multi-cursor-magic)
 
 ## Shared packages

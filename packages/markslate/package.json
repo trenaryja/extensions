@@ -1,6 +1,6 @@
 {
-	"name": "marksmith",
-	"displayName": "Marksmith",
+	"name": "markslate",
+	"displayName": "MarkSlate",
 	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
 	"version": "0.0.2",
 	"publisher": "trenaryja",
@@ -8,12 +8,12 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/trenaryja/vscode-extensions.git",
-		"directory": "packages/marksmith"
+		"directory": "packages/markslate"
 	},
 	"bugs": {
 		"url": "https://github.com/trenaryja/vscode-extensions/issues"
 	},
-	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/marksmith",
+	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/markslate",
 	"icon": "assets/icon.png",
 	"galleryBanner": {
 		"color": "#0c0a09",
@@ -90,25 +90,25 @@
 	"contributes": {
 		"walkthroughs": [
 			{
-				"id": "marksmith.gettingStarted",
-				"title": "Get Started with Marksmith",
+				"id": "markslate.gettingStarted",
+				"title": "Get Started with MarkSlate",
 				"description": "A live markdown editor that treats your notes like a craft.",
 				"steps": [
 					{
 						"id": "playground",
 						"title": "Open the playground",
-						"description": "Marksmith renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:marksmith.openPlayground)",
+						"description": "MarkSlate renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:markslate.openPlayground)",
 						"media": {
 							"markdown": "assets/walkthrough/playground.md"
 						},
 						"completionEvents": [
-							"onCommand:marksmith.openPlayground"
+							"onCommand:markslate.openPlayground"
 						]
 					},
 					{
 						"id": "editing",
 						"title": "It's your markdown editor now",
-						"description": "Marksmith is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).",
+						"description": "MarkSlate is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).",
 						"media": {
 							"markdown": "assets/walkthrough/editing.md"
 						}
@@ -118,36 +118,36 @@
 		],
 		"commands": [
 			{
-				"command": "marksmith.toggle",
+				"command": "markslate.toggle",
 				"title": "Toggle Raw/Preview",
-				"category": "Marksmith",
+				"category": "MarkSlate",
 				"icon": "$(book)"
 			},
 			{
-				"command": "marksmith.insertCodeBlock",
+				"command": "markslate.insertCodeBlock",
 				"title": "Insert Code Block",
-				"category": "Marksmith"
+				"category": "MarkSlate"
 			},
 			{
-				"command": "marksmith.insertCallout",
+				"command": "markslate.insertCallout",
 				"title": "Insert Callout",
-				"category": "Marksmith"
+				"category": "MarkSlate"
 			},
 			{
-				"command": "marksmith.insertMermaid",
+				"command": "markslate.insertMermaid",
 				"title": "Insert Mermaid Diagram",
-				"category": "Marksmith"
+				"category": "MarkSlate"
 			},
 			{
-				"command": "marksmith.openPlayground",
+				"command": "markslate.openPlayground",
 				"title": "Open Playground",
-				"category": "Marksmith",
+				"category": "MarkSlate",
 				"icon": "$(rocket)"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "marksmith.toggle",
+				"command": "markslate.toggle",
 				"key": "ctrl+shift+m",
 				"mac": "cmd+shift+m",
 				"when": "resourceExtname == .md"
@@ -156,30 +156,30 @@
 		"menus": {
 			"editor/title": [
 				{
-					"command": "marksmith.toggle",
+					"command": "markslate.toggle",
 					"group": "navigation",
 					"when": "resourceExtname == .md"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "marksmith.insertCodeBlock",
+					"command": "markslate.insertCodeBlock",
 					"when": "resourceExtname == .md"
 				},
 				{
-					"command": "marksmith.insertCallout",
+					"command": "markslate.insertCallout",
 					"when": "resourceExtname == .md"
 				},
 				{
-					"command": "marksmith.insertMermaid",
+					"command": "markslate.insertMermaid",
 					"when": "resourceExtname == .md"
 				}
 			]
 		},
 		"customEditors": [
 			{
-				"viewType": "marksmith.editor",
-				"displayName": "Marksmith",
+				"viewType": "markslate.editor",
+				"displayName": "MarkSlate",
 				"selector": [
 					{
 						"filenamePattern": "*.md"
@@ -189,9 +189,9 @@
 			}
 		],
 		"configuration": {
-			"title": "Marksmith",
+			"title": "MarkSlate",
 			"properties": {
-				"marksmith.mermaidRenderMode": {
+				"markslate.mermaidRenderMode": {
 					"default": "inline",
 					"markdownDescription": "How Mermaid diagrams are rendered. `inline` replaces the code block with the diagram, `below` shows the diagram beneath the source, `disabled` leaves the code block as-is.",
 					"enumDescriptions": [
@@ -207,7 +207,7 @@
 						"disabled"
 					]
 				},
-				"marksmith.callouts": {
+				"markslate.callouts": {
 					"default": {},
 					"markdownDescription": "Override callout icons/colors or add custom types. Each entry is `{ \"icon\"?: …, \"color\"?: … }`. An `icon` can be an emoji, a `$(codicon)` name (e.g. `$(bell)`), or a raw `<svg>`. Omit `icon` to keep the built-in and only change the color. A `\"default\"` entry sets the fallback icon for any unlisted type.",
 					"scope": "window",
@@ -885,19 +885,19 @@
 						}
 					}
 				},
-				"marksmith.calloutDefaultTitle": {
+				"markslate.calloutDefaultTitle": {
 					"default": true,
 					"markdownDescription": "Show the callout type as the heading when no custom title is given — e.g. `> [!note]` renders a **Note** title (matches Obsidian). Turn off to show only the icon.",
 					"scope": "window",
 					"type": "boolean"
 				},
-				"marksmith.mathExportColor": {
+				"markslate.mathExportColor": {
 					"default": "currentColor",
 					"markdownDescription": "Color baked into an exported/copied math SVG. `currentColor` (default) inherits the color at the paste target; `theme` bakes your editor foreground; or use any CSS color (e.g. `#1a1a1a`, `black`). Live in-editor math always uses your theme foreground.",
 					"scope": "window",
 					"type": "string"
 				},
-				"marksmith.formatTablesOnEdit": {
+				"markslate.formatTablesOnEdit": {
 					"default": true,
 					"markdownDescription": "Pretty-align a table (pad its columns to equal widths) when you leave its raw source after editing it — like Prettier’s format-on-save, but only for tables. Turn off to keep your hand-tuned spacing.",
 					"scope": "window",

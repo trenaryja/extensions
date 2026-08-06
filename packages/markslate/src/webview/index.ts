@@ -4,8 +4,8 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { syntaxTree } from '@codemirror/language'
-import { marksmithTheme } from './theme'
-import { marksmithFind, openFind } from './find'
+import { markslateTheme } from './theme'
+import { markslateFind, openFind } from './find'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
@@ -110,8 +110,8 @@ function createEditor(content: string): EditorView {
 			keymap.of([...defaultKeymap, ...historyKeymap]),
 			EditorView.lineWrapping,
 			markdown({ base: markdownLanguage, codeLanguages: languages }),
-			marksmithTheme,
-			...marksmithFind,
+			markslateTheme,
+			...markslateFind,
 			...createDecorationExtensions(getMermaidMode),
 			EditorView.domEventHandlers({
 				// Cmd/Ctrl+click a link to follow it. A plain click just places the cursor (and reveals the

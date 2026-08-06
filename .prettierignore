@@ -1,4 +1,4 @@
-# marksmith intentionally hand-formats its docs/fixtures (see its own .prettierignore `*.md`).
+# markslate intentionally hand-formats its docs/fixtures (see its own .prettierignore `*.md`).
 # Prettier only reads the ignore file in its CWD, so the root `check`'s `prettier -c .` can't see that
 # nested ignore — restate it here. (dist/ etc. are already skipped via .gitignore, which prettier 3 honors.)
-packages/marksmith/**/*.md
+packages/markslate/**/*.md

@@ -23,9 +23,9 @@
         "typescript": "^6.0.0",
       },
     },
-    "packages/marksmith": {
-      "name": "marksmith",
-      "version": "0.0.1",
+    "packages/markslate": {
+      "name": "markslate",
+      "version": "0.0.2",
       "dependencies": {
         "@codemirror/commands": "^6.8.1",
         "@codemirror/lang-markdown": "^6.3.2",
@@ -1518,7 +1518,7 @@
 
     "marked": ["marked@16.4.2", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA=="],
 
-    "marksmith": ["marksmith@workspace:packages/marksmith"],
+    "markslate": ["markslate@workspace:packages/markslate"],
 
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
 
