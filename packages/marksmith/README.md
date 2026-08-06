@@ -13,7 +13,6 @@ Marksmith renders markdown live and in place, Obsidian-style: headings render la
 - Headings, emphasis, lists, task lists, blockquotes, links, and images render as you type
 - The active line reveals its raw markdown for precise edits, then re-renders when you leave it
 - YAML frontmatter stays visible but dimmed
-- Code blocks are syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Find & replace with `Cmd+F` / `Cmd+Alt+F` — match count, case/word/regex toggles, in a VS Code-style widget
 
 ![Find in Marksmith](media/find.gif)
@@ -27,6 +26,8 @@ Excel-style grid editing on plain GFM tables:
 - Drag to reorder rows and columns
 - Auto-formats a table's source when you finish editing it (like format-on-save, scoped to the table — `marksmith.formatTablesOnEdit`)
 
+![Editing a table like a spreadsheet](media/tables.gif)
+
 ### Callouts
 
 Obsidian's full callout taxonomy — 13 types plus aliases:
@@ -36,6 +37,8 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Nested callouts, with per-level color, icon, and title
 - Override icons/colors or add your own types via `marksmith.callouts` — emoji, `$(codicon)`, or raw SVG
 - Covers GitHub Alerts (`> [!NOTE]` etc.) as a subset
+
+![Folding and unfolding callouts](media/callouts.gif)
 
 ### Math
 
@@ -49,6 +52,13 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Render inline, below the source, or not at all (`marksmith.mermaidRenderMode`)
 
 ![Math and mermaid rendering live](media/blocks.gif)
+
+### Code blocks
+
+- Syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
+- Copy and delete tools on hover; fences dim away while you read
+
+![Shiki-highlighted code](media/code.gif)
 
 ## Usage
 

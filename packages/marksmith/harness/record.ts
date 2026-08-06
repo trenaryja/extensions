@@ -118,6 +118,85 @@ const SCENARIOS: Scenario[] = [
 	},
 ]
 
+const TABLES_DOC = `# Tables
+
+| Feature  | Flavor   | Ships |
+| -------- | -------- | ----- |
+| Tables   | GFM      | ✅    |
+| Callouts | Obsidian | ✅    |
+| Math     | LaTeX    |       |
+`
+
+const CALLOUTS_DOC = `# Callouts
+
+> [!TIP] Callouts come in every flavor
+> note, tip, warning, quote — and custom ones you define.
+
+> [!WARNING]- This one starts folded
+> Click the title to reveal the details inside.
+`
+
+SCENARIOS.push(
+	{
+		name: 'tables',
+		doc: TABLES_DOC,
+		run: async (page) => {
+			await page.waitForTimeout(800)
+			// Fill the empty cell: click to select, type to edit (Excel-style), Enter commits.
+			// Emoji can't be typed as key events, and the grid enters edit from keydown — so double-click
+			// into edit mode first, then insertText targets the live cell editor.
+			await page.locator('.md-table td').nth(8).dblclick()
+			await page.waitForTimeout(500)
+			await page.keyboard.insertText('✅')
+			await page.keyboard.press('Enter')
+			await page.waitForTimeout(800)
+			// Add a whole row from the edge bar, then tab across it.
+			await page.locator('.md-table-add-row').click()
+			await page.waitForTimeout(600)
+			await page.locator('.md-table td').nth(9).click()
+			await type(page, 'Mermaid')
+			await page.keyboard.press('Tab')
+			await type(page, 'Mermaid')
+			await page.keyboard.press('Tab')
+			await page.locator('.md-table td').nth(11).dblclick()
+			await page.keyboard.insertText('✅')
+			await page.keyboard.press('Enter')
+			await page.keyboard.press('Escape')
+			await page.waitForTimeout(1200)
+		},
+	},
+	{
+		name: 'callouts',
+		doc: CALLOUTS_DOC,
+		run: async (page) => {
+			// Off the heading line so its raw `#` doesn't stay revealed in every frame.
+			await page.keyboard.press('ArrowDown')
+			await page.waitForTimeout(900)
+			const fold = page.locator('.md-callout-fold').last()
+			await fold.click()
+			await page.waitForTimeout(1100)
+			await fold.click()
+			await page.waitForTimeout(900)
+			await fold.click()
+			await page.waitForTimeout(1300)
+		},
+	},
+	{
+		name: 'code',
+		doc: '# Code\n\n',
+		run: async (page) => {
+			await page.keyboard.press('Meta+ArrowDown')
+			await page.waitForTimeout(500)
+			await line(page, '```ts')
+			await line(page, 'const greet = (name: string) => `Hello, ${name}!`')
+			await line(page, "console.log(greet('Marksmith'))")
+			await type(page, '```')
+			await page.keyboard.press('Enter')
+			await page.waitForTimeout(1800)
+		},
+	},
+)
+
 const requested = process.argv.slice(2)
 const toRecord = requested.length ? SCENARIOS.filter((s) => requested.includes(s.name)) : SCENARIOS
 if (!toRecord.length) throw new Error(`No matching scenarios. Available: ${SCENARIOS.map((s) => s.name).join(', ')}`)
