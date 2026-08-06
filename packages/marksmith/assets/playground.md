@@ -112,7 +112,7 @@ flowchart LR
 
 Images render inline, and their URLs are clickable:
 
-![Marksmith](data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='640'%20height='120'%3E%3Crect%20width='640'%20height='120'%20rx='14'%20fill='%235b21b6'/%3E%3Ctext%20x='320'%20y='70'%20font-family='ui-sans-serif,system-ui,sans-serif'%20font-size='40'%20font-weight='700'%20fill='%23ede9fe'%20text-anchor='middle'%3EMarksmith%20M%C2%A7%3C/text%3E%3C/svg%3E)
+![The M§ seal](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/marksmith/assets/icon.png)
 
 And a thematic break closes us out:
 
