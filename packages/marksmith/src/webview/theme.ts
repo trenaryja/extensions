@@ -1,5 +1,8 @@
 import { EditorView } from '@codemirror/view'
 
+/** Heading font sizes by level — shared with find.ts, whose match-box fix must mirror them. */
+export const HEADING_FONT_SIZES = { 1: '2em', 2: '1.6em', 3: '1.3em', 4: '1.1em', 5: '1em', 6: '0.95em' }
+
 export const marksmithTheme = EditorView.theme(
 	{
 		'&': {
@@ -42,32 +45,32 @@ export const marksmithTheme = EditorView.theme(
 
 		// Heading styles
 		'.md-h1': {
-			fontSize: '2em',
+			fontSize: HEADING_FONT_SIZES[1],
 			fontWeight: '700',
 			lineHeight: '1.3',
 			color: 'var(--vscode-editor-foreground)',
 		},
 		'.md-h2': {
-			fontSize: '1.6em',
+			fontSize: HEADING_FONT_SIZES[2],
 			fontWeight: '700',
 			lineHeight: '1.3',
 		},
 		'.md-h3': {
-			fontSize: '1.3em',
+			fontSize: HEADING_FONT_SIZES[3],
 			fontWeight: '600',
 			lineHeight: '1.3',
 		},
 		'.md-h4': {
-			fontSize: '1.1em',
+			fontSize: HEADING_FONT_SIZES[4],
 			fontWeight: '600',
 			lineHeight: '1.3',
 		},
 		'.md-h5': {
-			fontSize: '1em',
+			fontSize: HEADING_FONT_SIZES[5],
 			fontWeight: '600',
 		},
 		'.md-h6': {
-			fontSize: '0.95em',
+			fontSize: HEADING_FONT_SIZES[6],
 			fontWeight: '600',
 			opacity: '0.85',
 		},
