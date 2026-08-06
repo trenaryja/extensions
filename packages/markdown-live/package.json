@@ -1,0 +1,85 @@
+{
+	"name": "markdown-live",
+	"displayName": "Markdown Live",
+	"description": "Obsidian-style live preview markdown editor for VS Code",
+	"version": "0.0.1",
+	"publisher": "trenaryja",
+	"license": "MIT",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "bunx tsx ./scripts/build.ts",
+		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"test": "bun test",
+		"vscode:prepublish": "bun run build"
+	},
+	"dependencies": {
+		"@codemirror/commands": "^6.8.1",
+		"@codemirror/lang-markdown": "^6.3.2",
+		"@codemirror/language": "^6.11.1",
+		"@codemirror/language-data": "^6.5.1",
+		"@codemirror/state": "^6.5.2",
+		"@codemirror/view": "^6.38.1",
+		"mermaid": "^11.4.1",
+		"shiki": "^4.2.0"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/vscode": "^1.100.0",
+		"@vscode/vsce": "^3.7.1",
+		"bun-types": "latest",
+		"esbuild": "^0.27.2",
+		"tsx": "^4.21.0"
+	},
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"markdown",
+		"wysiwyg",
+		"live preview",
+		"editor"
+	],
+	"activationEvents": [],
+	"contributes": {
+		"customEditors": [
+			{
+				"viewType": "markdownLive.editor",
+				"displayName": "Markdown Live",
+				"selector": [
+					{
+						"filenamePattern": "*.md"
+					}
+				],
+				"priority": "default"
+			}
+		],
+		"commands": [
+			{
+				"command": "markdownLive.toggle",
+				"title": "Markdown Live: Toggle Raw/Preview"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "markdownLive.toggle",
+				"key": "ctrl+shift+m",
+				"mac": "cmd+shift+m",
+				"when": "resourceExtname == .md"
+			}
+		],
+		"configuration": {
+			"title": "Markdown Live",
+			"properties": {
+				"markdownLive.mermaidRenderMode": {
+					"type": "string",
+					"enum": ["inline", "below", "disabled"],
+					"default": "inline",
+					"description": "How Mermaid diagrams are rendered. 'inline' replaces the code block with the diagram, 'below' shows the diagram below the source, 'disabled' leaves the code block as-is."
+				}
+			}
+		}
+	}
+}

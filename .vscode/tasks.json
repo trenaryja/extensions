@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build: markdown-live",
+			"type": "shell",
+			"command": "bun run build",
+			"options": {
+				"cwd": "${workspaceFolder}/packages/markdown-live"
+			},
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		}
+	]
+}
