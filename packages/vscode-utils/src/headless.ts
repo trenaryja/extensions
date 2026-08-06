@@ -1,5 +1,7 @@
-import { readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { chromium, type Page } from 'playwright-core'
 
 // Headless Chromium for extension tooling — screenshots, icon rendering, demo recording.
@@ -39,5 +41,50 @@ export async function withPage<T>(options: HeadlessPageOptions, run: (page: Page
 		return await run(page)
 	} finally {
 		await browser.close()
+	}
+}
+
+export type RecordGifOptions = Omit<HeadlessPageOptions, 'recordVideo'> & {
+	/** Destination .gif path (directories are created). */
+	output: string
+	/** GIF frame rate — editor demos read well at 12–16. */
+	fps?: number
+	/** Scale the GIF to this width; defaults to the capture width. */
+	gifWidth?: number
+	/** gifski quality, 1–100. */
+	quality?: number
+}
+
+/**
+ * Record a page session and encode it as a GIF: Playwright's recordVideo captures a webm, gifski
+ * (per-frame palettes, temporal dithering — `brew install gifski`) encodes it. Returns the output path.
+ */
+export async function recordGif(options: RecordGifOptions, run: (page: Page) => Promise<void>) {
+	const { output, fps = 14, gifWidth, quality = 80, ...pageOptions } = options
+	const { width = 900, height = 700 } = pageOptions
+	const captureDir = mkdtempSync(join(tmpdir(), 'headless-record-'))
+	try {
+		let videoPath: string | undefined
+		// Without an explicit size, Playwright scales the video to fit 800×800 — and may switch frame
+		// properties mid-stream, which gifski's decoder can reject.
+		await withPage({ ...pageOptions, recordVideo: { dir: captureDir, size: { width, height } } }, async (page) => {
+			await run(page)
+			videoPath = await page.video()?.path()
+			// Videos are only guaranteed written after the CONTEXT closes — browser.close() alone can
+			// truncate the webm mid-write.
+			await page.context().close()
+		})
+		if (!videoPath) throw new Error('recordGif: no video captured')
+		mkdirSync(dirname(output), { recursive: true })
+		const args = ['--fps', String(fps), '--quality', String(quality)]
+		if (gifWidth) args.push('--width', String(gifWidth))
+		const result = spawnSync('gifski', [...args, '-o', output, videoPath], { stdio: 'inherit' })
+		if (result.error || result.status !== 0)
+			throw new Error(
+				`recordGif: gifski failed (${result.error?.message ?? `exit ${result.status}`}) — brew install gifski`,
+			)
+		return output
+	} finally {
+		rmSync(captureDir, { recursive: true, force: true })
 	}
 }
