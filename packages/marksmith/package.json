@@ -2,7 +2,7 @@
 	"name": "marksmith",
 	"displayName": "Marksmith",
 	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "trenaryja",
 	"license": "MIT",
 	"repository": {
