@@ -29,6 +29,7 @@
 		"contribute:check": "bun ./scripts/contribute.ts --check",
 		"harness": "bun run harness/screenshot.ts",
 		"icon": "bun scripts/icon.ts",
+		"record": "bun harness/record.ts",
 		"fix": "bun run contribute && prettier -w .",
 		"check": "bun run contribute:check && tsc && prettier -c . && bun run build",
 		"test": "bun test",

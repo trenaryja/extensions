@@ -4,7 +4,7 @@ A beautiful live-preview markdown editor for VS Code — write without ever leav
 
 Marksmith renders markdown live and in place, Obsidian-style: headings render large, tables become editable grids, callouts get their icons, math and diagrams draw themselves. Your file stays plain markdown on disk — Marksmith is an editor, not a format.
 
-<!-- TODO: hero GIF once branding/media lands -->
+![Live editing in Marksmith](media/editing.gif)
 
 ## Features
 
@@ -13,8 +13,9 @@ Marksmith renders markdown live and in place, Obsidian-style: headings render la
 - Headings, emphasis, lists, task lists, blockquotes, links, and images render as you type
 - The active line reveals its raw markdown for precise edits, then re-renders when you leave it
 - YAML frontmatter stays visible but dimmed
-- Code blocks are syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Find & replace with `Cmd+F` / `Cmd+Alt+F` — match count, case/word/regex toggles, in a VS Code-style widget
+
+![Find in Marksmith](media/find.gif)
 
 ### Tables
 
@@ -24,6 +25,8 @@ Excel-style grid editing on plain GFM tables:
 - Range selection, markdown-aware copy/paste
 - Drag to reorder rows and columns
 - Auto-formats a table's source when you finish editing it (like format-on-save, scoped to the table — `marksmith.formatTablesOnEdit`)
+
+![Editing a table like a spreadsheet](media/tables.gif)
 
 ### Callouts
 
@@ -35,16 +38,29 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Override icons/colors or add your own types via `marksmith.callouts` — emoji, `$(codicon)`, or raw SVG
 - Covers GitHub Alerts (`> [!NOTE]` etc.) as a subset
 
+![Folding and unfolding callouts](media/callouts.gif)
+
 ### Math
 
 - Inline `$…$`, block `$$…$$`, and ` ```math ` fences
 - Rendered by MathJax to crisp SVG in your theme's colors
 - A **Copy SVG** button on every block equation exports it for slides, docs, anywhere (`marksmith.mathExportColor` controls the baked-in color)
 
+![Math rendering live, with Copy SVG](media/math.gif)
+
 ### Mermaid diagrams
 
 - ` ```mermaid ` blocks render live, theme-matched
 - Render inline, below the source, or not at all (`marksmith.mermaidRenderMode`)
+
+![Mermaid rendering and re-theming live](media/mermaid.gif)
+
+### Code blocks
+
+- Syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
+- Copy and delete tools on hover; fences dim away while you read
+
+![Shiki following the editor theme](media/code.gif)
 
 ## Usage
 

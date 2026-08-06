@@ -33,6 +33,39 @@
 				--vscode-charts-yellow: #ffc83c;
 				--vscode-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 			}
+			/* Light+ counterparts, toggled by window.__setTheme('light') — the webview's MutationObserver
+			   on body[data-vscode-theme-*] re-requests the Shiki theme and re-themes mermaid. */
+			:root[data-lab-theme='light'] {
+				--vscode-editor-background: #ffffff;
+				--vscode-editor-foreground: #1f1f1f;
+				--vscode-editorCursor-foreground: #000000;
+				--vscode-editor-selectionBackground: #add6ff;
+				--vscode-textCodeBlock-background: #f4f4f4;
+				--vscode-textLink-foreground: #006ab1;
+				--vscode-descriptionForeground: #717171;
+				--vscode-editorWidget-background: #f3f3f3;
+				--vscode-editorWidget-border: #c8c8c8;
+				--vscode-widget-border: #c8c8c8;
+				--vscode-panel-border: #e0e0e0;
+				--vscode-focusBorder: #0090f1;
+				--vscode-button-background: #007acc;
+				--vscode-button-secondaryBackground: #e5e5e5;
+				--vscode-button-secondaryForeground: #3b3b3b;
+				--vscode-button-border: rgba(0, 0, 0, 0.08);
+				--vscode-charts-lines: #616161;
+				--vscode-charts-blue: #2f6feb;
+				--vscode-charts-green: #1a7f37;
+				--vscode-charts-orange: #bc4c00;
+				--vscode-charts-purple: #8250df;
+				--vscode-charts-red: #cf222e;
+				--vscode-charts-yellow: #9a6700;
+			}
+			body,
+			.cm-scroller {
+				transition:
+					background-color 0.35s ease,
+					color 0.35s ease;
+			}
 		</style>
 		<link rel="stylesheet" href="../dist/codicon.css" />
 		<link rel="stylesheet" href="../dist/webview.css" />
@@ -92,6 +125,12 @@
 				getState: () => undefined,
 				setState: () => undefined,
 			})
+			// Flip the harness between the Dark+/Light+ stub palettes (used by demo recordings).
+			window.__setTheme = (kind) => {
+				document.documentElement.dataset.labTheme = kind
+				document.body.dataset.vscodeThemeKind = kind === 'light' ? 'vscode-light' : 'vscode-dark'
+				document.body.dataset.vscodeThemeName = kind === 'light' ? 'Light+' : 'Dark+'
+			}
 		</script>
 	</head>
 	<body data-vscode-theme-kind="vscode-dark" data-vscode-theme-name="Dark+">
