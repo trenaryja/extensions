@@ -9,7 +9,7 @@ Justin Trenary's VS Code extensions, in one Turborepo.
 
 ## Shared packages
 
-- [`@repo/vscode-utils`](packages/vscode-utils) — command registry, webview scaffolding, and contributes codegen shared by the extensions
+- [`@repo/vscode-utils`](packages/vscode-utils) — command registry, webview scaffolding, contributes codegen, esbuild config, and headless Chromium helpers for screenshots and demo GIFs
 - [`@repo/config`](packages/config) — shared TypeScript and ESLint configuration
 - [`template-vscode-extension`](packages/template-vscode-extension) — the starting point for new extensions (`bun run new:vscode-extension`)
 
