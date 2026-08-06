@@ -2,11 +2,16 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Ext: template-vscode-extension",
+			"name": "Ext: Marksmith",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"]
+			"args": [
+				"${workspaceFolder}/packages/marksmith",
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/marksmith",
+				"--disable-extensions"
+			],
+			"preLaunchTask": "build: marksmith"
 		},
 		{
 			"name": "Ext: Multi-Cursor Magic",
@@ -16,12 +21,11 @@
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/multi-cursor-magic"]
 		},
 		{
-			"name": "Ext: Marksmith",
+			"name": "Ext: template-vscode-extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/marksmith", "--disable-extensions"],
-			"preLaunchTask": "build: marksmith"
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/template-vscode-extension"]
 		}
 	]
 }
