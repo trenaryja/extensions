@@ -1,0 +1,564 @@
+<!doctype html>
+<meta charset="utf8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>marksmith — m§ lab · round 6</title>
+<style>
+	:root {
+		--ground: #f4f0ea;
+		--surface: #fff;
+		--ink: #1d1a22;
+		--muted: #6f6678;
+		--line: #e6ded3;
+		--accent: #c65a2b;
+		--btn: #efe9df;
+		--btnon: #1d1a22;
+		--btnont: #fff;
+		--mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+		--sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--ground: #131019;
+			--surface: #1a1524;
+			--ink: #f0ebf5;
+			--muted: #988fab;
+			--line: #2a2336;
+			--accent: #e5854e;
+			--btn: #241d31;
+			--btnon: #f0ebf5;
+			--btnont: #131019;
+		}
+	}
+	:root[data-theme='light'] {
+		--ground: #f4f0ea;
+		--surface: #fff;
+		--ink: #1d1a22;
+		--muted: #6f6678;
+		--line: #e6ded3;
+		--accent: #c65a2b;
+		--btn: #efe9df;
+		--btnon: #1d1a22;
+		--btnont: #fff;
+	}
+	:root[data-theme='dark'] {
+		--ground: #131019;
+		--surface: #1a1524;
+		--ink: #f0ebf5;
+		--muted: #988fab;
+		--line: #2a2336;
+		--accent: #e5854e;
+		--btn: #241d31;
+		--btnon: #f0ebf5;
+		--btnont: #131019;
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		margin: 0;
+		background: var(--ground);
+		color: var(--ink);
+		font-family: var(--sans);
+		line-height: 1.55;
+		-webkit-font-smoothing: antialiased;
+	}
+	.wrap {
+		max-width: 1120px;
+		margin: 0 auto;
+		padding: 52px 24px 90px;
+	}
+	.eyebrow {
+		font-family: var(--mono);
+		font-size: 12px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--accent);
+		margin: 0 0 12px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.eyebrow::before {
+		content: '';
+		width: 26px;
+		height: 1px;
+		background: var(--accent);
+	}
+	h1 {
+		font-family: var(--mono);
+		font-weight: 600;
+		font-size: clamp(30px, 5vw, 44px);
+		letter-spacing: -0.02em;
+		margin: 0;
+	}
+	.lede {
+		max-width: 70ch;
+		color: var(--muted);
+		font-size: 15.5px;
+		margin: 12px 0 0;
+	}
+	.lede b {
+		color: var(--ink);
+	}
+	.bar {
+		position: sticky;
+		top: 0;
+		z-index: 5;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 14px 20px;
+		padding: 16px 0;
+		margin: 26px 0 8px;
+		background: var(--ground);
+		border-bottom: 1px solid var(--line);
+	}
+	.ctrl {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.ctrl .lbl {
+		font-family: var(--mono);
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	.seg {
+		display: flex;
+		background: var(--btn);
+		border-radius: 9px;
+		padding: 3px;
+		gap: 2px;
+	}
+	.seg button {
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font-family: var(--mono);
+		font-size: 12px;
+		padding: 5px 10px;
+		border-radius: 7px;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.seg button[aria-pressed='true'] {
+		background: var(--btnon);
+		color: var(--btnont);
+	}
+	.seg button:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 18px;
+		margin-top: 22px;
+	}
+	@media (max-width: 900px) {
+		.grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 600px) {
+		.grid {
+			grid-template-columns: 1fr;
+		}
+	}
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 16px;
+		padding: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		position: relative;
+	}
+	.card.missing {
+		opacity: 0.35;
+	}
+	.card.missing::after {
+		content: 'not installed';
+		position: absolute;
+		top: 14px;
+		right: 14px;
+		font-family: var(--mono);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--accent);
+	}
+	.tag {
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+	}
+	.tag b {
+		color: var(--ink);
+		font-weight: 600;
+	}
+	.pair {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 11px;
+	}
+	.cell {
+		aspect-ratio: 1;
+		border-radius: 12px;
+		overflow: hidden;
+	}
+	.cell svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+	.ctx {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+	.t {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		border-radius: 8px;
+		padding: 6px 9px;
+		min-width: 0;
+	}
+	.t svg {
+		width: 16px;
+		height: 16px;
+		flex: none;
+		border-radius: 3px;
+	}
+	.t .s32 {
+		width: 32px;
+		height: 32px;
+	}
+	.t i {
+		height: 4px;
+		flex: 1;
+		border-radius: 2px;
+	}
+	footer {
+		margin-top: 52px;
+		color: var(--muted);
+		font-size: 14px;
+		max-width: 66ch;
+	}
+	footer b {
+		color: var(--ink);
+	}
+</style>
+
+<div class="wrap">
+	<p class="eyebrow">base mark · round 6 · ring-safe · tailwind oklch</p>
+	<h1>m§ — nothing touches the ring</h1>
+	<p class="lede">
+		Round 5's flaw is fixed by rule, not by eye: the glyph pair's bounding circle must stay
+		<b>4 units inside the inner ring</b> — pairs that would collide are scaled down automatically (<b>fixed</b> fit), or
+		the rings grow to hug the pair (<b>hug</b> fit). Colors are exclusively <b>Tailwind v4 tokens in oklch</b>: light
+		ground is <code>-100 / -950 / -400</code> (disc / ink / ring), dark is <code>-950 / -50 / -600</code>. The font
+		field is wide open — every face below ships with macOS; grayed cards aren't installed on this machine. Flip
+		<b>guides</b> on to see the safe circle. Nothing here is decided.
+	</p>
+
+	<div class="bar" id="bar">
+		<div class="ctrl">
+			<span class="lbl">case</span>
+			<div class="seg" data-k="case"><button data-v="m">m</button><button data-v="M">M</button></div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">weight</span>
+			<div class="seg" data-k="weight"><button data-v="400">regular</button><button data-v="700">bold</button></div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">alignment</span>
+			<div class="seg" data-k="mode">
+				<button data-v="stretch">stretch</button><button data-v="center">centered</button>
+			</div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">gap</span>
+			<div class="seg" data-k="gap">
+				<button data-v="-3">−3</button><button data-v="-1">−1</button><button data-v="1">1</button
+				><button data-v="4">4</button>
+			</div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">rings</span>
+			<div class="seg" data-k="rings">
+				<button data-v="both">both</button><button data-v="solid">solid</button><button data-v="dashed">dashed</button
+				><button data-v="none">none</button>
+			</div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">ring fit</span>
+			<div class="seg" data-k="fit"><button data-v="fixed">fixed</button><button data-v="hug">hug</button></div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">palette</span>
+			<div class="seg" data-k="family">
+				<button data-v="stone">stone</button><button data-v="neutral">neutral</button><button data-v="zinc">zinc</button
+				><button data-v="slate">slate</button><button data-v="amber">amber</button
+				><button data-v="orange">orange</button>
+			</div>
+		</div>
+		<div class="ctrl">
+			<span class="lbl">guides</span>
+			<div class="seg" data-k="guides"><button data-v="off">off</button><button data-v="on">on</button></div>
+		</div>
+	</div>
+
+	<div class="grid" id="grid"></div>
+
+	<footer>
+		<p>
+			Open decisions, all yours: <b>font</b> (leaning Baskerville / Superclarendon; Charter in the running),
+			<b>palette family</b>, <b>rings + fit</b>, and final <b>case / weight / gap</b>. Evidence-backed recommendations
+			from earlier rounds (uppercase, stretch, flat) are recorded in <b>docs/design.md</b> — recommendations, not
+			decisions. When you've picked, the winner gets cut at 512px with transparent corners.
+		</p>
+	</footer>
+</div>
+
+<script>
+	// Tailwind v4 palette, oklch, verbatim from tailwindcss/theme.css — the only colors this mark may use.
+	const TW = {
+		stone: {
+			50: 'oklch(98.5% 0.001 106.423)',
+			100: 'oklch(97% 0.001 106.424)',
+			400: 'oklch(70.9% 0.01 56.259)',
+			600: 'oklch(44.4% 0.011 73.639)',
+			950: 'oklch(14.7% 0.004 49.25)',
+		},
+		neutral: {
+			50: 'oklch(98.5% 0 none)',
+			100: 'oklch(97% 0 none)',
+			400: 'oklch(70.8% 0 none)',
+			600: 'oklch(43.9% 0 none)',
+			950: 'oklch(14.5% 0 none)',
+		},
+		zinc: {
+			50: 'oklch(98.5% 0 none)',
+			100: 'oklch(96.7% 0.001 286.375)',
+			400: 'oklch(70.5% 0.015 286.067)',
+			600: 'oklch(44.2% 0.017 285.786)',
+			950: 'oklch(14.1% 0.005 285.823)',
+		},
+		slate: {
+			50: 'oklch(98.4% 0.003 247.858)',
+			100: 'oklch(96.8% 0.007 247.896)',
+			400: 'oklch(70.4% 0.04 256.788)',
+			600: 'oklch(44.6% 0.043 257.281)',
+			950: 'oklch(12.9% 0.042 264.695)',
+		},
+		amber: {
+			50: 'oklch(98.7% 0.022 95.277)',
+			100: 'oklch(96.2% 0.059 95.617)',
+			400: 'oklch(82.8% 0.189 84.429)',
+			600: 'oklch(66.6% 0.179 58.318)',
+			950: 'oklch(27.9% 0.077 45.635)',
+		},
+		orange: {
+			50: 'oklch(98% 0.016 73.684)',
+			100: 'oklch(95.4% 0.038 75.164)',
+			400: 'oklch(75% 0.183 55.934)',
+			600: 'oklch(64.6% 0.222 41.116)',
+			950: 'oklch(26.6% 0.079 36.259)',
+		},
+	}
+	const grounds = (family) => ({
+		light: { disc: TW[family][100], glyph: TW[family][950], ring: TW[family][400] },
+		dark: { disc: TW[family][950], glyph: TW[family][50], ring: TW[family][600] },
+	})
+
+	const FONTS = [
+		{ name: 'Baskerville', css: 'Baskerville, serif', note: 'transitional · the lean' },
+		{ name: 'Superclarendon', css: 'Superclarendon, serif', note: 'slab · sturdy' },
+		{ name: 'Charter', css: 'Charter, serif', note: 'Carter · low-res proof' },
+		{ name: 'Iowan Old Style', css: "'Iowan Old Style', serif", note: 'chunky book face' },
+		{ name: 'Hoefler Text', css: "'Hoefler Text', serif", note: 'oldstyle, ornate' },
+		{ name: 'Big Caslon', css: "'Big Caslon', serif", note: 'display · dramatic' },
+		{ name: 'Palatino', css: 'Palatino, serif', note: 'calligraphic' },
+		{ name: 'Cochin', css: 'Cochin, serif', note: 'French, elegant' },
+		{ name: 'Didot', css: 'Didot, serif', note: 'high-contrast' },
+		{ name: 'Bodoni 72', css: "'Bodoni 72', serif", note: 'Didone' },
+		{ name: 'Bodoni 72 Smallcaps', css: "'Bodoni 72 Smallcaps', serif", note: 'Didone · smallcaps' },
+		{ name: 'Georgia', css: 'Georgia, serif', note: 'screen serif' },
+		{ name: 'Times New Roman', css: "'Times New Roman', serif", note: 'baseline' },
+		{ name: 'Athelas', css: 'Athelas, serif', note: 'book, quiet' },
+		{ name: 'Marion', css: 'Marion, serif', note: 'slab-ish serif' },
+		{ name: 'American Typewriter', css: "'American Typewriter', serif", note: 'typewriter slab' },
+		{ name: 'Courier New', css: "'Courier New', monospace", note: 'typewriter mono' },
+		{ name: 'Menlo', css: 'Menlo, monospace', note: 'coding mono' },
+		{ name: 'SF Mono', css: "'SF Mono', monospace", note: 'Apple mono' },
+		{ name: 'Rockwell', css: 'Rockwell, serif', note: 'geometric slab' },
+		{ name: 'Copperplate', css: 'Copperplate, serif', note: 'engraved caps' },
+		{ name: 'Optima', css: 'Optima, sans-serif', note: 'flared humanist' },
+		{ name: 'Seravek', css: 'Seravek, sans-serif', note: 'humanist sans' },
+		{ name: 'Avenir Next', css: "'Avenir Next', sans-serif", note: 'geometric sans' },
+		{ name: 'Futura', css: 'Futura, sans-serif', note: 'geometric, warm M' },
+		{ name: 'Gill Sans', css: "'Gill Sans', sans-serif", note: 'humanist classic' },
+		{ name: 'Helvetica Neue', css: "'Helvetica Neue', sans-serif", note: 'neo-grotesque' },
+	]
+
+	const state = {
+		case: 'M',
+		weight: '700',
+		mode: 'stretch',
+		gap: '-1',
+		rings: 'both',
+		fit: 'fixed',
+		family: 'stone',
+		guides: 'off',
+	}
+	const cv = document.createElement('canvas')
+	const ctx = cv.getContext('2d')
+	// The anatomy unit: M = the M's cap height (the shared ink band). Every dimension is a ratio of M
+	// — see docs/design.md. 44 is only the reference rendering of M in this 128 viewBox.
+	const S = 100,
+		CX = 64,
+		CY = 64,
+		M = 44,
+		BAND0 = M,
+		TILE = 2.5 * M,
+		TILE_R = 0.6 * M,
+		OUTER = 1.1 * M,
+		INNER = 0.95 * M,
+		STROKE = M / 16,
+		DASH = `${M / 20} ${(3 * M) / 20}`,
+		PAD = 0.1 * M,
+		RING_GAP = 0.15 * M,
+		MAX_OUTER = TILE / 2 - PAD
+
+	function measure(glyph, css, weight) {
+		ctx.font = `${weight} ${S}px ${css}`
+		const m = ctx.measureText(glyph)
+		return { A: m.actualBoundingBoxAscent || S * 0.7, D: m.actualBoundingBoxDescent || 0, W: m.width }
+	}
+	// Lay the pair out for a given ink-band height, centered on (CX, CY). Returns glyph runs + total width.
+	function layoutPair(css, glyph, weight, mode, gap, band) {
+		const mm = measure(glyph, css, weight),
+			ss = measure('§', css, weight)
+		const inkM = mm.A + mm.D,
+			inkS = ss.A + ss.D
+		const top = CY - band / 2
+		let fsM, byM, fsS, byS
+		if (mode === 'stretch') {
+			const scM = band / inkM,
+				scS = band / inkS
+			fsM = S * scM
+			byM = top + mm.A * scM
+			fsS = S * scS
+			byS = top + ss.A * scS
+		} else {
+			const scS = band / inkS
+			fsS = S * scS
+			byS = top + ss.A * scS
+			fsM = fsS
+			const scM = fsM / S
+			byM = CY + mm.A * scM - (inkM * scM) / 2
+		}
+		const wM = mm.W * (fsM / S),
+			wS = ss.W * (fsS / S),
+			tot = wM + gap + wS,
+			sx = CX - tot / 2
+		return {
+			glyphs: [
+				{ ch: glyph, x: sx + wM / 2, y: byM, fs: fsM },
+				{ ch: '§', x: sx + wM + gap + wS / 2, y: byS, fs: fsS },
+			],
+			W: tot,
+			H: band,
+		}
+	}
+	// The ring-clearance rule: bounding circle of the pair must fit inside the inner ring minus PAD.
+	function fitPair(css, glyph, weight, mode, gap) {
+		let layout = layoutPair(css, glyph, weight, mode, gap, BAND0)
+		const radius = (l) => Math.hypot(l.W / 2, l.H / 2)
+		if (state.fit === 'fixed') {
+			const safe = (state.rings === 'none' ? MAX_OUTER : INNER) - PAD
+			if (radius(layout) > safe) {
+				const s = safe / radius(layout)
+				layout = layoutPair(css, glyph, weight, mode, gap * s, BAND0 * s)
+			}
+			return { layout, inner: INNER, outer: OUTER }
+		}
+		// hug: rings wrap the pair; cap so the outer ring stays inside the tile
+		let r = radius(layout)
+		if (r + PAD + RING_GAP > MAX_OUTER) {
+			const s = (MAX_OUTER - PAD - RING_GAP) / r
+			layout = layoutPair(css, glyph, weight, mode, gap * s, BAND0 * s)
+			r = radius(layout)
+		}
+		return { layout, inner: r + PAD, outer: r + PAD + RING_GAP }
+	}
+	function seal(css, small, tone) {
+		const g = grounds(state.family)[tone]
+		const { layout, inner, outer } = fitPair(css, state.case, state.weight, state.mode, Number(state.gap))
+		const texts = layout.glyphs
+			.map(
+				(t) =>
+					`<text x="${t.x.toFixed(2)}" y="${t.y.toFixed(2)}" text-anchor="middle" style="font-family:${css};font-weight:${state.weight};font-size:${t.fs.toFixed(2)}px" fill="${g.glyph}">${t.ch}</text>`,
+			)
+			.join('')
+		const solid = `<circle cx="${CX}" cy="${CY}" r="${outer.toFixed(1)}" fill="none" stroke="${g.ring}" stroke-width="${STROKE}"/>`
+		const dashed = `<circle cx="${CX}" cy="${CY}" r="${inner.toFixed(1)}" fill="none" stroke="${g.ring}" stroke-width="${STROKE}" stroke-dasharray="${DASH}" stroke-linecap="round"/>`
+		const rings =
+			state.rings === 'both' ? solid + dashed : state.rings === 'solid' ? solid : state.rings === 'dashed' ? dashed : ''
+		const guides =
+			!small && state.guides === 'on'
+				? `<circle cx="${CX}" cy="${CY}" r="${(inner - PAD).toFixed(1)}" fill="none" stroke="#ff2d78" stroke-width="1" stroke-dasharray="3 3" opacity=".9"/>`
+				: ''
+		return `<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <rect x="${CX - TILE / 2}" y="${CY - TILE / 2}" width="${TILE}" height="${TILE}" rx="${TILE_R}" fill="${g.disc}"/>
+    ${rings}${texts}${guides}</svg>`
+	}
+	function card(f) {
+		const available = document.fonts.check(`16px ${f.css.split(',')[0]}`)
+		const g = grounds(state.family)
+		return `<div class="card${available ? '' : ' missing'}" data-font="${f.name}"><div class="tag"><b>${f.name}</b><span>${f.note}</span></div>
+    <div class="pair"><div class="cell">${seal(f.css, false, 'light')}</div><div class="cell">${seal(f.css, false, 'dark')}</div></div>
+    <div class="ctx">
+      <div class="t" style="background:${g.dark.disc}"><span class="s32">${seal(f.css, true, 'dark')}</span>${seal(f.css, true, 'dark')}<i style="background:${g.dark.ring}"></i></div>
+      <div class="t" style="background:${g.light.disc}"><span class="s32">${seal(f.css, true, 'light')}</span>${seal(f.css, true, 'light')}<i style="background:${g.light.ring}"></i></div>
+    </div></div>`
+	}
+	function render() {
+		document.getElementById('grid').innerHTML = FONTS.map(card).join('')
+	}
+	function syncButtons() {
+		document.querySelectorAll('.seg').forEach((seg) => {
+			const k = seg.dataset.k
+			seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === state[k])))
+		})
+	}
+	document.getElementById('bar').addEventListener('click', (e) => {
+		const b = e.target.closest('button')
+		if (!b) return
+		const k = b.closest('.seg').dataset.k
+		state[k] = b.dataset.v
+		syncButtons()
+		render()
+	})
+	window.setLab = (next) => {
+		Object.assign(state, next)
+		syncButtons()
+		render()
+	}
+	window.sealSvg = (fontName, tone) => {
+		const f = FONTS.find((x) => x.name === fontName)
+		return f ? seal(f.css, false, tone) : null
+	}
+	syncButtons()
+	render()
+	if (document.fonts && document.fonts.ready) document.fonts.ready.then(render)
+</script>
