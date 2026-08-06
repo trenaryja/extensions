@@ -14,6 +14,11 @@
 		"url": "https://github.com/trenaryja/vscode-extensions/issues"
 	},
 	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/marksmith",
+	"icon": "assets/icon.png",
+	"galleryBanner": {
+		"color": "#16130f",
+		"theme": "dark"
+	},
 	"changelog": true,
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",
