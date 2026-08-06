@@ -14,6 +14,7 @@ Marksmith renders markdown live and in place, Obsidian-style: headings render la
 - The active line reveals its raw markdown for precise edits, then re-renders when you leave it
 - YAML frontmatter stays visible but dimmed
 - Code blocks are syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
+- Find & replace with `Cmd+F` / `Cmd+Alt+F` — match count, case/word/regex toggles, in a VS Code-style widget
 
 ### Tables
 
