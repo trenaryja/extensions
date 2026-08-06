@@ -4,7 +4,7 @@ import { type BundledLanguage, bundledLanguages, bundledThemes, createHighlighte
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import { defineWidget } from '../lib/widget'
 
-// Shiki service for code blocks (Model C+): the fenced block stays real, editable CodeMirror text; the tree
+// Shiki service for code blocks: the fenced block stays real, editable CodeMirror text; the tree
 // renderer (treeBlocks.ts) paints Shiki colors as inline-style marks — so the editable text is color-identical
 // to a Shiki render with no palette shift on focus. This module owns the highlighter, tokenization, the theme
 // bridge, and the copy/delete tools; the decorations themselves are emitted from the tree.

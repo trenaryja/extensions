@@ -159,8 +159,8 @@ function findMermaidBlocks(state: EditorState): MermaidBlock[] {
 	return blocks
 }
 
-// The fenced source itself is chromed like any code block by codeblocksPlugin (container, dimmed fences,
-// copy/delete, Shiki colors). This field owns only the diagram: it replaces the source when collapsed, and
+// The fenced source itself is chromed like any code block by treeBlocks + codeblocks (container, dimmed
+// fences, copy/delete, Shiki colors). This field owns only the diagram: it replaces the source when collapsed, and
 // renders below the source while editing (`below` mode, or the cursor is inside) — a live preview with no
 // big collapse, so revealing the source never jumps the scroll position.
 function buildMermaidDecorations(state: EditorState, mode: MermaidRenderMode): DecorationSet {

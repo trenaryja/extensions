@@ -9,10 +9,10 @@ import { chromium } from 'playwright-core'
 //
 //   bun run harness [markdownFile] [outputPng]
 //
-// Defaults to ../test.md → harness/out/harness.png. Requires `bun run build` first (loads dist/).
+// Defaults to ../assets/playground.md → harness/out/harness.png. Requires `bun run build` first (loads dist/).
 
 const here = dirname(fileURLToPath(import.meta.url))
-const markdownFile = resolve(process.argv[2] ?? join(here, '..', 'test.md'))
+const markdownFile = resolve(process.argv[2] ?? join(here, '..', 'assets', 'playground.md'))
 const outputPng = resolve(process.argv[3] ?? join(here, 'out', 'harness.png'))
 const content = readFileSync(markdownFile, 'utf8')
 

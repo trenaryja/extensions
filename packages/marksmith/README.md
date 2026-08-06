@@ -57,13 +57,13 @@ Marksmith registers as the default editor for `.md` files — just open one.
 
 ## Commands
 
-| Command                         | Notes                                    |
-| ------------------------------- | ---------------------------------------- |
-| Marksmith: Toggle Raw/Preview   | `Cmd+Shift+M` / `Ctrl+Shift+M`           |
-| Marksmith: Open Playground      | Editable tour of every feature           |
-| Marksmith: Insert Code Block    | Language picker included                 |
-| Marksmith: Insert Callout       | Type picker included                     |
-| Marksmith: Insert Mermaid Diagram |                                        |
+| Command                           | Notes                          |
+| --------------------------------- | ------------------------------ |
+| Marksmith: Toggle Raw/Preview     | `Cmd+Shift+M` / `Ctrl+Shift+M` |
+| Marksmith: Open Playground        | Editable tour of every feature |
+| Marksmith: Insert Code Block      | Language picker included       |
+| Marksmith: Insert Callout         | Type picker included           |
+| Marksmith: Insert Mermaid Diagram |                                |
 
 ## Settings
 
