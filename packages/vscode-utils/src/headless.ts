@@ -53,14 +53,37 @@ export type RecordGifOptions = Omit<HeadlessPageOptions, 'recordVideo'> & {
 	gifWidth?: number
 	/** gifski quality, 1–100. */
 	quality?: number
+	/** Render a visible cursor that follows the mouse (headless Chromium draws none). */
+	pointer?: boolean
 }
+
+// A fake cursor: headless Chromium renders no pointer, so mouse-driven demos read as telekinesis
+// without one. Follows pointer events (capture phase, so app handlers can't hide it) and shrinks
+// while a button is down.
+const POINTER_OVERLAY = `(() => {
+	const ready = () => {
+		const dot = document.createElement('div')
+		dot.style.cssText = 'position:fixed;top:0;left:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.7);z-index:2147483647;pointer-events:none;opacity:0;transition:opacity .15s'
+		document.body.appendChild(dot)
+		let scale = 1
+		const place = (x, y) => {
+			dot.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')'
+			dot.style.opacity = '1'
+		}
+		document.addEventListener('pointermove', (e) => place(e.clientX, e.clientY), true)
+		document.addEventListener('pointerdown', (e) => { scale = 0.7; place(e.clientX, e.clientY) }, true)
+		document.addEventListener('pointerup', (e) => { scale = 1; place(e.clientX, e.clientY) }, true)
+	}
+	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready)
+	else ready()
+})()`
 
 /**
  * Record a page session and encode it as a GIF: Playwright's recordVideo captures a webm, gifski
  * (per-frame palettes, temporal dithering — `brew install gifski`) encodes it. Returns the output path.
  */
 export async function recordGif(options: RecordGifOptions, run: (page: Page) => Promise<void>) {
-	const { output, fps = 14, gifWidth, quality = 80, ...pageOptions } = options
+	const { output, fps = 14, gifWidth, quality = 80, pointer, ...pageOptions } = options
 	const { width = 900, height = 700 } = pageOptions
 	const captureDir = mkdtempSync(join(tmpdir(), 'headless-record-'))
 	try {
@@ -68,6 +91,7 @@ export async function recordGif(options: RecordGifOptions, run: (page: Page) => 
 		// Without an explicit size, Playwright scales the video to fit 800×800 — and may switch frame
 		// properties mid-stream, which gifski's decoder can reject.
 		await withPage({ ...pageOptions, recordVideo: { dir: captureDir, size: { width, height } } }, async (page) => {
+			if (pointer) await page.addInitScript(POINTER_OVERLAY)
 			await run(page)
 			videoPath = await page.video()?.path()
 			// Videos are only guaranteed written after the CONTEXT closes — browser.close() alone can
