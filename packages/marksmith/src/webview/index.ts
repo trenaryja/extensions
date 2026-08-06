@@ -85,10 +85,11 @@ function getMermaidMode(): MermaidRenderMode {
 // SyntaxNode type derived from syntaxTree so we don't need a direct @lezer/common dependency.
 type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
 
-// Walk up from a document position to the enclosing Link node and return its URL, if any.
+// Walk up from a document position to the enclosing Link/Image (or bare autolink URL) and return its URL.
 function linkUrlAt(editorView: EditorView, pos: number): string | null {
 	let node: MarkdownNode | null = syntaxTree(editorView.state).resolveInner(pos, 0)
 	while (node) {
+		if (node.name === 'URL') return editorView.state.sliceDoc(node.from, node.to)
 		if (node.name === 'Link' || node.name === 'Image') {
 			const urlNode = node.getChild('URL')
 			return urlNode ? editorView.state.sliceDoc(urlNode.from, urlNode.to) : null
