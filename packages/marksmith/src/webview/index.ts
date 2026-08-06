@@ -229,7 +229,12 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 		currentSettings = msg.settings
 		setMathExportColor(currentSettings.mathExportColor)
 		setFormatTablesOnEdit(currentSettings.formatTablesOnEdit)
-		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
+		if (view) {
+			applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
+			// Mermaid's field only rebuilds on doc/selection changes or its refresh effect — without this,
+			// a mermaidRenderMode change wouldn't apply until the next edit or caret move.
+			refreshMermaidTheme(view)
+		}
 	}
 })
 
