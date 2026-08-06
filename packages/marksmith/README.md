@@ -46,17 +46,21 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Rendered by MathJax to crisp SVG in your theme's colors
 - A **Copy SVG** button on every block equation exports it for slides, docs, anywhere (`marksmith.mathExportColor` controls the baked-in color)
 
+![Math rendering live, with Copy SVG](media/math.gif)
+
 ### Mermaid diagrams
 
 - ` ```mermaid ` blocks render live, theme-matched
 - Render inline, below the source, or not at all (`marksmith.mermaidRenderMode`)
 
-![Math and mermaid rendering live](media/blocks.gif)
+![Mermaid rendering and re-theming live](media/mermaid.gif)
 
 ### Code blocks
 
 - Syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Copy and delete tools on hover; fences dim away while you read
+
+![Shiki following the editor theme](media/code.gif)
 
 ## Usage
 
