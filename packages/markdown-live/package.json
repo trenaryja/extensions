@@ -9,6 +9,8 @@
 	"scripts": {
 		"build": "bunx tsx ./scripts/build.ts",
 		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"fix": "prettier -w .",
+		"check": "tsc && prettier -c . && bun run build",
 		"test": "bun test",
 		"vscode:prepublish": "bun run build"
 	},
@@ -75,7 +77,11 @@
 			"properties": {
 				"markdownLive.mermaidRenderMode": {
 					"type": "string",
-					"enum": ["inline", "below", "disabled"],
+					"enum": [
+						"inline",
+						"below",
+						"disabled"
+					],
 					"default": "inline",
 					"description": "How Mermaid diagrams are rendered. 'inline' replaces the code block with the diagram, 'below' shows the diagram below the source, 'disabled' leaves the code block as-is."
 				}

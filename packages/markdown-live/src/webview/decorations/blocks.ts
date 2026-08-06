@@ -1,4 +1,11 @@
-import { Decoration, type DecorationSet, type EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view'
+import {
+	Decoration,
+	type DecorationSet,
+	type EditorView,
+	ViewPlugin,
+	type ViewUpdate,
+	WidgetType,
+} from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
 
 // ---------- Widgets ----------
@@ -101,7 +108,11 @@ function buildBlockDecorations(view: EditorView): DecorationSet {
 		const imgMatch = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(text)
 		if (imgMatch) {
 			entries.push(
-				markDeco(line.from, line.to, Decoration.replace({ widget: new ImageWidget(imgMatch[1] ?? '', imgMatch[2] ?? '') })),
+				markDeco(
+					line.from,
+					line.to,
+					Decoration.replace({ widget: new ImageWidget(imgMatch[1] ?? '', imgMatch[2] ?? '') }),
+				),
 			)
 			continue
 		}

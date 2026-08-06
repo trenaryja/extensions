@@ -6,6 +6,10 @@
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*"]
 		},
+		"check": {
+			"dependsOn": ["^build"]
+		},
+		"fix": {},
 		"lint": {
 			"dependsOn": ["^lint"]
 		},

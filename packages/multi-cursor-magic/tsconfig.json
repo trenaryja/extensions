@@ -3,8 +3,11 @@
 	"compilerOptions": {
 		"composite": true,
 		"incremental": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"noEmit": true,
+		"types": ["bun-types"]
 	},
 	"include": ["src", "scripts"],
+	"files": ["lib/countries.json", "lib/states.json"],
 	"exclude": ["node_modules", "dist"]
 }

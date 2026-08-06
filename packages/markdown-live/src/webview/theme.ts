@@ -296,10 +296,11 @@ export const markdownLiveTheme = EditorView.theme(
 			borderColor: 'rgba(255,100,100,0.4)',
 			background: 'rgba(255,100,100,0.06)',
 		},
-		'.md-callout-failure .md-callout-title, .md-callout-fail .md-callout-title, .md-callout-missing .md-callout-title': {
-			background: 'rgba(255,100,100,0.12)',
-			color: '#ff6464',
-		},
+		'.md-callout-failure .md-callout-title, .md-callout-fail .md-callout-title, .md-callout-missing .md-callout-title':
+			{
+				background: 'rgba(255,100,100,0.12)',
+				color: '#ff6464',
+			},
 		'.md-callout-danger, .md-callout-error': {
 			borderColor: 'rgba(255,100,100,0.4)',
 			background: 'rgba(255,100,100,0.06)',
@@ -328,10 +329,11 @@ export const markdownLiveTheme = EditorView.theme(
 			borderColor: 'rgba(0,200,180,0.4)',
 			background: 'rgba(0,200,180,0.06)',
 		},
-		'.md-callout-abstract .md-callout-title, .md-callout-summary .md-callout-title, .md-callout-tldr .md-callout-title': {
-			background: 'rgba(0,200,180,0.12)',
-			color: '#00c8b4',
-		},
+		'.md-callout-abstract .md-callout-title, .md-callout-summary .md-callout-title, .md-callout-tldr .md-callout-title':
+			{
+				background: 'rgba(0,200,180,0.12)',
+				color: '#00c8b4',
+			},
 		'.md-callout-example': {
 			borderColor: 'rgba(180,120,255,0.4)',
 			background: 'rgba(180,120,255,0.06)',

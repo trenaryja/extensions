@@ -44,11 +44,7 @@ function buildTaskDecorations(view: EditorView): DecorationSet {
 		const markerEnd = markerStart + mark.length + 3 // `[?] ` = 4 chars but we keep the space after
 
 		// Replace `[ ] ` with the checkbox widget
-		builder.add(
-			markerStart,
-			markerEnd,
-			Decoration.replace({ widget: new CheckboxWidget(checked), side: 1 }),
-		)
+		builder.add(markerStart, markerEnd, Decoration.replace({ widget: new CheckboxWidget(checked), side: 1 }))
 	}
 
 	return builder.finish()

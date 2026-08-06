@@ -11,6 +11,8 @@
 		"build": "bunx tsx ./scripts/build.ts",
 		"build:analyze": "bunx tsx ./scripts/build.ts --analyze",
 		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"fix": "eslint --fix . && prettier -w .",
+		"check": "tsc && bun run lint && bun run build",
 		"lint": "eslint . --max-warnings 0",
 		"contribute-commands": "bunx tsx ./scripts/contribute-commands.ts",
 		"vsce:login": "vsce login trenaryja",
@@ -30,6 +32,7 @@
 		"@types/module-alias": "^2.0.4",
 		"@types/vscode": "^1.107.0",
 		"@vscode/vsce": "^3.7.1",
+		"bun-types": "^1.3.14",
 		"esbuild": "^0.27.2",
 		"eslint": "^9.39.2",
 		"module-alias": "^2.2.3"
