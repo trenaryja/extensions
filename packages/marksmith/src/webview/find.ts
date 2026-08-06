@@ -15,6 +15,7 @@ import {
 import { Prec } from '@codemirror/state'
 import { EditorView, keymap, type Panel } from '@codemirror/view'
 import { countMatches } from './searchMatches'
+import { HEADING_FONT_SIZES } from './theme'
 
 // VS Code-style find/replace widget: a custom @codemirror/search panel that floats top-right like the
 // native one, themed with --vscode-* variables and codicons. Mod+F opens find, Mod+Alt+F opens replace.
@@ -201,7 +202,19 @@ function createFindPanel(view: EditorView): Panel {
 	}
 }
 
+// A match highlight renders as a span WRAPPING styled spans (`<span class="cm-searchMatch"><span
+// class="md-h1">…`), and an inline box's background height follows its OWN font metrics, not its
+// children's — so on headings the highlight would paint at base-text height, cutting through the
+// glyphs. Mirror each heading size onto the wrapper and let the child inherit (no compounding).
+const matchBoxFix = Object.fromEntries(
+	Object.entries(HEADING_FONT_SIZES).flatMap(([level, size]) => [
+		[`.cm-searchMatch:has(> .md-h${level}), .cm-selectionMatch:has(> .md-h${level})`, { fontSize: size }],
+		[`.cm-searchMatch > .md-h${level}, .cm-selectionMatch > .md-h${level}`, { fontSize: 'inherit' }],
+	]),
+)
+
 const findTheme = EditorView.theme({
+	...matchBoxFix,
 	'.cm-panels': { background: 'transparent' },
 	'.cm-panels-top': {
 		position: 'absolute',
@@ -283,10 +296,20 @@ const findTheme = EditorView.theme({
 		fontSize: '12px',
 	},
 	'.md-find-count': { minWidth: '56px', padding: '0 2px', textAlign: 'center', whiteSpace: 'nowrap', opacity: '0.9' },
-	'.cm-searchMatch': { background: 'var(--vscode-editor-findMatchHighlightBackground, rgba(234,92,0,0.33))' },
+	// Theme find colors are low-alpha washes tuned for small monospace; on large rendered type they
+	// fade. Rings derived from the same theme colors (mixed toward the foreground) keep matches
+	// legible in any theme without replacing its palette.
+	'.cm-searchMatch': {
+		background: 'var(--vscode-editor-findMatchHighlightBackground, rgba(234,92,0,0.33))',
+		outline:
+			'1px solid color-mix(in srgb, var(--vscode-editor-findMatchHighlightBackground, rgba(234,92,0,0.85)) 60%, var(--vscode-editor-foreground, #ccc) 40%)',
+		borderRadius: '2px',
+	},
 	'.cm-searchMatch-selected': {
 		background: 'var(--vscode-editor-findMatchBackground, rgba(245,152,66,0.6))',
-		outline: '1px solid var(--vscode-editor-findMatchBorder, transparent)',
+		outline:
+			'2px solid var(--vscode-editor-findMatchBorder, color-mix(in srgb, var(--vscode-editor-findMatchBackground, #515C6A) 45%, var(--vscode-editor-foreground, #fff) 55%))',
+		borderRadius: '2px',
 	},
 	'.cm-selectionMatch': { background: 'var(--vscode-editor-selectionHighlightBackground, rgba(128,128,128,0.25))' },
 })
