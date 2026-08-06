@@ -28,7 +28,7 @@ export type CommandApi = {
 }
 
 export type CommandEntry = {
-	/** Fully-qualified command id, e.g. `markslate.toggle`. */
+	/** Fully-qualified command id, e.g. `myExtension.doThing`. */
 	command: string
 	title: string
 	category?: string
