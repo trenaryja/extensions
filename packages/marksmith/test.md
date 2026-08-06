@@ -6,13 +6,6 @@ tags: [test, markdown, vscode]
 
 # Marksmith Test Suite
 
-Feature-specific tests:
-
-- [Callouts](test-callouts.md)
-- [Mermaid Diagrams](test-mermaid.md)
-- [Tables](test-tables.md)
-- [Math](test-math.md)
-
 ---
 
 ## Headings

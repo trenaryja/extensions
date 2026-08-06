@@ -3,7 +3,7 @@ title: Welcome to Marksmith
 tags: [playground, welcome]
 ---
 
-# Welcome to Marksmith 🔨
+# Welcome to Marksmith M§
 
 This is your **playground** — a scratch copy, so poke at anything and break everything. Your edits stay here and never touch your projects. Reopen it anytime with **Marksmith: Open Playground**.
 
@@ -14,7 +14,7 @@ This is your **playground** — a scratch copy, so poke at anything and break ev
 
 ## The basics
 
-You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the Marksmith site](https://marksmith.com) to open it. Bare URLs autolink too: https://commonmark.org.
+You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the Marksmith repo](https://github.com/trenaryja/vscode-extensions) to open it. Bare URLs autolink too: https://commonmark.org.
 
 > A blockquote, for when you're quoting someone wiser than yourself.
 
@@ -72,7 +72,7 @@ $$
 \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
 $$
 
-Put your cursor in an equation and run **Marksmith: Copy equation as SVG** to lift it out as vector art.
+Hover a block equation and hit its **Copy SVG** button to lift it out as vector art.
 
 ---
 
@@ -112,10 +112,10 @@ flowchart LR
 
 Images render inline, and their URLs are clickable:
 
-![Marksmith](data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='640'%20height='120'%3E%3Crect%20width='640'%20height='120'%20rx='14'%20fill='%235b21b6'/%3E%3Ctext%20x='320'%20y='70'%20font-family='ui-sans-serif,system-ui,sans-serif'%20font-size='40'%20font-weight='700'%20fill='%23ede9fe'%20text-anchor='middle'%3EMarksmith%20🔨%3C/text%3E%3C/svg%3E)
+![Marksmith](data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='640'%20height='120'%3E%3Crect%20width='640'%20height='120'%20rx='14'%20fill='%235b21b6'/%3E%3Ctext%20x='320'%20y='70'%20font-family='ui-sans-serif,system-ui,sans-serif'%20font-size='40'%20font-weight='700'%20fill='%23ede9fe'%20text-anchor='middle'%3EMarksmith%20M%C2%A7%3C/text%3E%3C/svg%3E)
 
 And a thematic break closes us out:
 
 ---
 
-That's the tour. Delete it all and start from a blank page, or keep tinkering here. Happy writing. 🔨
+That's the tour. Delete it all and start from a blank page, or keep tinkering here. Happy writing. M§
