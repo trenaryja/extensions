@@ -1,7 +1,7 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { recordGif } from '@repo/vscode-utils/headless'
-import type { Page } from 'playwright-core'
+import type { Locator, Page } from 'playwright-core'
 
 // Record marketplace demo GIFs by driving the real webview bundle in headless Chromium.
 //
@@ -28,7 +28,39 @@ const line = async (page: Page, text: string) => {
 	await page.keyboard.press('Enter')
 }
 
-type Scenario = { name: string; doc: string; run: (page: Page) => Promise<void> }
+// Mouse choreography: real cursor travel (steps) so the injected pointer overlay glides instead of
+// teleporting the way locator.click() does.
+const center = async (target: Locator) => {
+	const box = await target.boundingBox()
+	if (!box) throw new Error(`no bounding box for ${target}`)
+	return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+}
+const glideTo = async (page: Page, target: Locator, steps = 22) => {
+	const point = await center(target)
+	await page.mouse.move(point.x, point.y, { steps })
+	return point
+}
+const glideClick = async (page: Page, target: Locator) => {
+	await glideTo(page, target)
+	await page.mouse.down()
+	await page.waitForTimeout(90)
+	await page.mouse.up()
+}
+const glideDblclick = async (page: Page, target: Locator) => {
+	const point = await glideTo(page, target)
+	await page.mouse.dblclick(point.x, point.y)
+}
+const dragTo = async (page: Page, from: Locator, to: Locator) => {
+	await glideTo(page, from)
+	await page.mouse.down()
+	await page.waitForTimeout(200)
+	const point = await center(to)
+	await page.mouse.move(point.x, point.y, { steps: 30 })
+	await page.waitForTimeout(200)
+	await page.mouse.up()
+}
+
+type Scenario = { name: string; doc: string; pointer?: boolean; run: (page: Page) => Promise<void> }
 
 const FIND_DOC = `# Field Notes
 
@@ -47,6 +79,24 @@ Every table is rewritten exactly the way Prettier would print it.
 Inline math like $e^{i\\pi} + 1 = 0$ renders as you type, and every
 block equation ships with a copy button. Tables, callouts, and math
 all stay plain markdown on disk — no separate table format, ever.
+`
+
+const TABLES_DOC = `# Tables
+
+| Feature  | Flavor   | Ships |
+| -------- | -------- | ----- |
+| Tables   | GFM      | ✅    |
+| Callouts | Obsidian | ✅    |
+| Math     | LaTeX    |       |
+`
+
+const CALLOUTS_DOC = `# Callouts
+
+> [!TIP] Callouts come in every flavor
+> note, tip, warning, quote — and custom ones you define.
+
+> [!WARNING]- This one starts folded
+> Click the title to reveal the details inside.
 `
 
 const SCENARIOS: Scenario[] = [
@@ -100,11 +150,14 @@ const SCENARIOS: Scenario[] = [
 		run: async (page) => {
 			await page.keyboard.press('Meta+ArrowDown')
 			await page.waitForTimeout(500)
-			await line(page, '$$')
-			await line(page, 'e^{i\\pi} + 1 = 0')
-			await line(page, '$$')
+			// Code first: Shiki colors land as soon as the fence closes.
+			await line(page, '```ts')
+			await line(page, 'const greet = (name: string) => `Hello, ${name}!`')
+			await line(page, "console.log(greet('Marksmith'))")
+			await type(page, '```')
 			await page.keyboard.press('Enter')
-			await page.waitForTimeout(1200)
+			await page.waitForTimeout(1400)
+			// Then a diagram.
 			await line(page, '```mermaid')
 			await line(page, 'flowchart LR')
 			await line(page, '  Write --> Render --> Edit')
@@ -112,90 +165,88 @@ const SCENARIOS: Scenario[] = [
 			await page.keyboard.press('Meta+Backspace')
 			await type(page, '```')
 			await page.keyboard.press('Enter')
-			await page.keyboard.press('Meta+Backspace')
-			await page.waitForTimeout(2600)
+			await page.waitForTimeout(2200)
+			// Then math.
+			await line(page, '$$')
+			await line(page, 'e^{i\\pi} + 1 = 0')
+			await line(page, '$$')
+			await page.keyboard.press('Enter')
+			await page.waitForTimeout(1600)
 		},
 	},
-]
-
-const TABLES_DOC = `# Tables
-
-| Feature  | Flavor   | Ships |
-| -------- | -------- | ----- |
-| Tables   | GFM      | ✅    |
-| Callouts | Obsidian | ✅    |
-| Math     | LaTeX    |       |
-`
-
-const CALLOUTS_DOC = `# Callouts
-
-> [!TIP] Callouts come in every flavor
-> note, tip, warning, quote — and custom ones you define.
-
-> [!WARNING]- This one starts folded
-> Click the title to reveal the details inside.
-`
-
-SCENARIOS.push(
 	{
 		name: 'tables',
 		doc: TABLES_DOC,
+		pointer: true,
 		run: async (page) => {
+			const cell = (index: number) => page.locator('.md-table td').nth(index)
 			await page.waitForTimeout(800)
-			// Fill the empty cell: click to select, type to edit (Excel-style), Enter commits.
-			// Emoji can't be typed as key events, and the grid enters edit from keydown — so double-click
-			// into edit mode first, then insertText targets the live cell editor.
-			await page.locator('.md-table td').nth(8).dblclick()
+			// Fill the empty cell. Emoji can't be typed as key events, and the grid enters edit from
+			// keydown — so double-click into edit mode, then insertText targets the live cell editor.
+			await glideDblclick(page, cell(8))
+			await page.waitForTimeout(400)
+			await page.keyboard.insertText('✅')
+			await page.keyboard.press('Enter')
+			await page.waitForTimeout(700)
+			// Add a whole row from the bottom edge bar, tab across it.
+			await glideClick(page, page.locator('.md-table-add-row'))
 			await page.waitForTimeout(500)
+			await glideClick(page, cell(9))
+			await type(page, 'Mermaid')
+			await page.keyboard.press('Tab')
+			await type(page, 'Mermaid')
+			await page.keyboard.press('Tab')
+			await glideDblclick(page, cell(11))
 			await page.keyboard.insertText('✅')
 			await page.keyboard.press('Enter')
+			await page.waitForTimeout(700)
+			// Add a column from the right edge bar (4 columns from here on).
+			await glideClick(page, page.locator('.md-table-add-col'))
 			await page.waitForTimeout(800)
-			// Add a whole row from the edge bar, then tab across it.
-			await page.locator('.md-table-add-row').click()
-			await page.waitForTimeout(600)
-			await page.locator('.md-table td').nth(9).click()
-			await type(page, 'Mermaid')
-			await page.keyboard.press('Tab')
-			await type(page, 'Mermaid')
-			await page.keyboard.press('Tab')
-			await page.locator('.md-table td').nth(11).dblclick()
-			await page.keyboard.insertText('✅')
-			await page.keyboard.press('Enter')
+			// Copy one cell into another: select, ⌘C, select target, ⌘V.
+			await glideClick(page, cell(1))
+			await page.keyboard.press('Meta+c')
+			await page.waitForTimeout(400)
+			await glideClick(page, cell(3))
+			await page.keyboard.press('Meta+v')
+			await page.waitForTimeout(800)
+			// Drag the Mermaid row up by its handle.
+			await glideTo(page, cell(12))
+			await page.waitForTimeout(400)
+			await dragTo(page, page.locator('.md-row-handle').last(), cell(4))
+			await page.waitForTimeout(900)
 			await page.keyboard.press('Escape')
-			await page.waitForTimeout(1200)
+			await page.waitForTimeout(1100)
 		},
 	},
 	{
 		name: 'callouts',
 		doc: CALLOUTS_DOC,
+		pointer: true,
 		run: async (page) => {
 			// Off the heading line so its raw `#` doesn't stay revealed in every frame.
 			await page.keyboard.press('ArrowDown')
 			await page.waitForTimeout(900)
-			const fold = page.locator('.md-callout-fold').last()
-			await fold.click()
+			// Only fold-marked callouts get a chevron — the warning's is the only one on the page.
+			const fold = page.locator('.md-callout-fold').first()
+			await glideClick(page, fold)
 			await page.waitForTimeout(1100)
-			await fold.click()
+			await glideClick(page, fold)
 			await page.waitForTimeout(900)
-			await fold.click()
+			// Type a new callout from scratch.
+			await page.keyboard.press('Meta+ArrowDown')
+			// Blockquotes merge without a blank line between them — separate from the warning above.
+			await page.keyboard.press('Enter')
+			await page.waitForTimeout(400)
+			await line(page, '> [!NOTE] Make your own')
+			await line(page, 'custom icons and colors via settings.')
+			await page.keyboard.press('Backspace')
+			await page.waitForTimeout(900)
+			await glideClick(page, fold)
 			await page.waitForTimeout(1300)
 		},
 	},
-	{
-		name: 'code',
-		doc: '# Code\n\n',
-		run: async (page) => {
-			await page.keyboard.press('Meta+ArrowDown')
-			await page.waitForTimeout(500)
-			await line(page, '```ts')
-			await line(page, 'const greet = (name: string) => `Hello, ${name}!`')
-			await line(page, "console.log(greet('Marksmith'))")
-			await type(page, '```')
-			await page.keyboard.press('Enter')
-			await page.waitForTimeout(1800)
-		},
-	},
-)
+]
 
 const requested = process.argv.slice(2)
 const toRecord = requested.length ? SCENARIOS.filter((s) => requested.includes(s.name)) : SCENARIOS
@@ -203,9 +254,12 @@ if (!toRecord.length) throw new Error(`No matching scenarios. Available: ${SCENA
 
 for (const scenario of toRecord) {
 	const output = join(media, `${scenario.name}.gif`)
-	await recordGif({ width: 880, height: 560, output, fps: 14, quality: 80 }, async (page) => {
-		await load(page, scenario.doc)
-		await scenario.run(page)
-	})
+	await recordGif(
+		{ width: 880, height: 560, output, fps: 14, quality: 80, pointer: scenario.pointer },
+		async (page) => {
+			await load(page, scenario.doc)
+			await scenario.run(page)
+		},
+	)
 	console.log(`gif → ${output}`)
 }

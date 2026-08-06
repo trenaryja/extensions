@@ -58,8 +58,6 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Copy and delete tools on hover; fences dim away while you read
 
-![Shiki-highlighted code](media/code.gif)
-
 ## Usage
 
 Marksmith registers as the default editor for `.md` files — just open one.
