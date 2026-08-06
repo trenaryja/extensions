@@ -13,7 +13,7 @@ MarkSlate renders markdown live and in place, Obsidian-style: headings render la
 - Headings, emphasis, lists, task lists, blockquotes, links, and images render as you type
 - The active line reveals its raw markdown for precise edits, then re-renders when you leave it
 - YAML frontmatter stays visible but dimmed
-- Find & replace with `Cmd+F` / `Cmd+Alt+F` — match count, case/word/regex toggles, in a VS Code-style widget
+- Find & replace with `Cmd+F` / `Cmd+Alt+F` (`Ctrl+F` / `Ctrl+Alt+F`) — match count, case/word/regex toggles, in a VS Code-style widget
 
 ![Find in MarkSlate](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/find.gif)
 
@@ -36,7 +36,7 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Foldable callouts: `> [!tip]-` / `> [!tip]+`
 - Nested callouts, with per-level color, icon, and title
 - Override icons/colors or add your own types via `markslate.callouts` — emoji, `$(codicon)`, or raw SVG
-- Covers GitHub Alerts (`> [!NOTE]` etc.) as a subset
+- GitHub Alert syntax (`> [!NOTE]`, `> [!IMPORTANT]`, …) renders too, styled the Obsidian way
 
 ![Folding and unfolding callouts](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/callouts.gif)
 
@@ -51,7 +51,7 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 ### Mermaid diagrams
 
 - ` ```mermaid ` blocks render live, theme-matched
-- Render inline, below the source, or not at all (`markslate.mermaidRenderMode`)
+- Render `inline` (diagram replaces the block), `below` (diagram under the source), or `disabled` (`markslate.mermaidRenderMode`)
 
 ![Mermaid rendering and re-theming live](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/mermaid.gif)
 
@@ -66,7 +66,7 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 
 MarkSlate registers as the default editor for `.md` files — just open one.
 
-- **Toggle raw markdown**: `Cmd+Shift+M` (`Ctrl+Shift+M`) switches between live preview and plain text, and back
+- **Toggle raw markdown**: `Cmd+Shift+M` (`Ctrl+Shift+M`), or the book icon in the editor title bar, switches between live preview and plain text, and back
 - **Playground**: run **MarkSlate: Open Playground** from the Command Palette for a scratch file that tours every feature
 - **One-off raw open**: right-click a file → **Open With…** → your text editor
 - **Opt out as default**: set `workbench.editorAssociations` → `"*.md": "default"`
@@ -81,14 +81,16 @@ MarkSlate registers as the default editor for `.md` files — just open one.
 | MarkSlate: Insert Callout         | Type picker included           |
 | MarkSlate: Insert Mermaid Diagram |                                |
 
+Every command except **Open Playground** appears in the Command Palette only while a `.md` file is focused.
+
 ## Settings
 
 | Setting                          | Default        | What it does                                              |
 | -------------------------------- | -------------- | --------------------------------------------------------- |
-| `markslate.mermaidRenderMode`    | `inline`       | Diagram replaces the code block, renders below it, or off |
+| `markslate.mermaidRenderMode`    | `inline`       | `inline`, `below`, or `disabled`                          |
 | `markslate.callouts`             | `{}`           | Override callout icons/colors, add custom types           |
 | `markslate.calloutDefaultTitle`  | `true`         | Show the callout type as a title when none is given       |
-| `markslate.mathExportColor`      | `currentColor` | Color baked into copied/exported math SVGs                |
+| `markslate.mathExportColor`      | `currentColor` | Color baked into copied/exported math SVGs — `currentColor`, `theme`, or any CSS color |
 | `markslate.formatTablesOnEdit`   | `true`         | Pretty-align a table's source after editing it            |
 
 ## License
