@@ -5,6 +5,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { syntaxTree } from '@codemirror/language'
 import { marksmithTheme } from './theme'
+import { marksmithFind, openFind } from './find'
 import { createDecorationExtensions } from './decorations/index'
 import { setShikiTheme } from './decorations/codeblocks'
 import { applyCallouts } from './decorations/callouts'
@@ -28,6 +29,14 @@ const syncModifier = (event: KeyboardEvent | MouseEvent) =>
 window.addEventListener('keydown', syncModifier)
 window.addEventListener('keyup', syncModifier)
 window.addEventListener('blur', () => document.documentElement.classList.remove('md-mod-held'))
+
+// Mod+F anywhere in the webview opens find — even when focus is outside CodeMirror (e.g. the table grid).
+window.addEventListener('keydown', (event) => {
+	if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.key.toLowerCase() !== 'f') return
+	if (!view) return
+	event.preventDefault()
+	openFind(view, event.altKey)
+})
 
 // Ask the host to resolve the active VS Code theme to a Shiki theme, and re-ask whenever it changes.
 // `data-vscode-theme-name` updates on the body for both committed themes AND live previews.
@@ -101,6 +110,7 @@ function createEditor(content: string): EditorView {
 			EditorView.lineWrapping,
 			markdown({ base: markdownLanguage, codeLanguages: languages }),
 			marksmithTheme,
+			...marksmithFind,
 			...createDecorationExtensions(getMermaidMode),
 			EditorView.domEventHandlers({
 				// Cmd/Ctrl+click a link to follow it. A plain click just places the cursor (and reveals the
