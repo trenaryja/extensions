@@ -16,12 +16,12 @@
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/multi-cursor-magic"]
 		},
 		{
-			"name": "Ext: Markdown Live",
+			"name": "Ext: Marksmith",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/markdown-live", "--disable-extensions"],
-			"preLaunchTask": "build: markdown-live"
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/marksmith", "--disable-extensions"],
+			"preLaunchTask": "build: marksmith"
 		}
 	]
 }

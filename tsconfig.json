@@ -1,7 +1,7 @@
 {
 	"references": [
 		{ "path": "packages/vscode-utils" },
-		{ "path": "packages/markdown-live" },
+		{ "path": "packages/marksmith" },
 		{ "path": "packages/multi-cursor-magic" },
 		{ "path": "packages/template-vscode-extension" }
 	],
