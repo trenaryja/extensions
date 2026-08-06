@@ -3,7 +3,7 @@ import { EditorView } from '@codemirror/view'
 /** Heading font sizes by level — shared with find.ts, whose match-box fix must mirror them. */
 export const HEADING_FONT_SIZES = { 1: '2em', 2: '1.6em', 3: '1.3em', 4: '1.1em', 5: '1em', 6: '0.95em' }
 
-export const markslateTheme = EditorView.theme(
+export const markSlateTheme = EditorView.theme(
 	{
 		'&': {
 			height: '100%',

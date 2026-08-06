@@ -314,7 +314,7 @@ const findTheme = EditorView.theme({
 	'.cm-selectionMatch': { background: 'var(--vscode-editor-selectionHighlightBackground, rgba(128,128,128,0.25))' },
 })
 
-export const markslateFind = [
+export const markSlateFind = [
 	Prec.high(keymap.of([...searchKeymap, { key: 'Mod-Alt-f', run: (view) => openFind(view, true) }])),
 	search({
 		top: true,
