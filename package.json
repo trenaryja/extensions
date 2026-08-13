@@ -18,11 +18,11 @@
 	},
 	"devDependencies": {
 		"@inquirer/prompts": "^8.5.2",
-		"@types/node": "^25.9.2",
-		"prettier": "^3.8.3",
-		"remeda": "^2.37.0",
-		"tsx": "^4.22.4",
-		"turbo": "^2.9.16",
+		"@types/node": "^26.2.0",
+		"prettier": "^3.9.6",
+		"remeda": "^2.39.0",
+		"tsx": "^4.23.12",
+		"turbo": "^2.10.9",
 		"typescript": "6.0.3"
 	},
 	"prettier": {

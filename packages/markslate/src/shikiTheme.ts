@@ -57,8 +57,7 @@ const resolveIncludes = async (uri: vscode.Uri, theme: ThemeJson, depth = 0): Pr
 const resolveByLabel = async (label: string): Promise<ThemeJson | null> => {
 	for (const extension of vscode.extensions.all) {
 		const themes = extension.packageJSON?.contributes?.themes as
-			| Array<{ label?: string; id?: string; path: string }>
-			| undefined
+			Array<{ label?: string; id?: string; path: string }> | undefined
 		const match = themes?.find((theme) => theme.label === label || theme.id === label)
 		if (!match) continue
 
