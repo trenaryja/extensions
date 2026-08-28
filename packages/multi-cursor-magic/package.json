@@ -7,13 +7,13 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/trenaryja/vscode-extensions.git",
+		"url": "https://github.com/trenaryja/extensions.git",
 		"directory": "packages/multi-cursor-magic"
 	},
 	"bugs": {
-		"url": "https://github.com/trenaryja/vscode-extensions/issues"
+		"url": "https://github.com/trenaryja/extensions/issues"
 	},
-	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/multi-cursor-magic",
+	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/multi-cursor-magic",
 	"icon": "images/icon.png",
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",

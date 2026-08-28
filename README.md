@@ -1,6 +1,6 @@
-# vscode-extensions
+# extensions
 
-Justin Trenary's VS Code extensions, in one Turborepo.
+Justin Trenary's editor and launcher extensions — VS Code and Raycast — in one Turborepo.
 
 ## Extensions
 

@@ -1,5 +1,5 @@
 {
-	"name": "vscode-extensions",
+	"name": "extensions",
 	"private": true,
 	"workspaces": [
 		"apps/*",

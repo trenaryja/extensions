@@ -4,7 +4,7 @@ A beautiful live-preview markdown editor for VS Code — write without ever leav
 
 MarkSlate renders markdown live and in place, Obsidian-style: headings render large, tables become editable grids, callouts get their icons, math and diagrams draw themselves. Your file stays plain markdown on disk — MarkSlate is an editor, not a format.
 
-![Live editing in MarkSlate](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/editing.gif)
+![Live editing in MarkSlate](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/editing.gif)
 
 ## Features
 
@@ -15,7 +15,7 @@ MarkSlate renders markdown live and in place, Obsidian-style: headings render la
 - YAML frontmatter stays visible but dimmed
 - Find & replace with `Cmd+F` / `Cmd+Alt+F` (`Ctrl+F` / `Ctrl+Alt+F`) — match count, case/word/regex toggles, in a VS Code-style widget
 
-![Find in MarkSlate](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/find.gif)
+![Find in MarkSlate](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/find.gif)
 
 ### Tables
 
@@ -26,7 +26,7 @@ Excel-style grid editing on plain GFM tables:
 - Drag to reorder rows and columns
 - Auto-formats a table's source when you finish editing it (like format-on-save, scoped to the table — `markslate.formatTablesOnEdit`)
 
-![Editing a table like a spreadsheet](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/tables.gif)
+![Editing a table like a spreadsheet](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/tables.gif)
 
 ### Callouts
 
@@ -38,7 +38,7 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Override icons/colors or add your own types via `markslate.callouts` — emoji, `$(codicon)`, or raw SVG
 - GitHub Alert syntax (`> [!NOTE]`, `> [!IMPORTANT]`, …) renders too, styled the Obsidian way
 
-![Folding and unfolding callouts](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/callouts.gif)
+![Folding and unfolding callouts](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/callouts.gif)
 
 ### Math
 
@@ -46,21 +46,21 @@ Obsidian's full callout taxonomy — 13 types plus aliases:
 - Rendered by MathJax to crisp SVG in your theme's colors
 - A **Copy SVG** button on every block equation exports it for slides, docs, anywhere (`markslate.mathExportColor` controls the baked-in color)
 
-![Math rendering live, with Copy SVG](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/math.gif)
+![Math rendering live, with Copy SVG](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/math.gif)
 
 ### Mermaid diagrams
 
 - ` ```mermaid ` blocks render live, theme-matched
 - Render `inline` (diagram replaces the block), `below` (diagram under the source), or `disabled` (`markslate.mermaidRenderMode`)
 
-![Mermaid rendering and re-theming live](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/mermaid.gif)
+![Mermaid rendering and re-theming live](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/mermaid.gif)
 
 ### Code blocks
 
 - Syntax-highlighted with [Shiki](https://shiki.style/), matched to your editor theme
 - Copy and delete tools on hover; fences dim away while you read
 
-![Shiki following the editor theme](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/media/code.gif)
+![Shiki following the editor theme](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/media/code.gif)
 
 ## Usage
 
@@ -95,4 +95,4 @@ Every command except **Open Playground** appears in the Command Palette only whi
 
 ## License
 
-[MIT](https://github.com/trenaryja/vscode-extensions/blob/main/packages/markslate/LICENSE)
+[MIT](https://github.com/trenaryja/extensions/blob/main/packages/markslate/LICENSE)

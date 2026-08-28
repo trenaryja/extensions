@@ -14,7 +14,7 @@ This is your **playground** — a scratch copy, so poke at anything and break ev
 
 ## The basics
 
-You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the MarkSlate repo](https://github.com/trenaryja/vscode-extensions) to open it. Bare URLs autolink too: https://commonmark.org.
+You get **bold**, _italic_, ~~strikethrough~~, and `inline code`. Links are clickable — ⌘/Ctrl-click [the MarkSlate repo](https://github.com/trenaryja/extensions) to open it. Bare URLs autolink too: https://commonmark.org.
 
 > A blockquote, for when you're quoting someone wiser than yourself.
 
@@ -112,7 +112,7 @@ flowchart LR
 
 Images render inline, and their URLs are clickable:
 
-![The M§ seal](https://raw.githubusercontent.com/trenaryja/vscode-extensions/main/packages/markslate/assets/icon.png)
+![The M§ seal](https://raw.githubusercontent.com/trenaryja/extensions/main/packages/markslate/assets/icon.png)
 
 And a thematic break closes us out:
 

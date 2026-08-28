@@ -7,13 +7,13 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/trenaryja/vscode-extensions.git",
+		"url": "https://github.com/trenaryja/extensions.git",
 		"directory": "packages/markslate"
 	},
 	"bugs": {
-		"url": "https://github.com/trenaryja/vscode-extensions/issues"
+		"url": "https://github.com/trenaryja/extensions/issues"
 	},
-	"homepage": "https://github.com/trenaryja/vscode-extensions/tree/main/packages/markslate",
+	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/markslate",
 	"icon": "assets/icon.png",
 	"galleryBanner": {
 		"color": "#0c0a09",
