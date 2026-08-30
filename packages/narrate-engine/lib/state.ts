@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs'
+import { readFile, rename } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { PlaybackState, SeekTarget } from './types'
@@ -29,13 +30,34 @@ export const ensureStateDirs = () => {
 	for (const dir of [paths.root, paths.audio, paths.segments, paths.scratch]) mkdirSync(dir, { recursive: true })
 }
 
-export const writeState = (state: PlaybackState) =>
-	Bun.write(paths.state, JSON.stringify({ ...state, updatedAt: new Date().toISOString() }))
+// `Bun.write` truncates before it writes, so a `narrate status` poll landing mid-write reads a torn
+// file and throws. Renaming into place is atomic; the queue keeps an earlier state from landing last.
+let writes: Promise<unknown> = Promise.resolve()
 
+export const writeAtomic = (path: string, contents: string) => {
+	const done = writes
+		.catch(() => undefined)
+		.then(async () => {
+			const temp = `${path}.${process.pid}.tmp`
+			await Bun.write(temp, contents)
+			await rename(temp, path)
+		})
+	writes = done
+	return done
+}
+
+export const writeState = (state: PlaybackState) =>
+	writeAtomic(paths.state, JSON.stringify({ ...state, updatedAt: new Date().toISOString() }))
+
+// Read to EOF rather than through `Bun.file`, which sizes the read from an earlier stat and so
+// returns a truncated string when the file is replaced mid-read. A torn or absent file reads as
+// "nothing is playing", which is what a caller does with a null anyway.
 export const readState = async () => {
-	const file = Bun.file(paths.state)
-	if (!(await file.exists())) return null
-	return (await file.json()) as PlaybackState
+	try {
+		return JSON.parse(await readFile(paths.state, 'utf8')) as PlaybackState
+	} catch {
+		return null
+	}
 }
 
 export const requestStop = () => Bun.write(paths.stop, '')

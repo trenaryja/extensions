@@ -1,6 +1,6 @@
 import { appendFile } from 'node:fs/promises'
 import * as R from 'remeda'
-import { paths } from './state'
+import { paths, writeAtomic } from './state'
 import type { HistoryEntry, PlaybackState } from './types'
 
 const DEFAULT_LIMIT_ENTRIES = 200
@@ -55,7 +55,7 @@ export const pruneHistory = async (limit = historyLimitEntries()) => {
 		R.map((entry) => `${JSON.stringify(entry)}\n`),
 		R.join(''),
 	)
-	await Bun.write(paths.history, kept)
+	await writeAtomic(paths.history, kept)
 
 	return { removed: entries.length - limit }
 }
