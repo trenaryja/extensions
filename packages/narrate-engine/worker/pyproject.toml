@@ -1,0 +1,9 @@
+[project]
+name = "narrate-kokoro-worker"
+version = "0.0.0"
+requires-python = "==3.12.*"
+dependencies = ["kokoro", "misaki[en]", "numpy", "soundfile"]
+
+# Nothing here is importable as a package, so uv must not try to build it.
+[tool.uv]
+package = false

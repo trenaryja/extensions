@@ -1,0 +1,11 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			// The compiled binary lands in packages/narrate/assets, outside this package, so turbo cannot
+			// track it as an output. Caching would skip a rebuild the binary actually needed. It takes 2s.
+			"cache": false
+		}
+	}
+}

@@ -1,0 +1,29 @@
+{
+	"name": "@repo/narrate-engine",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"exports": {
+		"./types": "./lib/types.ts"
+	},
+	"scripts": {
+		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift",
+		"test": "bun test",
+		"fix": "prettier -w .",
+		"check": "tsc --noEmit && prettier -c . && bun test"
+	},
+	"dependencies": {
+		"mdast-util-to-string": "^4.0.0",
+		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.1",
+		"remeda": "^2.39.0",
+		"strip-markdown": "^6.0.0",
+		"unist-util-visit": "^5.1.0"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/bun": "^1.3.11",
+		"@types/mdast": "^4.0.4",
+		"typescript": "^6.0.0"
+	}
+}
