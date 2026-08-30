@@ -7,7 +7,7 @@
 		"./types": "./lib/types.ts"
 	},
 	"scripts": {
-		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift",
+		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && ([ \"$(uname)\" != Darwin ] || swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift)",
 		"test": "bun test",
 		"fix": "prettier -w .",
 		"check": "tsc --noEmit && prettier -c . && bun test"
