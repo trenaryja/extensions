@@ -13,6 +13,9 @@
 			"path": "packages/template-vscode-extension"
 		},
 		{
+			"path": "packages/narrate"
+		},
+		{
 			"path": "packages/narrate-engine"
 		}
 	],

@@ -1,0 +1,125 @@
+{
+	"$schema": "https://www.raycast.com/schemas/extension.json",
+	"name": "narrate",
+	"title": "Narrate",
+	"description": "Read Claude Code responses and selected text aloud through the local narrate engine.",
+	"icon": "extension-icon.png",
+	"author": "trenaryja",
+	"license": "MIT",
+	"private": true,
+	"version": "0.0.1",
+	"changelog": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/extensions.git",
+		"directory": "packages/narrate"
+	},
+	"scripts": {
+		"dev": "ray develop",
+		"build": "ray build",
+		"fix": "prettier -w .",
+		"check": "tsc --noEmit && prettier -c ."
+	},
+	"commands": [
+		{
+			"name": "recent-messages",
+			"title": "Recent Messages",
+			"subtitle": "Narrate",
+			"description": "Play, summarize, or copy recent Claude Code responses.",
+			"mode": "view"
+		},
+		{
+			"name": "read-selection",
+			"title": "Read Selection",
+			"subtitle": "Narrate",
+			"description": "Read the text selected in the frontmost app aloud.",
+			"mode": "no-view"
+		},
+		{
+			"name": "choose-voice",
+			"title": "Choose Voice",
+			"subtitle": "Narrate",
+			"description": "Set the voice and backend that read your messages, and hear it before you commit.",
+			"mode": "view"
+		},
+		{
+			"name": "playback-status",
+			"title": "Playback Status",
+			"subtitle": "Narrate",
+			"description": "Follow the narration sentence by sentence; select a sentence to jump to it.",
+			"mode": "view"
+		},
+		{
+			"name": "stop",
+			"title": "Stop",
+			"subtitle": "Narrate",
+			"description": "Stop the running narration.",
+			"mode": "no-view"
+		},
+		{
+			"name": "speed-up",
+			"title": "Speed Up",
+			"subtitle": "Narrate",
+			"description": "Raise the playback rate by 0.25\u00d7 without restarting.",
+			"mode": "no-view"
+		},
+		{
+			"name": "slow-down",
+			"title": "Slow Down",
+			"subtitle": "Narrate",
+			"description": "Lower the playback rate by 0.25\u00d7 without restarting.",
+			"mode": "no-view"
+		}
+	],
+	"preferences": [
+		{
+			"name": "speed",
+			"title": "Speed",
+			"description": "Initial playback rate, e.g. 1.25.",
+			"type": "textfield",
+			"default": "1",
+			"required": false
+		},
+		{
+			"name": "summarizer",
+			"title": "Summarize with",
+			"description": "Summarize & Play runs this CLI on your Mac and spends your tokens. Off means messages are only ever read in full.",
+			"type": "dropdown",
+			"default": "off",
+			"required": false,
+			"data": [
+				{
+					"title": "Off",
+					"value": "off"
+				},
+				{
+					"title": "Claude Code (Haiku)",
+					"value": "claude"
+				},
+				{
+					"title": "OpenCode",
+					"value": "opencode"
+				}
+			]
+		},
+		{
+			"name": "cacheLimitMb",
+			"title": "Audio cache limit (MB)",
+			"description": "Oldest clips are deleted after a narration to stay under this. 0 keeps everything.",
+			"type": "textfield",
+			"default": "200",
+			"required": false
+		}
+	],
+	"dependencies": {
+		"@raycast/api": "^2.1.1",
+		"@raycast/utils": "^2.3.0",
+		"remeda": "^2.39.0"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@repo/narrate-engine": "workspace:*",
+		"@types/react": "^19.2.18",
+		"typescript": "^6.0.0"
+	}
+}

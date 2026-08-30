@@ -33,6 +33,7 @@
 		"useTabs": true
 	},
 	"trustedDependencies": [
+		"@raycast/api",
 		"@vscode/vsce-sign",
 		"esbuild",
 		"keytar",
