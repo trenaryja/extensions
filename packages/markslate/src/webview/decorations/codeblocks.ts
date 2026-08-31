@@ -153,18 +153,30 @@ export const toolButton = (label: string, title: string, onClick: () => void) =>
 	return button
 }
 
+// A clipboard write rejects when permission is denied or the webview isn't a secure context, and the button
+// is the only surface a widget has to say so — report both outcomes on it.
+export const copyButton = (label: string, title: string, getText: () => string) => {
+	const button = toolButton(label, title, () => {
+		const flash = (message: string) => {
+			button.textContent = message
+			setTimeout(() => (button.textContent = label), 1500)
+		}
+
+		navigator.clipboard.writeText(getText()).then(
+			() => flash('Copied!'),
+			() => flash('Copy failed'),
+		)
+	})
+	return button
+}
+
 export const toolsWidget = defineWidget<{ code: string; from: number; to: number }>({
 	eq: (a, b) => a.from === b.from && a.to === b.to && a.code === b.code,
 	toDOM: (value, view) => {
 		const tools = document.createElement('span')
 		tools.className = 'md-cb-tools'
 		tools.contentEditable = 'false'
-		const copy = toolButton('Copy', 'Copy code', () => {
-			navigator.clipboard.writeText(value.code).then(() => {
-				copy.textContent = 'Copied!'
-				setTimeout(() => (copy.textContent = 'Copy'), 1500)
-			})
-		})
+		const copy = copyButton('Copy', 'Copy code', () => value.code)
 		const remove = toolButton('Delete', 'Delete code block', () => {
 			const to = Math.min(value.to + 1, view.state.doc.length) // also eat the trailing newline
 			view.dispatch({ changes: { from: value.from, to, insert: '' } })

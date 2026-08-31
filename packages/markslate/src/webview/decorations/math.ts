@@ -10,7 +10,7 @@ import { mathjax } from 'mathjax-full/js/mathjax.js'
 import { SVG } from 'mathjax-full/js/output/svg.js'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
-import { toolButton } from './codeblocks'
+import { copyButton } from './codeblocks'
 
 // MathJax → SVG, headless via liteAdaptor (works in the CSP webview, renders synchronously). `fontCache:
 // local` makes each SVG self-contained (its own glyph <defs>), so any equation is directly copyable/exportable.
@@ -82,11 +82,7 @@ const blockMathWidget = defineWidget<{ latex: string }>({
 		const tools = document.createElement('div')
 		tools.className = 'md-math-tools'
 		tools.contentEditable = 'false'
-		tools.append(
-			toolButton('Copy SVG', 'Copy equation as SVG', () => {
-				navigator.clipboard.writeText(exportSvg(value.latex))
-			}),
-		)
+		tools.append(copyButton('Copy SVG', 'Copy equation as SVG', () => exportSvg(value.latex)))
 		const svg = document.createElement('div')
 		svg.className = 'md-math-svg'
 		svg.innerHTML = renderMath(value.latex, true)
