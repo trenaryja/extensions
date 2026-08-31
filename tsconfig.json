@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "packages/narrate-engine"
+		},
+		{
+			"path": "scripts"
 		}
 	],
 	"files": [],

@@ -54,6 +54,7 @@ const message = (error: unknown) => (error instanceof Error ? error.message : St
 const wait = (ms: number, signal: AbortSignal) =>
 	new Promise<void>((resolve) => {
 		const done = () => {
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- done and timer are a cycle: done clears the timer that calls it. Hoisting timer to a `let` is the only reordering, and it is worse
 			clearTimeout(timer)
 			signal.removeEventListener('abort', done)
 			resolve()
@@ -114,6 +115,7 @@ const readControl = async (): Promise<Control | null> => {
 	if ((await takeSentinel(paths.resume)) !== null) return { type: 'resume' }
 
 	const seek = await takeSentinel(paths.seek)
+
 	if (seek !== null) {
 		const target = parseSeekTarget(seek)
 		return target ? { type: 'seek', target } : null
@@ -168,66 +170,31 @@ const toSegments = (chunks: Chunk[]) => {
 	return segments
 }
 
-export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
-	const { text, label, origin, voiceId, maxChars } = options
-	let { speed } = options
-	const backend = deps.backend ?? getBackend(options.backend)
-	const play = deps.play ?? playWav
+// afplay cannot start at an offset, so anything but a segment from its first sample is played from a slice.
+const audioFor = async (segment: Segment, startTime: number) => {
+	if (startTime <= 0) return segment.wavPath
+	await writeWav(paths.seekAudio, sliceWav(await readWav(segment.wavPath), startTime))
+	return paths.seekAudio
+}
 
-	await takeOverSession()
-	await clearSignals()
-	// The previous narration's paragraph wavs are dead weight, and its indices collide with this one's.
-	await rm(paths.segments, { recursive: true, force: true })
-	ensureStateDirs()
+type RendererOptions = {
+	segments: Chunk[][]
+	startSegment: number
+	state: PlaybackState
+	controller: AbortController
+	backend: SpeechBackend
+	voiceId: string
+}
 
-	const chunks = chunk(text, { maxChars })
-	const segments = toSegments(chunks)
-	const segmentOfSentence = R.pipe(
-		segments,
-		R.flatMap((parts, index) => R.map(parts, () => index)),
-	)
-
-	const firstSentence = Math.min(Math.max(options.startIndex ?? 0, 0), Math.max(chunks.length - 1, 0))
-	const startSegment = segmentOfSentence[firstSentence] ?? 0
-
-	const state: PlaybackState = {
-		phase: 'synthesizing',
-		pid: process.pid,
-		label,
-		origin,
-		backend: options.backend,
-		voiceId,
-		speed,
-		sentences: R.map(chunks, (part) => ({ text: part.text, start: -1, end: -1 })),
-		words: [],
-		duration: 0,
-		position: 0,
-		sentenceIndex: firstSentence,
-		skipped: [],
-		updatedAt: new Date().toISOString(),
-	}
-	await writeState(state)
-
-	const controller = new AbortController()
+// Owns everything the audio side of the run mutates: the queue, the running offset, and the format
+// every later segment inherits. The runner only ever asks for a segment and whether one has landed.
+const createRenderer = ({ segments, startSegment, state, controller, backend, voiceId }: RendererOptions) => {
 	const rendering = new Map<number, Promise<Segment>>()
 	const settled = new Set<number>()
 	let renderQueue: Promise<unknown> = Promise.resolve()
 	let nextToRender = startSegment
 	let renderedSeconds = 0
 	let format: WavFormat | null = null
-
-	const finish = async (phase: PlaybackState['phase'], error?: string) => {
-		controller.abort()
-		state.phase = phase
-		if (error) state.error = error
-		await writeState(state)
-		await rm(paths.pid, { force: true })
-		await appendHistory(state, text)
-		await pruneHistory()
-		// Pruning after the narration keeps the wavs this run just played among the newest.
-		await pruneAudioCache()
-		return state
-	}
 
 	const skipSentence = async (index: number, error: unknown) => {
 		state.skipped.push(index)
@@ -268,8 +235,10 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 
 		const wavPath = join(paths.segments, `${index}.wav`)
 		await writeWav(wavPath, concatWav(audio))
+		/* eslint-disable require-atomic-updates -- render() chains every renderSegment onto renderQueue, so no second one is ever in flight to interleave with this write */
 		renderedSeconds = offset + played
 		state.duration = renderedSeconds
+		/* eslint-enable require-atomic-updates */
 		settled.add(index)
 		await writeState(state)
 		return { wavPath, offset, duration: played }
@@ -290,26 +259,16 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 		return rendering.get(index) ?? null
 	}
 
+	return { render, isSettled: (index: number) => settled.has(index) }
+}
+
+type CursorOptions = { state: PlaybackState; chunks: Chunk[]; firstSentence: number }
+
+// Reads the sentence map; holds nothing of its own, so a cursor is always derived from current state.
+const createCursors = ({ state, chunks, firstSentence }: CursorOptions) => {
 	const sentenceAt = (position: number) => {
 		const index = R.findLastIndex(state.sentences, (sentence) => sentence.start >= 0 && sentence.start <= position)
 		return index < 0 ? firstSentence : index
-	}
-
-	const publishPosition = (position: number) => {
-		state.position = position
-		state.sentenceIndex = sentenceAt(position)
-		return writeState(state)
-	}
-
-	const trackPosition = async (segment: Segment, startTime: number, signal: AbortSignal) => {
-		const startedAt = Date.now()
-
-		while (!signal.aborted) {
-			await wait(POSITION_MS, signal)
-			if (signal.aborted) return
-			const heard = startTime + ((Date.now() - startedAt) / 1000) * speed
-			await publishPosition(segment.offset + Math.min(heard, segment.duration))
-		}
 	}
 
 	const toCursor = (target: SeekTarget): Cursor => {
@@ -327,6 +286,38 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 		return sentence && sentence.start >= 0 ? sentence.start + cursor.skew : state.position
 	}
 
+	return { sentenceAt, toCursor, cursorPosition }
+}
+
+type PlayerOptions = {
+	state: PlaybackState
+	controller: AbortController
+	play: typeof playWav
+	segments: Chunk[][]
+	chunks: Chunk[]
+	cursors: ReturnType<typeof createCursors>
+}
+
+// Everything between handing a rendered segment to afplay and knowing where to pick up next:
+// the position clock, the paused park, and how each control moves the cursor.
+const createPlayer = ({ state, controller, play, segments, chunks, cursors }: PlayerOptions) => {
+	const publishPosition = (position: number) => {
+		state.position = position
+		state.sentenceIndex = cursors.sentenceAt(position)
+		return writeState(state)
+	}
+
+	const trackPosition = async (segment: Segment, startTime: number, signal: AbortSignal) => {
+		const startedAt = Date.now()
+
+		while (!signal.aborted) {
+			await wait(POSITION_MS, signal)
+			if (signal.aborted) return
+			const heard = startTime + ((Date.now() - startedAt) / 1000) * state.speed
+			await publishPosition(segment.offset + Math.min(heard, segment.duration))
+		}
+	}
+
 	// afplay has been killed and the position tracker is stopped, so nothing moves until a control lands.
 	// Seeking stays parked: it moves where resume will re-enter, it does not start playing again.
 	const parkPaused = async (resumeAt: Cursor) => {
@@ -340,13 +331,13 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 			if (control.type === 'resume') return cursor
 
 			if (control.type === 'seek') {
-				cursor = toCursor(control.target)
-				await publishPosition(cursorPosition(cursor))
+				cursor = cursors.toCursor(control.target)
+				await publishPosition(cursors.cursorPosition(cursor))
 			}
 
 			if (control.type === 'rate') {
-				;({ speed } = control)
-				state.speed = speed
+				// eslint-disable-next-line require-atomic-updates -- state is this run's only playback record and this loop is its only writer while parked
+				state.speed = control.speed
 				await writeState(state)
 			}
 		}
@@ -354,24 +345,16 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 
 	const applyControl = async (control: Control, cursor: Cursor): Promise<Cursor | null> => {
 		if (control.type === 'stop') return null
-		if (control.type === 'seek') return toCursor(control.target)
+		if (control.type === 'seek') return cursors.toCursor(control.target)
 		// Resume re-enters at the position already reached, so pausing mid-sentence does not replay it.
 		if (control.type === 'pause')
-			return parkPaused(state.phase === 'playing' ? toCursor({ seconds: state.position }) : cursor)
+			return parkPaused(state.phase === 'playing' ? cursors.toCursor({ seconds: state.position }) : cursor)
 		if (control.type === 'resume') return cursor
 
-		;({ speed } = control)
-		state.speed = speed
+		state.speed = control.speed
 		await writeState(state)
 		// Only the sentence being heard restarts; a rate change during synthesis leaves the cursor where it was.
 		return state.phase === 'playing' ? { sentence: state.sentenceIndex, skew: 0 } : cursor
-	}
-
-	// afplay cannot start at an offset, so anything but a segment from its first sample is played from a slice.
-	const audioFor = async (segment: Segment, startTime: number) => {
-		if (startTime <= 0) return segment.wavPath
-		await writeWav(paths.seekAudio, sliceWav(await readWav(segment.wavPath), startTime))
-		return paths.seekAudio
 	}
 
 	// Resolves to where playback picks up next, or null once a stop has been requested.
@@ -380,12 +363,13 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 		const startTime = Math.max(0, (sentence && sentence.start >= 0 ? sentence.start : segment.offset) - segment.offset)
 		const path = await audioFor(segment, startTime + cursor.skew)
 
+		// eslint-disable-next-line require-atomic-updates -- state is this run's only playback record and the runner drives one segment at a time
 		state.phase = 'playing'
 		await publishPosition(segment.offset + startTime + cursor.skew)
 
 		const playing = new AbortController()
 		const tracking = new AbortController()
-		const played = play(path, speed, AbortSignal.any([controller.signal, playing.signal]))
+		const played = play(path, state.speed, AbortSignal.any([controller.signal, playing.signal]))
 		const tracker = trackPosition(segment, startTime + cursor.skew, tracking.signal)
 		const raced = await raceControl(played)
 		tracking.abort()
@@ -402,15 +386,75 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 		return applyControl(raced.control, cursor)
 	}
 
+	return { playSegment, applyControl }
+}
+
+export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
+	const { text, label, origin, voiceId, speed, maxChars } = options
+	const backend = deps.backend ?? getBackend(options.backend)
+	const play = deps.play ?? playWav
+
+	await takeOverSession()
+	await clearSignals()
+	// The previous narration's paragraph wavs are dead weight, and its indices collide with this one's.
+	await rm(paths.segments, { recursive: true, force: true })
+	ensureStateDirs()
+
+	const chunks = chunk(text, { maxChars })
+	const segments = toSegments(chunks)
+	const segmentOfSentence = R.pipe(
+		segments,
+		R.flatMap((parts, index) => R.map(parts, () => index)),
+	)
+
+	const firstSentence = Math.min(Math.max(options.startIndex ?? 0, 0), Math.max(chunks.length - 1, 0))
+	const startSegment = segmentOfSentence[firstSentence] ?? 0
+
+	const state: PlaybackState = {
+		phase: 'synthesizing',
+		pid: process.pid,
+		label,
+		origin,
+		backend: options.backend,
+		voiceId,
+		speed,
+		sentences: R.map(chunks, (part) => ({ text: part.text, start: -1, end: -1 })),
+		words: [],
+		duration: 0,
+		position: 0,
+		sentenceIndex: firstSentence,
+		skipped: [],
+		updatedAt: new Date().toISOString(),
+	}
+	await writeState(state)
+
+	const controller = new AbortController()
+	const renderer = createRenderer({ segments, startSegment, state, controller, backend, voiceId })
+	const cursors = createCursors({ state, chunks, firstSentence })
+	const player = createPlayer({ state, controller, play, segments, chunks, cursors })
+
+	const finish = async (phase: PlaybackState['phase'], error?: string) => {
+		controller.abort()
+		state.phase = phase
+		if (error) state.error = error
+		await writeState(state)
+		await rm(paths.pid, { force: true })
+		await appendHistory(state, text)
+		await pruneHistory()
+		// Pruning after the narration keeps the wavs this run just played among the newest.
+		await pruneAudioCache()
+		return state
+	}
+
 	try {
 		let cursor: Cursor | null = { sentence: firstSentence, skew: 0 }
 
 		while (cursor && cursor.sentence < chunks.length) {
 			const index = segmentOfSentence[cursor.sentence] ?? startSegment
-			const segment = render(index)
+			const segment = renderer.render(index)
 			if (!segment) break
 
-			if (!settled.has(index)) {
+			if (!renderer.isSettled(index)) {
 				state.phase = 'synthesizing'
 				await writeState(state)
 			}
@@ -418,12 +462,12 @@ export const runNarration = async (options: RunOptions, deps: RunDeps = {}) => {
 			const raced = await raceControl(segment)
 
 			if (raced.control) {
-				cursor = await applyControl(raced.control, cursor)
+				cursor = await player.applyControl(raced.control, cursor)
 				continue
 			}
 
-			void render(index + SEGMENTS_AHEAD)
-			cursor = await playSegment(index, raced.value, cursor)
+			void renderer.render(index + SEGMENTS_AHEAD)
+			cursor = await player.playSegment(index, raced.value, cursor)
 		}
 
 		return await finish(cursor ? 'done' : 'stopped')

@@ -1,5 +1,7 @@
-import { type EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
+import type { EditorState } from '@codemirror/state'
+import { Decoration, EditorView } from '@codemirror/view'
+import type { DecorationSet } from '@codemirror/view'
 import mermaid from 'mermaid'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
@@ -136,13 +138,14 @@ export function refreshMermaidTheme(view: EditorView) {
 type MermaidBlock = { startLine: number; endLine: number; code: string }
 
 function findMermaidBlocks(state: EditorState): MermaidBlock[] {
-	const doc = state.doc
+	const { doc } = state
 	const blocks: MermaidBlock[] = []
 	let blockStart = -1
 	const codeLines: string[] = []
 
 	for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
-		const text = doc.line(lineNum).text
+		const { text } = doc.line(lineNum)
+
 		if (blockStart === -1) {
 			if (/^```mermaid\s*$/i.test(text)) {
 				blockStart = lineNum
@@ -167,7 +170,7 @@ function buildMermaidDecorations(state: EditorState, mode: MermaidRenderMode): D
 	if (mode === 'disabled') return Decoration.none
 
 	const builder = new RangeSetBuilder<Decoration>()
-	const doc = state.doc
+	const { doc } = state
 
 	for (const block of findMermaidBlocks(state)) {
 		const start = doc.line(block.startLine)

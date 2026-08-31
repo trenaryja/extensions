@@ -10,9 +10,6 @@
 			"dependsOn": ["^build"]
 		},
 		"fix": {},
-		"lint": {
-			"dependsOn": ["^lint"]
-		},
 		"dev": {
 			"dependsOn": ["^build"],
 			"cache": false,

@@ -10,9 +10,11 @@ export function countMatches(state: EditorState, query: SearchQuery) {
 	let total = 0
 	let current = 0
 	const cursor = query.getCursor(state)
+
 	for (let match = cursor.next(); !match.done && total < MAX_MATCHES; match = cursor.next()) {
 		total++
 		if (match.value.from === from && match.value.to === to) current = total
 	}
+
 	return { total, current }
 }

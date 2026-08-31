@@ -1,6 +1,8 @@
 import { StateEffect } from '@codemirror/state'
-import { EditorView, ViewPlugin } from '@codemirror/view'
-import { type BundledLanguage, bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
+import type { EditorView } from '@codemirror/view'
+import { ViewPlugin } from '@codemirror/view'
+import { bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
+import type { BundledLanguage } from 'shiki'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import { defineWidget } from '../lib/widget'
 
@@ -14,6 +16,17 @@ const FONT_ITALIC = 1
 const FONT_BOLD = 2
 const FONT_UNDERLINE = 4
 
+const loadedLangs = new Set<string>()
+const loadingLangs = new Set<string>()
+const loadedThemes = new Set<string>()
+
+// Set by the live view (treeBlocks) so async work (highlighter/language load, theme change) can force a rebuild.
+let requestRefresh: (() => void) | null = null
+
+// The user's active VS Code theme, resolved host-side and loaded into Shiki; null → fall back by kind.
+let customThemeName: string | null = null
+let pendingTheme: Record<string, unknown> | null = null
+
 // Pure-JS engine (no WASM / eval) — same CSP-safe path used elsewhere.
 const highlighterPromise = createHighlighterCore({
 	themes: [bundledThemes['dark-plus'], bundledThemes['light-plus']],
@@ -21,31 +34,24 @@ const highlighterPromise = createHighlighterCore({
 	engine: createJavaScriptRegexEngine(),
 })
 let highlighter: Awaited<typeof highlighterPromise> | null = null
-highlighterPromise.then((hl) => {
+void highlighterPromise.then((hl) => {
 	highlighter = hl
+
 	if (pendingTheme) {
 		const theme = pendingTheme
 		pendingTheme = null
-		loadCustomTheme(hl, theme)
+		void loadCustomTheme(hl, theme)
 	}
+
 	requestRefresh?.()
 })
 
-const loadedLangs = new Set<string>()
-const loadingLangs = new Set<string>()
-const loadedThemes = new Set<string>()
-// Set by the live view (treeBlocks) so async work (highlighter/language load, theme change) can force a rebuild.
-let requestRefresh: (() => void) | null = null
-
 // Effect the tree renderer listens for to rebuild when Shiki state changes; and the hook to wire the refresh.
 export const refresh = StateEffect.define<null>()
+
 export const setCodeRefresh = (fn: (() => void) | null) => {
 	requestRefresh = fn
 }
-
-// The user's active VS Code theme, resolved host-side and loaded into Shiki; null → fall back by kind.
-let customThemeName: string | null = null
-let pendingTheme: Record<string, unknown> | null = null
 
 export const getTheme = () =>
 	customThemeName ?? (document.body.dataset.vscodeThemeKind?.includes('light') ? 'light-plus' : 'dark-plus')
@@ -54,6 +60,7 @@ export type Token = { offset: number; length: number; style: string }
 const tokenCache = new Map<string, Token[]>()
 
 type ShikiToken = { content: string; color?: string; fontStyle?: number }
+
 const styleFor = (token: ShikiToken) => {
 	const parts: string[] = []
 	if (token.color) parts.push(`color:${token.color}`)
@@ -72,12 +79,13 @@ export function tokenize(lang: string, code: string, theme: string): Token[] | n
 	if (!loadedLangs.has(lang)) {
 		if (!loadingLangs.has(lang)) {
 			loadingLangs.add(lang)
-			hl.loadLanguage(bundledLanguages[lang as BundledLanguage]).then(() => {
+			void hl.loadLanguage(bundledLanguages[lang as BundledLanguage]).then(() => {
 				loadedLangs.add(lang)
 				loadingLangs.delete(lang)
 				requestRefresh?.()
 			})
 		}
+
 		return null
 	}
 
@@ -95,15 +103,18 @@ export function tokenize(lang: string, code: string, theme: string): Token[] | n
 
 async function loadCustomTheme(hl: Awaited<typeof highlighterPromise>, theme: Record<string, unknown>) {
 	const name = typeof theme.name === 'string' ? theme.name : ''
+
 	try {
 		if (name && !loadedThemes.has(name)) {
-			await hl.loadTheme(theme as Parameters<typeof hl.loadTheme>[number])
+			await hl.loadTheme(theme)
 			loadedThemes.add(name)
 		}
+
 		customThemeName = name || null
 	} catch {
 		customThemeName = null
 	}
+
 	tokenCache.clear()
 	requestRefresh?.()
 }
@@ -114,12 +125,13 @@ export function setShikiTheme(theme: Record<string, unknown> | null) {
 		customThemeName = null
 		pendingTheme = null
 	} else if (highlighter) {
-		loadCustomTheme(highlighter, theme)
+		void loadCustomTheme(highlighter, theme)
 		return
 	} else {
 		pendingTheme = theme
 		return
 	}
+
 	tokenCache.clear()
 	requestRefresh?.()
 }
@@ -178,7 +190,7 @@ export const codeHoverTools = ViewPlugin.fromClass(
 			this.hovered = open
 		}
 		onOver = (event: Event) => {
-			const line = (event.target as HTMLElement).closest?.('.cm-line') as HTMLElement | null
+			const line = (event.target as HTMLElement).closest?.<HTMLElement>('.cm-line')
 			if (!line?.classList.contains('md-cb')) return this.setHovered(null)
 			// Walk back to the block's opening fence line (where the tools live).
 			let open: HTMLElement | null = line
@@ -187,11 +199,13 @@ export const codeHoverTools = ViewPlugin.fromClass(
 			this.setHovered(open?.classList.contains('md-cb-open') ? open : null)
 		}
 		onLeave = () => this.setHovered(null)
+
 		constructor(view: EditorView) {
 			this.dom = view.scrollDOM
 			this.dom.addEventListener('mouseover', this.onOver)
 			this.dom.addEventListener('mouseleave', this.onLeave)
 		}
+
 		destroy() {
 			this.dom.removeEventListener('mouseover', this.onOver)
 			this.dom.removeEventListener('mouseleave', this.onLeave)

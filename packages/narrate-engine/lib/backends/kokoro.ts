@@ -146,13 +146,16 @@ const spawnWorker = async () => {
 	)
 
 	let exitCode: number | null = null
-	child.exited.then((code) => (exitCode = code))
+	void child.exited.then((code) => (exitCode = code))
 
 	// The worker binds its socket before loading the model, so connecting is what "ready" means. A worker
 	// that lost the race for the socket exits at once, which is why a dead child is not on its own a failure.
 	const deadline = Date.now() + SPAWN_TIMEOUT_MS
+
+	// eslint-disable-next-line no-unmodified-loop-condition -- exitCode is set from child.exited's continuation, which the rule cannot see
 	while (exitCode === null) {
 		const probe = await openConnection()
+
 		if (probe) {
 			probe.socket.end()
 			child.unref()
@@ -230,7 +233,7 @@ export const kokoroBackend: SpeechBackend = {
 
 	synthesize: async (text, voiceId, signal) => {
 		ensureStateDirs()
-		const wavPath = cachePath('kokoro' + voiceId + text, '.wav')
+		const wavPath = cachePath(`kokoro${voiceId}${text}`, '.wav')
 		const cached = await readCachedSynthesis(wavPath)
 		if (cached) return cached
 

@@ -1,20 +1,21 @@
-import { Annotation, type EditorState, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView, keymap } from '@codemirror/view'
+import { Annotation, Prec, RangeSetBuilder, StateField } from '@codemirror/state'
+import type { EditorState } from '@codemirror/state'
+import { Decoration, EditorView, keymap } from '@codemirror/view'
+import type { DecorationSet } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { formatterProfile } from './tableFormat'
-import {
-	docOrSelectionChanged,
-	rawSourceRanges,
-	selectionRangeTouches,
-	selectionTouches,
-	type SourceRange,
-} from './active'
-import { type Cell, type Effect, type GridEvent, type GridState, normalizeRange, reduce } from './tableMachine'
+import { docOrSelectionChanged, rawSourceRanges, selectionRangeTouches, selectionTouches } from './active'
+import type { SourceRange } from './active'
+import { normalizeRange, reduce } from './tableMachine'
+import type { Cell, Effect, GridEvent, GridState } from './tableMachine'
 
 type Align = 'left' | 'center' | 'right' | null
+
+type Axis = 'col' | 'row'
+
 type TableModel = { headers: string[]; aligns: Align[]; rows: string[][]; from: number; to: number }
 
-const isSeparatorRow = (text: string) => /^\|?[\s\-|:]+\|[\s\-|:]*$/.test(text) && text.includes('-')
+const isSeparatorRow = (text: string) => /^[-\s:|][-\s:]*\|[-\s:|]*$/.test(text) && text.includes('-')
 
 // Split a `| a | b |` row into cells, honoring GFM's `\|` escape (a literal pipe inside a cell). Each cell is
 // trimmed and unescaped, so the model holds a literal `|`; `serialize` re-escapes it on the way out.
@@ -22,6 +23,7 @@ export function parseRow(text: string) {
 	const inner = text.replace(/^\s*\|/, '').replace(/\|\s*$/, '')
 	const cells: string[] = []
 	let cell = ''
+
 	for (let i = 0; i < inner.length; i++) {
 		const ch = inner[i]
 		if (ch === '\\' && i + 1 < inner.length) {
@@ -32,6 +34,7 @@ export function parseRow(text: string) {
 			cell = ''
 		} else cell += ch
 	}
+
 	cells.push(cell)
 	return cells.map((c) => c.trim().replace(/\\\|/g, '|'))
 }
@@ -57,22 +60,28 @@ const inlineEl = (tag: string, text: string, className?: string) => {
 	return el
 }
 
+const inlineMatchEl = (match: RegExpExecArray) => {
+	if (match[1] != null) return inlineEl('code', match[1], 'md-code-inline')
+	if (match[2] != null || match[3] != null) return inlineEl('strong', match[2] ?? match[3] ?? '')
+	if (match[4] != null || match[5] != null) return inlineEl('em', match[4] ?? match[5] ?? '')
+	if (match[6] != null) return inlineEl('del', match[6])
+	if (match[7] == null) return null
+	const link = inlineEl('a', match[7], 'md-link-text')
+	link.title = `⌘/Ctrl-click to open · ${match[8]}`
+	return link
+}
+
 function appendInline(parent: HTMLElement, text: string) {
 	INLINE_RE.lastIndex = 0
 	let last = 0
+
 	for (let match = INLINE_RE.exec(text); match; match = INLINE_RE.exec(text)) {
 		if (match.index > last) parent.append(text.slice(last, match.index))
-		if (match[1] != null) parent.append(inlineEl('code', match[1], 'md-code-inline'))
-		else if (match[2] != null || match[3] != null) parent.append(inlineEl('strong', match[2] ?? match[3] ?? ''))
-		else if (match[4] != null || match[5] != null) parent.append(inlineEl('em', match[4] ?? match[5] ?? ''))
-		else if (match[6] != null) parent.append(inlineEl('del', match[6]))
-		else if (match[7] != null) {
-			const link = inlineEl('a', match[7], 'md-link-text')
-			link.title = `⌘/Ctrl-click to open · ${match[8]}`
-			parent.append(link)
-		}
+		const el = inlineMatchEl(match)
+		if (el) parent.append(el)
 		last = INLINE_RE.lastIndex
 	}
+
 	if (last < text.length) parent.append(text.slice(last))
 }
 
@@ -110,6 +119,7 @@ export function parseTable(text: string, from = 0, to = 0): TableModel | null {
 const replaceAt = <T>(list: T[], index: number, value: T) => list.map((item, i) => (i === index ? value : item))
 const insertAt = <T>(list: T[], index: number, value: T) => [...list.slice(0, index), value, ...list.slice(index)]
 const removeAt = <T>(list: T[], index: number) => list.filter((_, i) => i !== index)
+
 // Move the item at `from` so it lands before position `to` (0..length). `to === from`/`from + 1` are no-ops.
 const moveAt = <T>(list: T[], from: number, to: number) => {
 	const value = list[from]
@@ -126,11 +136,10 @@ const withCell = (row: string[], col: number, value: string) => {
 	return next
 }
 
-// rowIndex -1 targets the header row.
-const setCell = (model: TableModel, rowIndex: number, col: number, value: string): TableModel =>
-	rowIndex < 0
+const setCell = (model: TableModel, { row, col }: Cell, value: string): TableModel =>
+	row < 0
 		? { ...model, headers: replaceAt(model.headers, col, value) }
-		: { ...model, rows: replaceAt(model.rows, rowIndex, withCell(model.rows[rowIndex] ?? [], col, value)) }
+		: { ...model, rows: replaceAt(model.rows, row, withCell(model.rows[row] ?? [], col, value)) }
 
 const emptyRow = (model: TableModel) => model.headers.map(() => '')
 const insertRow = (model: TableModel, at: number): TableModel => ({
@@ -175,6 +184,7 @@ const deleteTable = (view: EditorView, model: TableModel) =>
 // ---------- Context menu (houses insert / align / delete for a column or row) ----------
 
 let currentMenu: { el: HTMLElement; cleanup: () => void } | null = null
+
 const closeMenu = () => {
 	currentMenu?.el.remove()
 	currentMenu?.cleanup()
@@ -182,6 +192,9 @@ const closeMenu = () => {
 }
 
 type MenuItem = 'separator' | { label: string; icon: string; danger?: boolean; onClick: () => void }
+
+// Every menu action rewrites one table, so they all need the same two things the interaction runner's Ctx carries.
+type MenuCtx = Pick<Ctx, 'view' | 'model'>
 
 // Position a menu below-left of an element (used by the grip handles); right-click uses the pointer instead.
 const anchorPos = (el: HTMLElement) => {
@@ -194,6 +207,7 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 	const menu = document.createElement('div')
 	menu.className = 'md-table-menu'
 	menu.contentEditable = 'false'
+
 	for (const item of items) {
 		if (item === 'separator') {
 			const separator = document.createElement('div')
@@ -201,6 +215,7 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 			menu.append(separator)
 			continue
 		}
+
 		const button = document.createElement('button')
 		button.type = 'button'
 		button.className = item.danger ? 'md-menu-item md-menu-danger' : 'md-menu-item'
@@ -215,13 +230,16 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 		})
 		menu.append(button)
 	}
+
 	// Live inside the editor (so themed styles apply) but position: fixed to escape the table's scroll clip.
 	view.dom.append(menu)
 	menu.style.left = `${Math.max(8, Math.min(at.x, window.innerWidth - menu.offsetWidth - 8))}px`
 	menu.style.top = `${Math.max(8, Math.min(at.y, window.innerHeight - menu.offsetHeight - 8))}px`
+
 	const onDown = (event: Event) => {
 		if (!menu.contains(event.target as Node)) closeMenu()
 	}
+
 	const onKey = (event: KeyboardEvent) => event.key === 'Escape' && closeMenu()
 	document.addEventListener('pointerdown', onDown, true)
 	document.addEventListener('keydown', onKey, true)
@@ -239,7 +257,9 @@ function writeClipboard(text: string) {
 	if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
 	else fallbackCopy(text)
 }
+
 const copyMarkdown = (model: TableModel) => writeClipboard(serialize(model))
+
 function fallbackCopy(text: string) {
 	const area = document.createElement('textarea')
 	area.value = text
@@ -250,6 +270,8 @@ function fallbackCopy(text: string) {
 	area.remove()
 }
 
+let revealedFrom: number | null = null // the table currently in raw-source mode (sticky while its caret stays)
+
 // Reveal the raw markdown by selecting the table's range — a non-empty selection flips it into source mode.
 const revealSource = (view: EditorView, model: TableModel) => {
 	leaveGrid(view) // drop any grid selection first so its overlay doesn't linger over the revealed source
@@ -258,7 +280,7 @@ const revealSource = (view: EditorView, model: TableModel) => {
 	view.focus()
 }
 
-const columnMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, col: number) =>
+const columnMenu = ({ view, model }: MenuCtx, anchor: HTMLElement, col: number) =>
 	openMenu(view, anchorPos(anchor), [
 		{ label: 'Insert left', icon: 'arrow-left', onClick: () => rewrite(view, model, insertColumn(model, col)) },
 		{ label: 'Insert right', icon: 'arrow-right', onClick: () => rewrite(view, model, insertColumn(model, col + 1)) },
@@ -283,7 +305,7 @@ const columnMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, co
 		},
 	])
 
-const rowMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, rowIndex: number) =>
+const rowMenu = ({ view, model }: MenuCtx, anchor: HTMLElement, rowIndex: number) =>
 	openMenu(view, anchorPos(anchor), [
 		{ label: 'Insert above', icon: 'arrow-up', onClick: () => rewrite(view, model, insertRow(model, rowIndex)) },
 		{ label: 'Insert below', icon: 'arrow-down', onClick: () => rewrite(view, model, insertRow(model, rowIndex + 1)) },
@@ -296,16 +318,16 @@ const rowMenu = (view: EditorView, anchor: HTMLElement, model: TableModel, rowIn
 		},
 	])
 
-// The full right-click menu for a cell: row + column + alignment + table actions. (rowIndex -1 = header.)
-function cellMenu(view: EditorView, at: { x: number; y: number }, model: TableModel, rowIndex: number, col: number) {
+// The full right-click menu for a cell: row + column + alignment + table actions.
+function cellMenu({ view, model }: MenuCtx, at: { x: number; y: number }, { row, col }: Cell) {
 	const deleteRowItem: MenuItem[] =
-		rowIndex >= 0
+		row >= 0
 			? [
 					{
 						label: 'Delete row',
 						icon: 'trash',
 						danger: true,
-						onClick: () => rewrite(view, model, deleteRow(model, rowIndex)),
+						onClick: () => rewrite(view, model, deleteRow(model, row)),
 					},
 				]
 			: []
@@ -313,12 +335,12 @@ function cellMenu(view: EditorView, at: { x: number; y: number }, model: TableMo
 		{
 			label: 'Insert row above',
 			icon: 'arrow-up',
-			onClick: () => rewrite(view, model, insertRow(model, Math.max(0, rowIndex))),
+			onClick: () => rewrite(view, model, insertRow(model, Math.max(0, row))),
 		},
 		{
 			label: 'Insert row below',
 			icon: 'arrow-down',
-			onClick: () => rewrite(view, model, insertRow(model, rowIndex + 1)),
+			onClick: () => rewrite(view, model, insertRow(model, row + 1)),
 		},
 		'separator',
 		{ label: 'Insert column left', icon: 'arrow-left', onClick: () => rewrite(view, model, insertColumn(model, col)) },
@@ -362,6 +384,7 @@ const dropIndexAt = (bounds: { start: number; end: number }[], pos: number) => {
 		const bound = bounds[i]
 		if (bound && pos < (bound.start + bound.end) / 2) return i
 	}
+
 	return bounds.length
 }
 
@@ -370,7 +393,7 @@ type DragItem = { cells: HTMLElement[]; start: number; size: number }
 // Every column (header cell + its data cells) or every data row, with its position along the drag axis.
 // Captured at drag start — a drag makes no document edit until the drop, so the widget DOM is frozen and we
 // can animate it freely with transforms.
-function collectDragItems(table: HTMLElement, axis: 'col' | 'row'): DragItem[] {
+function collectDragItems(table: HTMLElement, axis: Axis): DragItem[] {
 	const rows = [...table.querySelectorAll('tbody tr')] as HTMLElement[]
 	if (axis === 'row')
 		return rows.map((tr) => {
@@ -386,36 +409,42 @@ function collectDragItems(table: HTMLElement, axis: 'col' | 'row'): DragItem[] {
 }
 
 // Each item's target start after moving `from` before `to`, laid out edge-to-edge from the first item's start.
-function targetStarts(starts: number[], sizes: number[], from: number, to: number) {
-	const order = moveAt([...starts.keys()], from, to)
-	const result = new Array<number>(starts.length)
-	let cursor = starts[0] ?? 0
-	for (const idx of order) {
-		result[idx] = cursor
-		cursor += sizes[idx] ?? 0
+function targetStarts(items: Pick<DragItem, 'start' | 'size'>[], from: number, to: number) {
+	const order = moveAt([...items.keys()], from, to)
+	const result = new Array<number>(items.length)
+	let cursor = items[0]?.start ?? 0
+
+	for (const index of order) {
+		result[index] = cursor
+		cursor += items[index]?.size ?? 0
 	}
+
 	return result
 }
 
-const offsetCells = (cells: HTMLElement[], axis: 'col' | 'row', offset: number, animate: boolean) => {
+type CellMotion = { axis: Axis; motion: 'instant' | 'animated' }
+
+const offsetCells = (cells: HTMLElement[], offset: number, { axis, motion }: CellMotion) => {
 	for (const cell of cells) {
-		cell.style.transition = animate ? 'transform 0.16s ease' : 'none'
+		cell.style.transition = motion === 'animated' ? 'transform 0.16s ease' : 'none'
 		cell.style.transform = offset ? (axis === 'col' ? `translateX(${offset}px)` : `translateY(${offset}px)`) : ''
 	}
+}
+
+type ReorderContext = {
+	handle: HTMLElement
+	axis: Axis
+	index: number
+	frame: HTMLElement
+	table: HTMLElement
+	onClick: () => void
+	commit: (to: number) => void
 }
 
 // A grip either reorders its column/row or opens its menu. Dragging lifts the grabbed item to follow the
 // pointer, slides the others aside to open a gap where it will land, and settles it into the gap on release —
 // then commits the markdown rewrite (whose rebuilt DOM matches the settled layout, so there's no flash).
-function attachReorder(
-	handle: HTMLElement,
-	axis: 'col' | 'row',
-	index: number,
-	frame: HTMLElement,
-	table: HTMLElement,
-	onClick: () => void,
-	commit: (to: number) => void,
-) {
+function attachReorder({ handle, axis, index, frame, table, onClick, commit }: ReorderContext) {
 	handle.addEventListener('pointerdown', (down) => {
 		down.preventDefault()
 		down.stopPropagation()
@@ -424,8 +453,6 @@ function attachReorder(
 		const origin = axisPos(down)
 		let dragging = false
 		let items: DragItem[] = []
-		let starts: number[] = []
-		let sizes: number[] = []
 		let drop = index
 
 		const move = (event: PointerEvent) => {
@@ -433,29 +460,34 @@ function attachReorder(
 				if (Math.abs(event.clientX - down.clientX) + Math.abs(event.clientY - down.clientY) < 4) return
 				dragging = true
 				items = collectDragItems(table, axis)
-				starts = items.map((item) => item.start)
-				sizes = items.map((item) => item.size)
 				frame.classList.add(`md-dragging-${axis}`)
 				for (const cell of items[index]?.cells ?? []) cell.classList.add('md-drag-lift')
 			}
-			offsetCells(items[index]?.cells ?? [], axis, axisPos(event) - origin, false) // grabbed item tracks the pointer
+
+			// grabbed item tracks the pointer
+			offsetCells(items[index]?.cells ?? [], axisPos(event) - origin, { axis, motion: 'instant' })
 			drop = dropIndexAt(
 				items.map((item) => ({ start: item.start, end: item.start + item.size })),
 				axisPos(event),
 			)
-			const targets = targetStarts(starts, sizes, index, drop)
+			const targets = targetStarts(items, index, drop)
 			items.forEach((item, i) => {
-				if (i !== index) offsetCells(item.cells, axis, (targets[i] ?? item.start) - item.start, true)
+				if (i !== index) offsetCells(item.cells, (targets[i] ?? item.start) - item.start, { axis, motion: 'animated' })
 			})
 		}
+
 		const finishListeners = () => {
 			handle.removeEventListener('pointermove', move)
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutual teardown: up/cancel call finishListeners, which must unbind them
 			handle.removeEventListener('pointerup', up)
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutual teardown: up/cancel call finishListeners, which must unbind them
 			handle.removeEventListener('pointercancel', cancel)
 			if (handle.hasPointerCapture(down.pointerId)) handle.releasePointerCapture(down.pointerId)
 		}
+
 		const clearDrag = () => {
 			frame.classList.remove(`md-dragging-${axis}`)
+
 			for (const item of items)
 				for (const cell of item.cells) {
 					cell.style.transform = ''
@@ -463,23 +495,30 @@ function attachReorder(
 					cell.classList.remove('md-drag-lift')
 				}
 		}
+
 		// A drag can end without a pointerup — a touch/gesture interruption or the browser stealing the capture.
 		// Reset so the widget isn't stranded in drag-visual state with the move/up listeners still attached.
 		const cancel = () => {
 			finishListeners()
 			if (dragging) clearDrag()
 		}
+
 		const up = () => {
 			finishListeners()
 			if (!dragging) return onClick()
-			const targets = targetStarts(starts, sizes, index, drop)
-			offsetCells(items[index]?.cells ?? [], axis, (targets[index] ?? 0) - (starts[index] ?? 0), true) // settle into the gap
+			const targets = targetStarts(items, index, drop)
+			// settle into the gap
+			offsetCells(items[index]?.cells ?? [], (targets[index] ?? 0) - (items[index]?.start ?? 0), {
+				axis,
+				motion: 'animated',
+			})
 			const moved = drop !== index && drop !== index + 1
 			setTimeout(() => {
 				if (moved) return commit(drop) // rewrite: the rebuilt DOM already matches the settled layout
 				clearDrag()
 			}, 170)
 		}
+
 		handle.addEventListener('pointermove', move)
 		handle.addEventListener('pointerup', up)
 		handle.addEventListener('pointercancel', cancel)
@@ -497,7 +536,6 @@ const modelOf = new WeakMap<HTMLElement, TableModel>()
 let gridState: GridState = { mode: 'document' }
 let activeFrom: number | null = null
 let activeView: EditorView | null = null
-let revealedFrom: number | null = null // the table currently in raw-source mode (sticky while its caret stays)
 let pendingPaste = '' // stashed by the paste handler so the pure machine can stay clipboard-free
 
 type Ctx = {
@@ -531,6 +569,7 @@ const cellTd = (table: HTMLElement, cell: Cell): HTMLElement | undefined => {
 	const row = cell.row < 0 ? table.querySelector('thead tr') : table.querySelectorAll('tbody tr')[cell.row]
 	return row?.children[cell.col] as HTMLElement | undefined
 }
+
 const cellContentEl = (table: HTMLElement, cell: Cell) =>
 	cellTd(table, cell)?.querySelector('.md-td-content') as HTMLElement | undefined
 
@@ -542,6 +581,7 @@ const placeCaret = (el: HTMLElement, toStart: boolean) => {
 	selection?.removeAllRanges()
 	selection?.addRange(range)
 }
+
 const placeCaretEnd = (el: HTMLElement) => placeCaret(el, false)
 const placeCaretStart = (el: HTMLElement) => placeCaret(el, true)
 
@@ -556,8 +596,13 @@ const caretAtEdge = (el: HTMLElement, atStart: boolean) => {
 	else range.setStart(selection.anchorNode, selection.anchorOffset)
 	return range.toString().length === 0 // nothing between the caret and that edge
 }
+
 const caretAtStart = (el: HTMLElement) => caretAtEdge(el, true)
 const caretAtEnd = (el: HTMLElement) => caretAtEdge(el, false)
+
+const hideBox = (ctx: Ctx) => {
+	ctx.box.style.display = 'none'
+}
 
 // The selection box is one overlay positioned over the range's bounding rect (relative to the frame).
 function positionBox(ctx: Ctx, anchor: Cell, focus: Cell) {
@@ -571,16 +616,13 @@ function positionBox(ctx: Ctx, anchor: Cell, focus: Cell) {
 	const left = Math.min(ar.left, fr.left) - frame.left
 	ctx.box.style.cssText = `display:block;top:${top}px;left:${left}px;width:${Math.max(ar.right, fr.right) - frame.left - left}px;height:${Math.max(ar.bottom, fr.bottom) - frame.top - top}px`
 }
-const hideBox = (ctx: Ctx) => {
-	ctx.box.style.display = 'none'
-}
 
 // Set every cell in the range to empty in one transaction.
 function clearRange(ctx: Ctx, anchor: Cell, focus: Cell) {
 	const r = normalizeRange(anchor, focus)
 	let next = ctx.model
 	for (let row = r.top; row <= r.bottom; row++)
-		for (let col = r.left; col <= r.right; col++) next = setCell(next, row, col, '')
+		for (let col = r.left; col <= r.right; col++) next = setCell(next, { row, col }, '')
 	rewrite(ctx.view, ctx.model, next)
 }
 
@@ -593,11 +635,13 @@ const cellText = (model: TableModel, row: number, col: number) =>
 function sliceRange(model: TableModel, anchor: Cell, focus: Cell) {
 	const r = normalizeRange(anchor, focus)
 	const grid: string[][] = []
+
 	for (let row = r.top; row <= r.bottom; row++) {
 		const line: string[] = []
 		for (let col = r.left; col <= r.right; col++) line.push(cellText(model, row, col))
 		grid.push(line)
 	}
+
 	return grid
 }
 
@@ -621,7 +665,7 @@ function parseClipboardGrid(text: string): string[][] {
 	return lines.map((line) => [line])
 }
 
-function copyRange(ctx: Ctx, anchor: Cell, focus: Cell, cut: boolean) {
+function copyRange(ctx: Ctx, { anchor, focus, cut }: Extract<Effect, { e: 'copyRange' }>) {
 	writeClipboard(gridToMarkdown(sliceRange(ctx.model, anchor, focus)))
 	if (cut) clearRange(ctx, anchor, focus)
 }
@@ -631,19 +675,20 @@ function pasteRange(ctx: Ctx, cell: Cell) {
 	const grid = parseClipboardGrid(pendingPaste)
 	pendingPaste = ''
 	if (!grid.length) return
-	let model = ctx.model
+	let { model } = ctx
 	const needCols = cell.col + Math.max(...grid.map((line) => line.length))
 	while (model.headers.length < needCols) model = insertColumn(model, model.headers.length)
 	const needRows = cell.row + grid.length
 	while (model.rows.length < needRows) model = insertRow(model, model.rows.length)
 	grid.forEach((line, dr) => {
 		line.forEach((value, dc) => {
-			model = setCell(model, cell.row + dr, cell.col + dc, value.replace(/[\r\n]+/g, ' ').trim())
+			model = setCell(model, { row: cell.row + dr, col: cell.col + dc }, value.replace(/[\r\n]+/g, ' ').trim())
 		})
 	})
 	rewrite(ctx.view, ctx.model, model)
 }
 
+// eslint-disable-next-line complexity -- one arm per Effect variant; the branching belongs to the machine, not the runner
 function runEffect(effect: Effect, ctx: Ctx) {
 	switch (effect.e) {
 		case 'focusCell': {
@@ -663,11 +708,13 @@ function runEffect(effect: Effect, ctx: Ctx) {
 			el.contentEditable = 'false'
 			const raw = el.dataset.raw ?? ''
 			const next = (el.textContent ?? '').replace(/[\r\n]+/g, ' ').trim()
-			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell.row, effect.cell.col, next))
+
+			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell, next))
 			else {
 				el.textContent = ''
 				appendInline(el, raw)
 			}
+
 			return
 		}
 		case 'cancelEdit': {
@@ -689,10 +736,14 @@ function runEffect(effect: Effect, ctx: Ctx) {
 		case 'clearRange':
 			return clearRange(ctx, effect.anchor, effect.focus)
 		case 'copyRange':
-			return copyRange(ctx, effect.anchor, effect.focus, effect.cut)
+			return copyRange(ctx, effect)
 		case 'pasteAt':
 			return void pasteRange(ctx, effect.cell)
-		// showSelection / hideSelection / focusSink are derived from gridState by applyVisual — ignored here.
+		// Derived from gridState by applyVisual instead — nothing to run here.
+		case 'focusSink':
+		case 'showSelection':
+		case 'hideSelection':
+			break
 	}
 }
 
@@ -709,24 +760,31 @@ function applyVisual(ctx: Ctx | null) {
 
 const dimsOf = (model: TableModel) => ({ rows: model.rows.length, cols: model.headers.length })
 
+// Switching tables (click/enter into a different one) — commit any in-progress edit on the previous grid
+// before leaving it (else the uncommitted text is silently lost), then tidy it up. Returns `from` remapped
+// past whatever reflow that commit caused.
+function leavePreviousGrid(view: EditorView, from: number) {
+	if (activeFrom === null || activeFrom === from) return from
+	const previous = ctxFor(view, activeFrom)
+	let target = from
+
+	if (previous) {
+		const lengthBefore = view.state.doc.length
+		for (const effect of reduce(gridState, { t: 'exit' }, dimsOf(previous.model)).effects) runEffect(effect, previous)
+		// A commit that reflowed the previous table shifts every position after it — including our target
+		// `from` when the clicked table sits below the one we just left.
+		if (activeFrom < target) target += view.state.doc.length - lengthBefore
+		const settled = ctxFor(view, activeFrom)
+		if (settled) hideBox(settled)
+	}
+
+	gridState = { mode: 'document' }
+	return target
+}
+
 // Send an event to the machine for table `from`, run its effects, then re-apply the visual to the fresh DOM.
 function dispatch(view: EditorView, initialFrom: number, event: GridEvent) {
-	let from = initialFrom
-	// Switching tables (click/enter into a different one) — commit any in-progress edit on the previous grid
-	// before leaving it (else the uncommitted text is silently lost), then tidy it up.
-	if ((event.t === 'click' || event.t === 'enter') && activeFrom !== null && activeFrom !== from) {
-		const previous = ctxFor(view, activeFrom)
-		if (previous) {
-			const lengthBefore = view.state.doc.length
-			for (const effect of reduce(gridState, { t: 'exit' }, dimsOf(previous.model)).effects) runEffect(effect, previous)
-			// A commit that reflowed the previous table shifts every position after it — including our target
-			// `from` when the clicked table sits below the one we just left.
-			if (activeFrom < from) from += view.state.doc.length - lengthBefore
-			const settled = ctxFor(view, activeFrom)
-			if (settled) hideBox(settled)
-		}
-		gridState = { mode: 'document' }
-	}
+	const from = event.t === 'click' || event.t === 'enter' ? leavePreviousGrid(view, initialFrom) : initialFrom
 	const ctx = ctxFor(view, from)
 	if (!ctx) return
 	const enteringGrid = gridState.mode === 'document'
@@ -735,12 +793,14 @@ function dispatch(view: EditorView, initialFrom: number, event: GridEvent) {
 	const dims = dimsOf(ctx.model)
 	const { next, effects } = reduce(gridState, event, dims)
 	gridState = next
+
 	// On first entry, anchor CM's caret to the table so undo/redo return here instead of the document top.
 	// (A selection-only change keeps the widget's model equal, so ctx stays valid — no rebuild.)
 	if (enteringGrid && next.mode !== 'document') {
-		const head = view.state.selection.main.head
+		const { head } = view.state.selection.main
 		if (head < ctx.model.from || head > ctx.model.to) view.dispatch({ selection: { anchor: ctx.model.from } })
 	}
+
 	for (const effect of effects) runEffect(effect, ctx)
 	applyVisual(ctxFor(view, from)) // fresh ctx (a commit/clear may have rebuilt): hides the box in document
 	if (next.mode === 'document') activeFrom = null // mode, positions it + holds the sink otherwise
@@ -761,7 +821,9 @@ function leaveGrid(view: EditorView) {
 // A cell shows rendered inline markdown and is inert until the machine puts it into edit mode. Click selects,
 // double-click edits; while editing, Enter/Tab/Escape and edge arrows route to the machine, mid-text arrows and
 // typing are native (the caret only spills to a neighbour once it reaches the cell's start/end).
-function gridCell(content: HTMLElement, raw: string, cell: Cell, view: EditorView, from: number) {
+type GridCellContext = { content: HTMLElement; raw: string; cell: Cell; view: EditorView; from: number }
+
+function gridCell({ content, raw, cell, view, from }: GridCellContext) {
 	content.className = 'md-td-content'
 	content.dataset.raw = raw
 	content.contentEditable = 'false'
@@ -829,6 +891,42 @@ function leaveIfOutside(view: EditorView, from: number) {
 	dispatch(view, from, { t: 'exit' })
 }
 
+const arrowDir = (key: string) =>
+	key === 'ArrowUp'
+		? 'up'
+		: key === 'ArrowDown'
+			? 'down'
+			: key === 'ArrowLeft'
+				? 'left'
+				: key === 'ArrowRight'
+					? 'right'
+					: null
+
+// The ⌘/Ctrl chords the sink owns. Returns whether it consumed the key.
+const sinkChord = (view: EditorView, from: number, event: KeyboardEvent) => {
+	if (!event.metaKey && !event.ctrlKey) return false
+	const lower = event.key.toLowerCase()
+	if (lower !== 'a' && lower !== 'c' && lower !== 'x') return false
+	event.preventDefault()
+	if (lower === 'a') dispatch(view, from, { t: 'selectAll' })
+	else dispatch(view, from, { t: lower === 'x' ? 'cut' : 'copy' })
+	return true
+}
+
+// The sink's plain-key bindings: nav, edit entry, clear, and type-to-replace.
+const sinkKeyEvent = (event: KeyboardEvent): GridEvent | null => {
+	const { key } = event
+	const dir = arrowDir(key)
+	if (dir) return { t: 'move', dir, shift: event.shiftKey }
+	// Enter on a selected cell edits it (like F2); Enter while *editing* commits + moves down (cell handler).
+	if (key === 'Enter' || key === 'F2') return { t: 'beginEdit', seed: null }
+	if (key === 'Tab') return { t: 'commitMove', dir: event.shiftKey ? 'left' : 'right' }
+	if (key === 'Escape') return { t: 'escape' }
+	if (key === 'Backspace' || key === 'Delete') return { t: 'clear' }
+	if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) return { t: 'beginEdit', seed: key }
+	return null
+}
+
 // The hidden per-table sink holds keyboard focus while a range is selected (so typing, nav, and paste have a
 // target). It also captures clipboard events. Selected-mode key handling lives here; editing lives on cells.
 function makeSink(view: EditorView, from: number) {
@@ -836,43 +934,12 @@ function makeSink(view: EditorView, from: number) {
 	sink.className = 'md-grid-sink'
 	sink.setAttribute('aria-hidden', 'true')
 	sink.tabIndex = -1
-	const move = (dir: 'up' | 'down' | 'left' | 'right', shift: boolean) =>
-		dispatch(view, from, { t: 'move', dir, shift })
 	sink.addEventListener('keydown', (event) => {
-		const key = event.key
-		const chord = event.metaKey || event.ctrlKey
-		const lower = key.toLowerCase()
-		if (chord && lower === 'a') {
-			event.preventDefault()
-			return dispatch(view, from, { t: 'selectAll' })
-		}
-		if (chord && (lower === 'c' || lower === 'x')) {
-			event.preventDefault()
-			return dispatch(view, from, { t: lower === 'x' ? 'cut' : 'copy' })
-		}
-		if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
-			event.preventDefault()
-			move(key.slice(5).toLowerCase() as 'up' | 'down' | 'left' | 'right', event.shiftKey)
-		} else if (key === 'Enter') {
-			// Enter on a selected cell edits it (like F2); Enter while *editing* commits + moves down (cell handler).
-			event.preventDefault()
-			dispatch(view, from, { t: 'beginEdit', seed: null })
-		} else if (key === 'Tab') {
-			event.preventDefault()
-			dispatch(view, from, { t: 'commitMove', dir: event.shiftKey ? 'left' : 'right' })
-		} else if (key === 'Escape') {
-			event.preventDefault()
-			dispatch(view, from, { t: 'escape' })
-		} else if (key === 'F2') {
-			event.preventDefault()
-			dispatch(view, from, { t: 'beginEdit', seed: null })
-		} else if (key === 'Backspace' || key === 'Delete') {
-			event.preventDefault()
-			dispatch(view, from, { t: 'clear' })
-		} else if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-			event.preventDefault()
-			dispatch(view, from, { t: 'beginEdit', seed: key })
-		}
+		if (sinkChord(view, from, event)) return
+		const gridEvent = sinkKeyEvent(event)
+		if (!gridEvent) return
+		event.preventDefault()
+		dispatch(view, from, gridEvent)
 	})
 	sink.addEventListener('blur', () => requestAnimationFrame(() => leaveIfOutside(view, from)))
 	return sink
@@ -903,7 +970,7 @@ if (typeof document !== 'undefined')
 	)
 
 // A full-edge "+" bar (Obsidian-style): add a column on the right, or a row below.
-function edgeAdd(kind: 'col' | 'row', title: string, onClick: () => void) {
+function edgeAdd(kind: Axis, title: string, onClick: () => void) {
 	const bar = document.createElement('button')
 	bar.type = 'button'
 	bar.className = `md-table-add md-table-add-${kind} codicon codicon-add`
@@ -962,24 +1029,25 @@ const tableWidget = defineWidget<TableModel>({
 			const handle = document.createElement('div')
 			handle.className = 'md-col-handle'
 			handle.title = 'Drag to move · click for options'
-			attachReorder(
+			attachReorder({
 				handle,
-				'col',
-				col,
+				axis: 'col',
+				index: col,
 				frame,
 				table,
-				() => columnMenu(view, handle, model, col),
-				(to) => rewrite(view, model, moveColumn(model, col, to)),
-			)
+				onClick: () => columnMenu({ view, model }, handle, col),
+				commit: (to) => rewrite(view, model, moveColumn(model, col, to)),
+			})
 			th.append(handle)
 
+			const cell = { row: -1, col }
 			const content = document.createElement('span')
-			gridCell(content, header, { row: -1, col }, view, model.from)
+			gridCell({ content, raw: header, cell, view, from: model.from })
 			th.append(content)
 			th.addEventListener('contextmenu', (event) => {
 				event.preventDefault()
-				dispatch(view, model.from, { t: 'click', cell: { row: -1, col }, shift: false })
-				cellMenu(view, { x: event.clientX, y: event.clientY }, model, -1, col)
+				dispatch(view, model.from, { t: 'click', cell, shift: false })
+				cellMenu({ view, model }, { x: event.clientX, y: event.clientY }, cell)
 			})
 			headerRow.append(th)
 		})
@@ -994,24 +1062,26 @@ const tableWidget = defineWidget<TableModel>({
 					const handle = document.createElement('div')
 					handle.className = 'md-row-handle'
 					handle.title = 'Drag to move · click for options'
-					attachReorder(
+					attachReorder({
 						handle,
-						'row',
-						rowIndex,
+						axis: 'row',
+						index: rowIndex,
 						frame,
 						table,
-						() => rowMenu(view, handle, model, rowIndex),
-						(to) => rewrite(view, model, moveRow(model, rowIndex, to)),
-					)
+						onClick: () => rowMenu({ view, model }, handle, rowIndex),
+						commit: (to) => rewrite(view, model, moveRow(model, rowIndex, to)),
+					})
 					td.append(handle)
 				}
+
+				const cell = { row: rowIndex, col }
 				const content = document.createElement('span')
-				gridCell(content, row[col] ?? '', { row: rowIndex, col }, view, model.from)
+				gridCell({ content, raw: row[col] ?? '', cell, view, from: model.from })
 				td.append(content)
 				td.addEventListener('contextmenu', (event) => {
 					event.preventDefault()
-					dispatch(view, model.from, { t: 'click', cell: { row: rowIndex, col }, shift: false })
-					cellMenu(view, { x: event.clientX, y: event.clientY }, model, rowIndex, col)
+					dispatch(view, model.from, { t: 'click', cell, shift: false })
+					cellMenu({ view, model }, { x: event.clientX, y: event.clientY }, cell)
 				})
 			})
 		})
@@ -1044,14 +1114,43 @@ const tableWidget = defineWidget<TableModel>({
 
 type TableScan = { deco: DecorationSet; raw: SourceRange[] }
 
+// Reveal the raw source when a ranged selection touches the table (drag-select or "Edit source"), and stay
+// revealed while a caret lingers in its lines (sticky) so editing the source doesn't collapse it. A grid
+// session never reveals — its parked caret would otherwise touch the range.
+function updateRevealed(state: EditorState, from: number, to: number) {
+	const gridActive = activeFrom === from && gridState.mode !== 'document'
+	const reveal =
+		!gridActive &&
+		(selectionRangeTouches(state, from, to) || (revealedFrom === from && selectionTouches(state, from, to)))
+	if (reveal) revealedFrom = from
+	else if (revealedFrom === from) revealedFrom = null
+	return reveal
+}
+
+// Reveal just the raw markdown, styled as a monospace box, so what's highlighted is what copies. The first and
+// last lines round the box's corners.
+function addSourceLines(
+	builder: RangeSetBuilder<Decoration>,
+	state: EditorState,
+	lines: { first: number; last: number },
+) {
+	for (let lineNum = lines.first; lineNum <= lines.last; lineNum++) {
+		const corner = lineNum === lines.first ? ' md-table-src-top' : lineNum === lines.last ? ' md-table-src-bottom' : ''
+		const { from } = state.doc.line(lineNum)
+		builder.add(from, from, Decoration.line({ attributes: { class: `md-table-src${corner}` } }))
+	}
+}
+
 function buildTableDecorations(state: EditorState): TableScan {
 	const builder = new RangeSetBuilder<Decoration>()
 	const raw: SourceRange[] = []
-	const doc = state.doc
+	const { doc } = state
 
 	let lineNum = 1
+
 	while (lineNum <= doc.lines) {
 		const line = doc.line(lineNum)
+
 		if (!line.text.includes('|') || lineNum + 1 > doc.lines) {
 			lineNum++
 			continue
@@ -1065,6 +1164,7 @@ function buildTableDecorations(state: EditorState): TableScan {
 		const aligns = parseAligns(doc.line(lineNum + 1).text, headers.length)
 		const rows: string[][] = []
 		let endLineNum = lineNum + 1
+
 		for (let dataLine = lineNum + 2; dataLine <= doc.lines; dataLine++) {
 			const rowLine = doc.line(dataLine)
 			if (!rowLine.text.includes('|')) break
@@ -1072,39 +1172,16 @@ function buildTableDecorations(state: EditorState): TableScan {
 			endLineNum = dataLine
 		}
 
-		const from = line.from
-		const to = doc.line(endLineNum).to
+		const { from } = line
+		const { to } = doc.line(endLineNum)
 		const model: TableModel = { headers, aligns, rows, from, to }
 
-		// Reveal the raw source when a ranged selection touches the table (drag-select or "Edit source"), and stay
-		// revealed while a caret lingers in its lines (sticky) so editing the source doesn't collapse it. A grid
-		// session never reveals — its parked caret would otherwise touch the range.
-		const gridActive = activeFrom === from && gridState.mode !== 'document'
-		const reveal =
-			!gridActive &&
-			(selectionRangeTouches(state, from, to) || (revealedFrom === from && selectionTouches(state, from, to)))
-		if (reveal) revealedFrom = from
-		else if (revealedFrom === from) revealedFrom = null
-
-		if (!reveal) {
+		if (!updateRevealed(state, from, to)) {
 			// block: true tells CM this replaces whole lines — fixes the over-tall caret on the line above it.
 			builder.add(from, to, Decoration.replace({ widget: tableWidget(model), block: true }))
 		} else {
-			// Reveal just the raw markdown, styled as a monospace box, so what's highlighted is what copies.
 			raw.push({ from, to }) // other plugins skip this range → the source stays byte-accurate
-			for (let sourceLine = lineNum; sourceLine <= endLineNum; sourceLine++) {
-				const lineClass =
-					sourceLine === lineNum
-						? 'md-table-src md-table-src-top'
-						: sourceLine === endLineNum
-							? 'md-table-src md-table-src-bottom'
-							: 'md-table-src'
-				builder.add(
-					doc.line(sourceLine).from,
-					doc.line(sourceLine).from,
-					Decoration.line({ attributes: { class: lineClass } }),
-				)
-			}
+			addSourceLines(builder, state, { first: lineNum, last: endLineNum })
 		}
 
 		lineNum = endLineNum + 1
@@ -1141,9 +1218,11 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	if (!caret.empty) return false
 	const line = view.state.doc.lineAt(caret.head)
 	const edges = tableEdges(view.state)
+
 	if (key === 'down' || (key === 'right' && caret.head === line.to)) {
 		// ↓ / → into the top of the table → top-left cell.
 		const table = edges.find((edge) => view.state.doc.lineAt(edge.from).number === line.number + 1)
+
 		if (table) {
 			dispatch(view, table.from, { t: 'enter', corner: 'top-left' })
 			return true
@@ -1152,11 +1231,13 @@ function enterFromDoc(view: EditorView, key: 'up' | 'down' | 'left' | 'right') {
 	if (key === 'up' || (key === 'left' && caret.head === line.from)) {
 		// ↑ enters the bottom-left; ← wraps into the bottom-right (last) cell, like leftward text motion.
 		const table = edges.find((edge) => view.state.doc.lineAt(edge.to).number === line.number - 1)
+
 		if (table) {
 			dispatch(view, table.from, { t: 'enter', corner: key === 'left' ? 'bottom-right' : 'bottom-left' })
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -1209,22 +1290,27 @@ async function flushFormat(view: EditorView) {
 	const text = view.state.doc.sliceString(edge.from, edge.to)
 	if (!isTableText(text)) return
 	let formatted: string
+
 	try {
 		formatted = await formatterProfile.formatTable(text)
 	} catch {
 		return
 	}
+
 	if (formatted === text) {
 		if (dirty.size) armFormat(view)
 		return
 	}
+
 	// The doc may have changed during the await (the user kept typing) — bail and retry if this table moved/changed.
 	const fresh = tableEdges(view.state).find((entry) => entry.from === from)
+
 	if (!fresh || view.state.doc.sliceString(fresh.from, fresh.to) !== text) {
 		dirty.add(from)
 		armFormat(view)
 		return
 	}
+
 	view.dispatch({ changes: { from: fresh.from, to: fresh.to, insert: formatted }, annotations: formatPass.of(true) })
 }
 
@@ -1238,10 +1324,13 @@ const formatOnEdit = EditorView.updateListener.of((update) => {
 		dirty.clear()
 		for (const from of mapped) dirty.add(from)
 	}
+
 	const isFormatPass = update.transactions.some((tr) => tr.annotation(formatPass))
+
 	if (update.docChanged && !isFormatPass)
 		for (const edge of [...tableEdges(update.state), ...update.state.field(tablesField).raw]) {
 			let touched = false
+			// eslint-disable-next-line max-params -- CodeMirror's iterChangedRanges dictates the callback arity
 			update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
 				if (fromB <= edge.to && toB >= edge.from) touched = true
 			})

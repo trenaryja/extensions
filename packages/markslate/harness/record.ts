@@ -17,6 +17,14 @@ import type { Locator, Page } from 'playwright-core'
 const here = dirname(fileURLToPath(import.meta.url))
 const media = join(here, '..', 'media')
 
+type Point = { x: number; y: number }
+
+/** Fraction of a locator's box on each axis, 0–1. */
+type Anchor = Point
+
+const PARK = { x: 812, y: 498 }
+let mouseAt = { ...PARK }
+
 const load = async (page: Page, doc: string) => {
 	page.on('pageerror', (error) => console.error('[pageerror]', error.message))
 	await page.addInitScript((markdown: string) => {
@@ -30,85 +38,94 @@ const load = async (page: Page, doc: string) => {
 }
 
 const type = (page: Page, text: string) => page.keyboard.type(text, { delay: 45 })
+
 const line = async (page: Page, text: string) => {
 	await type(page, text)
 	await page.keyboard.press('Enter')
 }
+
 const setTheme = (page: Page, kind: 'light' | 'dark') =>
 	page.evaluate((theme: string) => (window as unknown as { __setTheme: (k: string) => void }).__setTheme(theme), kind)
 
 // ---------- Eased mouse choreography ----------
 
-const PARK = { x: 812, y: 498 }
-let mouseAt = { ...PARK }
+const CENTER: Anchor = { x: 0.5, y: 0.5 }
+const OFF_CENTER: Anchor = { x: 0.5, y: 0.55 }
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
 
 /** Glide along a gentle quadratic-Bézier arc with cubic easing. Deterministic — no jitter. */
-const glide = async (page: Page, x: number, y: number, duration = 700, arc = 0.14) => {
+const glide = async (page: Page, to: Point, { duration = 700, arc = 0.14 } = {}) => {
 	const from = mouseAt
-	const dx = x - from.x
-	const dy = y - from.y
+	const dx = to.x - from.x
+	const dy = to.y - from.y
 	const distance = Math.hypot(dx, dy)
 	if (distance < 2) return
 	const bend = Math.min(48, distance * arc)
 	const control = {
-		x: (from.x + x) / 2 + (dy / distance) * bend,
-		y: (from.y + y) / 2 - (dx / distance) * bend,
+		x: (from.x + to.x) / 2 + (dy / distance) * bend,
+		y: (from.y + to.y) / 2 - (dx / distance) * bend,
 	}
 	const frames = Math.min(64, Math.max(14, Math.round(duration / 16)))
+
 	for (let i = 1; i <= frames; i++) {
 		const t = easeInOutCubic(i / frames)
 		const inverse = 1 - t
-		const px = inverse * inverse * from.x + 2 * inverse * t * control.x + t * t * x
-		const py = inverse * inverse * from.y + 2 * inverse * t * control.y + t * t * y
+		const px = inverse * inverse * from.x + 2 * inverse * t * control.x + t * t * to.x
+		const py = inverse * inverse * from.y + 2 * inverse * t * control.y + t * t * to.y
 		await page.mouse.move(px, py)
 		await page.waitForTimeout(Math.max(6, duration / frames - 4))
 	}
-	mouseAt = { x, y }
+
+	mouseAt = { ...to }
 }
 
 /** Point within a locator's box — anchored off-center by default so text stays readable. */
-const anchorPoint = async (target: Locator, ax = 0.5, ay = 0.55) => {
+const anchorPoint = async (target: Locator, anchor: Anchor = OFF_CENTER) => {
 	const box = await target.boundingBox()
 	if (!box) throw new Error(`no bounding box for ${target}`)
-	return { x: box.x + box.width * ax, y: box.y + box.height * ay }
+	return { x: box.x + box.width * anchor.x, y: box.y + box.height * anchor.y }
 }
 
-const glideTo = async (page: Page, target: Locator, ax?: number, ay?: number) => {
-	const point = await anchorPoint(target, ax, ay)
-	await glide(page, point.x, point.y)
+const glideTo = async (page: Page, target: Locator, anchor?: Anchor) => {
+	const point = await anchorPoint(target, anchor)
+	await glide(page, point)
 	return point
 }
-const glideClick = async (page: Page, target: Locator, ax?: number, ay?: number) => {
-	await glideTo(page, target, ax, ay)
+
+const glideClick = async (page: Page, target: Locator, anchor?: Anchor) => {
+	await glideTo(page, target, anchor)
 	await page.waitForTimeout(160)
 	await page.mouse.down()
 	await page.waitForTimeout(110)
 	await page.mouse.up()
 }
-const glideDblclick = async (page: Page, target: Locator, ax?: number, ay?: number) => {
-	const point = await glideTo(page, target, ax, ay)
+
+const glideDblclick = async (page: Page, target: Locator, anchor?: Anchor) => {
+	const point = await glideTo(page, target, anchor)
 	await page.waitForTimeout(150)
 	await page.mouse.dblclick(point.x, point.y)
 }
+
 const clickAt = async (page: Page, x: number, y: number) => {
-	await glide(page, x, y)
+	await glide(page, { x, y })
 	await page.waitForTimeout(140)
 	await page.mouse.click(x, y)
 }
+
 const dragTo = async (page: Page, from: Locator, to: Locator) => {
-	await glideTo(page, from, 0.5, 0.5)
+	await glideTo(page, from, CENTER)
 	await page.waitForTimeout(200)
 	await page.mouse.down()
 	await page.waitForTimeout(220)
-	const point = await anchorPoint(to, 0.5, 0.5)
-	await glide(page, point.x, point.y, 950, 0.06)
+	const point = await anchorPoint(to, CENTER)
+	await glide(page, point, { duration: 950, arc: 0.06 })
 	await page.waitForTimeout(220)
 	await page.mouse.up()
 }
+
 /** Retire the cursor out of the content area so the result is unobstructed. */
-const park = async (page: Page) => glide(page, PARK.x, PARK.y, 550, 0.1)
+const park = async (page: Page) => glide(page, PARK, { duration: 550, arc: 0.1 })
 
 // ---------- Scenarios ----------
 
@@ -176,11 +193,13 @@ const SCENARIOS: Scenario[] = [
 			// Quote continuation leaves a bare `> ` — Backspace (deleteMarkupBackward) clears it.
 			await page.keyboard.press('Backspace')
 			await page.waitForTimeout(900)
+
 			// Walk back up: the active line reveals its raw markdown, then re-renders on the way out.
 			for (let step = 0; step < 4; step++) {
 				await page.keyboard.press('ArrowUp')
 				await page.waitForTimeout(380)
 			}
+
 			await page.keyboard.press('Meta+ArrowDown')
 			await page.waitForTimeout(1400)
 		},
@@ -194,10 +213,12 @@ const SCENARIOS: Scenario[] = [
 			await page.waitForTimeout(500)
 			await type(page, 'table')
 			await page.waitForTimeout(1000)
+
 			for (let match = 0; match < 3; match++) {
 				await page.keyboard.press('Enter')
 				await page.waitForTimeout(700)
 			}
+
 			await page.keyboard.press('Escape')
 			await page.waitForTimeout(1100)
 		},
@@ -210,7 +231,7 @@ const SCENARIOS: Scenario[] = [
 			await page.waitForTimeout(800)
 			// Fill the empty cell. Emoji can't be typed as key events, and the grid enters edit from
 			// keydown — so double-click into edit mode, then insertText targets the live cell editor.
-			await glideDblclick(page, cell(8), 0.7, 0.62)
+			await glideDblclick(page, cell(8), { x: 0.7, y: 0.62 })
 			await page.waitForTimeout(420)
 			await page.keyboard.insertText('✅')
 			await page.keyboard.press('Enter')
@@ -218,12 +239,12 @@ const SCENARIOS: Scenario[] = [
 			// Add a whole row from the bottom edge bar, tab across it.
 			await glideClick(page, page.locator('.md-table-add-row'))
 			await page.waitForTimeout(550)
-			await glideClick(page, cell(9), 0.72, 0.62)
+			await glideClick(page, cell(9), { x: 0.72, y: 0.62 })
 			await type(page, 'Mermaid')
 			await page.keyboard.press('Tab')
 			await type(page, 'Mermaid')
 			await page.keyboard.press('Tab')
-			await glideDblclick(page, cell(11), 0.7, 0.62)
+			await glideDblclick(page, cell(11), { x: 0.7, y: 0.62 })
 			await page.keyboard.insertText('✅')
 			await page.keyboard.press('Enter')
 			await park(page)
@@ -232,14 +253,14 @@ const SCENARIOS: Scenario[] = [
 			await glideClick(page, page.locator('.md-table-add-col'))
 			await page.waitForTimeout(850)
 			// Copy one cell into another: select, ⌘C, select target, ⌘V.
-			await glideClick(page, cell(1), 0.72, 0.62)
+			await glideClick(page, cell(1), { x: 0.72, y: 0.62 })
 			await page.keyboard.press('Meta+c')
 			await page.waitForTimeout(500)
-			await glideClick(page, cell(3), 0.72, 0.62)
+			await glideClick(page, cell(3), { x: 0.72, y: 0.62 })
 			await page.keyboard.press('Meta+v')
 			await page.waitForTimeout(850)
 			// Drag the Mermaid row up by its handle.
-			await glideTo(page, cell(12), 0.3, 0.5)
+			await glideTo(page, cell(12), { x: 0.3, y: 0.5 })
 			await page.waitForTimeout(450)
 			await dragTo(page, page.locator('.md-row-handle').last(), cell(4))
 			await page.keyboard.press('Escape')
@@ -256,10 +277,10 @@ const SCENARIOS: Scenario[] = [
 			await page.waitForTimeout(900)
 			// Only fold-marked callouts get a chevron — the warning's is the only one on the page.
 			const fold = page.locator('.md-callout-fold').first()
-			await glideClick(page, fold, 0.5, 0.5)
+			await glideClick(page, fold, CENTER)
 			await park(page)
 			await page.waitForTimeout(1200)
-			await glideClick(page, fold, 0.5, 0.5)
+			await glideClick(page, fold, CENTER)
 			await park(page)
 			await page.waitForTimeout(900)
 			// Type a new callout from scratch.
@@ -271,7 +292,7 @@ const SCENARIOS: Scenario[] = [
 			await line(page, 'custom icons and colors via settings.')
 			await page.keyboard.press('Backspace')
 			await page.waitForTimeout(900)
-			await glideClick(page, fold, 0.5, 0.5)
+			await glideClick(page, fold, CENTER)
 			await park(page)
 			await page.waitForTimeout(1400)
 		},
@@ -328,12 +349,12 @@ const SCENARIOS: Scenario[] = [
 			await page.keyboard.press('Enter')
 			await page.waitForTimeout(1300)
 			// Hovering the block reveals its tools; Copy SVG lifts the equation out as vector art.
-			await glideTo(page, page.locator('.md-math-block'), 0.5, 0.6)
+			await glideTo(page, page.locator('.md-math-block'), { x: 0.5, y: 0.6 })
 			await page.waitForTimeout(500)
 			await glideClick(page, page.locator('.md-math-tools .md-cb-btn'))
 			await page.waitForTimeout(900)
 			// Click into the equation to reveal its source (still live below), then out to re-render.
-			await glideClick(page, page.locator('.md-math-svg'), 0.4, 0.6)
+			await glideClick(page, page.locator('.md-math-svg'), { x: 0.4, y: 0.6 })
 			await page.waitForTimeout(1400)
 			await clickAt(page, 440, 470)
 			await park(page)

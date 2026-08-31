@@ -22,6 +22,7 @@ const ALL_DIRECTORIES = 'all'
 
 const play = async (message: TranscriptMessage) => {
 	const toast = await showToast({ style: Toast.Style.Animated, title: 'Starting narration…' })
+
 	try {
 		const started = await playMessage(message.id)
 		toast.style = Toast.Style.Success
@@ -49,6 +50,7 @@ const offerSummarizer = async () => {
 const summarize = async (message: TranscriptMessage) => {
 	if (summarizer() === 'off') return offerSummarizer()
 	const toast = await showToast({ style: Toast.Style.Animated, title: 'Summarizing…', message: 'usually 20–60 s' })
+
 	try {
 		const { playback } = await summarizeAndPlay(message.id)
 		toast.style = Toast.Style.Success

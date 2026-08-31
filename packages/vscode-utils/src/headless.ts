@@ -2,7 +2,8 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { chromium, type Page } from 'playwright-core'
+import { chromium } from 'playwright-core'
+import type { Page } from 'playwright-core'
 
 // Headless Chromium for extension tooling — screenshots, icon rendering, demo recording.
 // Reuses whatever Chromium `playwright install` cached (no per-project browser download).
@@ -36,13 +37,14 @@ export type HeadlessPageOptions = {
 export async function withPage<T>(options: HeadlessPageOptions, run: (page: Page) => Promise<T>) {
 	const { width = 900, height = 700, deviceScaleFactor = 1, recordVideo } = options
 	const browser = await chromium.launch({ executablePath: findChromium(), headless: true })
+
 	try {
 		const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor, recordVideo })
 		// Headless contexts deny navigator.clipboard by default; pages that copy shouldn't silently fail.
 		await page
 			.context()
 			.grantPermissions(['clipboard-read', 'clipboard-write'])
-			.catch(() => {})
+			.catch(() => undefined)
 		return await run(page)
 	} finally {
 		await browser.close()
@@ -142,6 +144,7 @@ export async function recordGif(options: RecordGifOptions, run: (page: Page) => 
 	const { output, fps = 14, gifWidth, quality = 80, pointer, ...pageOptions } = options
 	const { width = 900, height = 700 } = pageOptions
 	const captureDir = mkdtempSync(join(tmpdir(), 'headless-record-'))
+
 	try {
 		let videoPath: string | undefined
 		// Without an explicit size, Playwright scales the video to fit 800×800 — and may switch frame

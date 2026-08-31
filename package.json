@@ -8,9 +8,8 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"fix": "prettier -w . && turbo run fix",
-		"check": "tsc -b && prettier -c . && turbo run check",
-		"lint": "turbo run lint",
+		"fix": "prettier -w . && bunx eslint --fix . && turbo run fix",
+		"check": "tsc -b && prettier -c . && bunx eslint . --max-warnings=0 && turbo run check",
 		"format": "prettier -w .",
 		"get-latest": "bun update --latest -i",
 		"reinstall": "rm -rf node_modules && rm bun.lock && bun install",
@@ -18,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@inquirer/prompts": "^8.5.2",
+		"@trenaryja/config": "^0.0.4",
 		"@types/node": "^26.2.0",
 		"prettier": "^3.9.6",
 		"remeda": "^2.39.0",

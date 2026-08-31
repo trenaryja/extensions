@@ -1,5 +1,6 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { type CalloutConfig, CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
+import { CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
+import type { CalloutConfig } from './callouts.data'
 import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
 // Lazy import keeps this module (and the contributes codegen) free of any top-level `vscode` import.
@@ -62,7 +63,7 @@ export const commands = defineCommands([
 		when: 'resourceExtname == .md',
 		menus: [{ id: 'editor/title', group: 'navigation', when: 'resourceExtname == .md' }],
 		handler: async ({ vscode }) => {
-			const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab
+			const { activeTab } = vscode.window.tabGroups.activeTabGroup
 			const input = activeTab?.input
 			const uri = input instanceof vscode.TabInputText || input instanceof vscode.TabInputCustom ? input.uri : undefined
 			if (!uri || !uri.path.endsWith('.md')) return

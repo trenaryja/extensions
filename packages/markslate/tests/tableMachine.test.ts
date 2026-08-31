@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { type Cell, type Dims, type GridState, normalizeRange, reduce } from '../src/webview/decorations/tableMachine'
+import { normalizeRange, reduce } from '../src/webview/decorations/tableMachine'
+import type { Cell, Dims, GridState } from '../src/webview/decorations/tableMachine'
 
 const dims: Dims = { rows: 3, cols: 2 } // header (-1) + data rows 0,1,2 ; cols 0,1
 const cell = (row: number, col: number): Cell => ({ row, col })

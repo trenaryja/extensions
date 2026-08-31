@@ -3,7 +3,9 @@ import { formatterProfile } from '../src/webview/decorations/tableFormat'
 import { parseRow, parseTable, serialize } from '../src/webview/decorations/tables'
 
 type Align = 'left' | 'center' | 'right' | null
+
 const model = (headers: string[], aligns: Align[], rows: string[][]) => ({ headers, aligns, rows, from: 0, to: 0 })
+
 const parse = (source: string) => {
 	const parsed = parseTable(source)
 	if (!parsed) throw new Error(`not a table: ${source}`)

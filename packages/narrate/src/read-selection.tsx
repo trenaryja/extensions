@@ -4,11 +4,13 @@ import { openStatus } from './lib/open-status'
 
 export default async function Command() {
 	let text: string
+
 	try {
 		text = await getSelectedText()
 	} catch {
 		return showHUD('Select some text first')
 	}
+
 	if (!text.trim()) return showHUD('Select some text first')
 
 	try {

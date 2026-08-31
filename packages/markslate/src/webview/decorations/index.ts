@@ -5,7 +5,8 @@ import { codeHoverTools } from './codeblocks'
 import { treeBlocksPlugin } from './treeBlocks'
 import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
-import { createMermaidPlugin, type MermaidRenderMode } from './mermaid'
+import { createMermaidPlugin } from './mermaid'
+import type { MermaidRenderMode } from './mermaid'
 import { mathPlugin } from './math'
 
 export function createDecorationExtensions(getMode: () => MermaidRenderMode): Extension[] {

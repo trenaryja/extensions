@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
 import { BACKEND_IDS } from '../types'
-import { annotateVoices, parseVoices, type VoiceMetadata } from './say'
+import { annotateVoices, parseVoices } from './say'
+import type { VoiceMetadata } from './say'
 import { getBackend } from '.'
 
 // The kokoro worker downloads and loads an 82M-parameter model, so its synthesis only runs on request.
@@ -61,7 +62,7 @@ test.skipIf(!live)(
 		try {
 			expect(Bun.file(wavPath).size).toBeGreaterThan(0)
 			expect(duration).toBeGreaterThan(1)
-			expect(words.some((word) => /^(three|3)$/i.test(word.text))).toBe(true)
+			expect(words.some((word) => /^(?:3|three)$/i.test(word.text))).toBe(true)
 			expect(words.at(-1)?.end).toBeLessThanOrEqual(duration)
 		} finally {
 			await discard(wavPath)
@@ -144,10 +145,12 @@ test('annotates say voices by name and locale, leaving unmatched ones bare', () 
 const voicesWithHelper = async (helperPath: string) => {
 	const original = process.env.NARRATE_VOICE_METADATA
 	process.env.NARRATE_VOICE_METADATA = helperPath
+
 	try {
 		return await getBackend('say').voices()
 	} finally {
 		if (original === undefined) delete process.env.NARRATE_VOICE_METADATA
+		// eslint-disable-next-line require-atomic-updates -- restoring a value captured before the await is the point; nothing else writes this var
 		else process.env.NARRATE_VOICE_METADATA = original
 	}
 }

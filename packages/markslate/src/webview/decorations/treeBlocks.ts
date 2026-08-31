@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
+import { Decoration, ViewPlugin } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { selectionTouches } from './active'
 import { getTheme, refresh, setCodeRefresh, tokenize, toolsWidget } from './codeblocks'
@@ -17,9 +18,11 @@ type RenderContext = {
 	state: EditorState
 	add: (from: number, to: number, deco: Decoration) => void
 }
+
 type NodeRenderer = (node: SyntaxNode, ctx: RenderContext) => void
 
 const renderers: Record<string, NodeRenderer> = {}
+
 const register = (nodeNames: string[], renderer: NodeRenderer) => {
 	for (const name of nodeNames) renderers[name] = renderer
 }
@@ -90,12 +93,12 @@ register(['TaskMarker'], (node, { state, add }) => {
 // `> ` stripped as separate QuoteMarks), so this renders correctly inside callouts too. Mermaid/math fences are
 // chromed here as well; their own plugins overlay the rendered diagram/SVG on top.
 register(['FencedCode'], (node, { state, add }) => {
-	const doc = state.doc
+	const { doc } = state
 	const info = node.getChild('CodeInfo')
 	const lang = info ? doc.sliceString(info.from, info.to).trim().toLowerCase() : ''
 
 	// The actual code = the CodeText chunks concatenated (each is one line's content, at its real position).
-	const chunks: Array<{ from: number; to: number }> = []
+	const chunks: { from: number; to: number }[] = []
 	for (let child = node.firstChild; child; child = child.nextSibling)
 		if (child.name === 'CodeText') chunks.push({ from: child.from, to: child.to })
 	const code = chunks.map((chunk) => doc.sliceString(chunk.from, chunk.to)).join('')
@@ -103,6 +106,7 @@ register(['FencedCode'], (node, { state, add }) => {
 	// Container line decoration on every line of the block, rounded on the fence lines.
 	const firstLine = doc.lineAt(node.from).number
 	const lastLine = doc.lineAt(node.to).number
+
 	for (let ln = firstLine; ln <= lastLine; ln++) {
 		const cls = ln === firstLine ? 'md-cb md-cb-open' : ln === lastLine ? 'md-cb md-cb-close' : 'md-cb'
 		add(doc.line(ln).from, doc.line(ln).from, Decoration.line({ class: cls }))
@@ -126,6 +130,7 @@ register(['FencedCode'], (node, { state, add }) => {
 		joined += chunk.to - chunk.from
 		return range
 	})
+
 	for (const token of tokens) {
 		if (!token.style) continue
 		const chunk = chunkRanges.find((range) => token.offset >= range.start && token.offset < range.end)
@@ -138,7 +143,7 @@ register(['FencedCode'], (node, { state, add }) => {
 // ---------- Plugin ----------
 
 function buildTreeDecorations(view: EditorView): DecorationSet {
-	const ranges: Array<{ from: number; to: number; deco: Decoration }> = []
+	const ranges: { from: number; to: number; deco: Decoration }[] = []
 	const ctx: RenderContext = {
 		state: view.state,
 		add: (from, to, deco) => {
@@ -159,16 +164,19 @@ function buildTreeDecorations(view: EditorView): DecorationSet {
 export const treeBlocksPlugin = ViewPlugin.fromClass(
 	class {
 		decorations: DecorationSet
+
 		constructor(view: EditorView) {
 			// Rebuild when Shiki finishes loading a language/theme (async) so code colors appear.
 			setCodeRefresh(() => view.dispatch({ effects: refresh.of(null) }))
 			this.decorations = buildTreeDecorations(view)
 		}
+
 		update(update: ViewUpdate) {
 			const refreshed = update.transactions.some((transaction) => transaction.effects.some((e) => e.is(refresh)))
 			if (update.docChanged || update.viewportChanged || update.selectionSet || refreshed)
 				this.decorations = buildTreeDecorations(update.view)
 		}
+
 		destroy() {
 			setCodeRefresh(null)
 		}

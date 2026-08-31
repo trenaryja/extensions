@@ -79,13 +79,17 @@ export async function runBuilds(
 	}
 
 	const results = await Promise.all(configs.map((c) => esbuild.build(c)))
+
 	for (const result of results) {
 		if (!result.metafile) continue
+
 		for (const [file, { bytes }] of Object.entries(result.metafile.outputs)) {
 			if (!file.endsWith('.js')) continue
 			console.log(`${file}: ${(bytes / 1024).toFixed(2)} KB`)
 		}
+
 		if (analyze) console.log(await esbuild.analyzeMetafile(result.metafile))
 	}
+
 	console.log('Build complete.')
 }

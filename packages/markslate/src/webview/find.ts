@@ -8,12 +8,13 @@ import {
 	replaceAll,
 	replaceNext,
 	search,
-	SearchQuery,
 	searchKeymap,
+	SearchQuery,
 	setSearchQuery,
 } from '@codemirror/search'
 import { Prec } from '@codemirror/state'
-import { EditorView, keymap, type Panel } from '@codemirror/view'
+import { EditorView, keymap } from '@codemirror/view'
+import type { Panel, ViewUpdate } from '@codemirror/view'
 import { countMatches } from './searchMatches'
 import { HEADING_FONT_SIZES } from './theme'
 
@@ -40,23 +41,63 @@ const iconButton = (name: string, title: string, onClick: () => void) => {
 	return button
 }
 
+const field = (placeholder: string) => {
+	const input = document.createElement('input')
+	input.className = 'md-find-input'
+	input.placeholder = placeholder
+	input.setAttribute('aria-label', placeholder)
+	return input
+}
+
+const box = (input: HTMLInputElement, ...flags: HTMLElement[]) => {
+	const container = document.createElement('div')
+	container.className = 'md-find-box'
+	container.append(input, ...flags)
+	return container
+}
+
+// A flag button (Match Case, Whole Word, Regexp) owns its state through the `md-find-flag-on` class.
+type FindFlag = { button: HTMLButtonElement; on: boolean }
+
+type FindPanelParts = {
+	findInput: HTMLInputElement
+	replaceInput: HTMLInputElement
+	caseFlag: FindFlag
+	wordFlag: FindFlag
+	regexpFlag: FindFlag
+	refresh: () => void
+}
+
+// Mirror the editor's query back into the panel — another view, a keymap command or `openFind` can change it.
+function syncPanelToQuery(parts: FindPanelParts, update: ViewUpdate) {
+	const { findInput, replaceInput, caseFlag, wordFlag, regexpFlag, refresh } = parts
+	let queryChanged = false
+
+	for (const transaction of update.transactions)
+		for (const effect of transaction.effects)
+			if (effect.is(setSearchQuery)) {
+				queryChanged = true
+				const query = effect.value
+				if (query.search !== findInput.value) findInput.value = query.search
+				if ((query.replace ?? '') !== replaceInput.value) replaceInput.value = query.replace ?? ''
+				caseFlag.on = query.caseSensitive
+				wordFlag.on = query.wholeWord
+				regexpFlag.on = query.regexp
+			}
+
+	if (queryChanged || update.docChanged || update.selectionSet) refresh()
+}
+
 function createFindPanel(view: EditorView): Panel {
 	const initial = getSearchQuery(view.state)
-
-	const field = (placeholder: string) => {
-		const input = document.createElement('input')
-		input.className = 'md-find-input'
-		input.placeholder = placeholder
-		input.setAttribute('aria-label', placeholder)
-		return input
-	}
 	const findInput = field('Find')
 	findInput.setAttribute('main-field', 'true')
 	const replaceInput = field('Replace')
 
-	const flag = (name: string, title: string, on: boolean) => {
+	const flag = (name: string, title: string, on: boolean): FindFlag => {
 		const button = iconButton(name, title, () => {
 			button.classList.toggle('md-find-flag-on')
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: a flag click commits, commit rebuilds the query, and refresh reads the flags back
 			commit()
 		})
 		button.classList.add('md-find-flag')
@@ -71,6 +112,7 @@ function createFindPanel(view: EditorView): Panel {
 			},
 		}
 	}
+
 	const caseFlag = flag('case-sensitive', 'Match Case', initial.caseSensitive)
 	const wordFlag = flag('whole-word', 'Match Whole Word', initial.wholeWord)
 	const regexpFlag = flag('regex', 'Use Regular Expression', initial.regexp)
@@ -88,6 +130,7 @@ function createFindPanel(view: EditorView): Panel {
 				: current
 					? `${current} of ${total}`
 					: `${total} found`
+		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: findBox holds the flag buttons, whose clicks call commit, which calls refresh
 		findBox.classList.toggle('md-find-invalid', !!query.search && !query.valid)
 	}
 
@@ -104,18 +147,13 @@ function createFindPanel(view: EditorView): Panel {
 		else refresh()
 	}
 
-	const box = (input: HTMLInputElement, ...flags: HTMLElement[]) => {
-		const container = document.createElement('div')
-		container.className = 'md-find-box'
-		container.append(input, ...flags)
-		return container
-	}
 	const findBox = box(findInput, caseFlag.button, wordFlag.button, regexpFlag.button)
 
 	const close = () => {
 		closeSearchPanel(view)
 		view.focus()
 	}
+
 	const onFieldKey = (event: KeyboardEvent, onEnter: () => void, onShiftEnter = onEnter) => {
 		if (event.key === 'Enter') {
 			event.preventDefault()
@@ -126,6 +164,7 @@ function createFindPanel(view: EditorView): Panel {
 			close()
 		}
 	}
+
 	findInput.addEventListener('keydown', (event) =>
 		onFieldKey(
 			event,
@@ -161,11 +200,15 @@ function createFindPanel(view: EditorView): Panel {
 
 	const wrap = document.createElement('div')
 	wrap.className = 'md-find'
+
 	const setReplace = (show: boolean) => {
 		wrap.classList.toggle('md-find-replacing', show)
+		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: the sash button's click calls setReplace, which flips the sash's own chevron
 		sash.classList.toggle('codicon-chevron-right', !show)
+		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- same cycle as above
 		sash.classList.toggle('codicon-chevron-down', show)
 	}
+
 	const sash = iconButton('chevron-right', 'Toggle Replace', () =>
 		setReplace(!wrap.classList.contains('md-find-replacing')),
 	)
@@ -184,21 +227,7 @@ function createFindPanel(view: EditorView): Panel {
 			findInput.select()
 			refresh()
 		},
-		update: (update) => {
-			let queryChanged = false
-			for (const transaction of update.transactions)
-				for (const effect of transaction.effects)
-					if (effect.is(setSearchQuery)) {
-						queryChanged = true
-						const query = effect.value
-						if (query.search !== findInput.value) findInput.value = query.search
-						if ((query.replace ?? '') !== replaceInput.value) replaceInput.value = query.replace ?? ''
-						caseFlag.on = query.caseSensitive
-						wordFlag.on = query.wholeWord
-						regexpFlag.on = query.regexp
-					}
-			if (queryChanged || update.docChanged || update.selectionSet) refresh()
-		},
+		update: (update) => syncPanelToQuery({ findInput, replaceInput, caseFlag, wordFlag, regexpFlag, refresh }, update),
 	}
 }
 

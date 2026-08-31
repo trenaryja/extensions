@@ -9,14 +9,14 @@ import type {
 	BackendId,
 	HistoryEntry,
 	Origin,
-	PlaybackState,
 	Phase,
+	PlaybackState,
 	Sentence,
 	TranscriptMessage,
 	Voice,
 } from '@repo/narrate-engine/types'
 
-export type { BackendId, HistoryEntry, PlaybackState, Phase, Sentence, TranscriptMessage, Voice }
+export type { BackendId, HistoryEntry, Phase, PlaybackState, Sentence, TranscriptMessage, Voice }
 
 export type Status = PlaybackState | { phase: 'idle' }
 
@@ -53,6 +53,11 @@ const resolvePath = () => {
 	return loginPath
 }
 
+const cacheLimit = () => {
+	const limit = getPreferenceValues<Preferences>().cacheLimitMb?.trim()
+	return limit ? { NARRATE_CACHE_MB: limit } : {}
+}
+
 const run = async <T>(args: string[], input?: string) => {
 	const PATH = await resolvePath()
 
@@ -70,6 +75,7 @@ const run = async <T>(args: string[], input?: string) => {
 		child.on('error', reject)
 		child.on('close', (code) => {
 			if (code === 0) return resolve(JSON.parse(stdout) as T)
+
 			try {
 				reject(new Error((JSON.parse(stderr) as { error: string }).error))
 			} catch {
@@ -78,11 +84,6 @@ const run = async <T>(args: string[], input?: string) => {
 		})
 		if (input !== undefined) child.stdin?.end(input)
 	})
-}
-
-const cacheLimit = () => {
-	const limit = getPreferenceValues<Preferences>().cacheLimitMb?.trim()
-	return limit ? { NARRATE_CACHE_MB: limit } : {}
 }
 
 // Raycast extensions cannot write their own preferences, so the backend, the per-backend voice and the
@@ -104,6 +105,7 @@ export const selectVoice = (backend: BackendId, voiceId: string) => LocalStorage
 
 export const clearVoice = (backend: BackendId) => LocalStorage.removeItem(voiceKey(backend))
 
+// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- a stored-but-blank phrase must fall back too, which `??` would not do
 export const previewText = async () => (await LocalStorage.getItem<string>('previewText'))?.trim() || PREVIEW_SAMPLE
 
 export const setPreviewText = (text: string) => LocalStorage.setItem('previewText', text.trim())

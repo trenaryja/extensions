@@ -7,5 +7,3 @@ export const activate = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(registerMarkSlateEditor(context))
 	registerCommands(context, commands)
 }
-
-export const deactivate = () => {}

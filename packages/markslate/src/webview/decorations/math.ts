@@ -1,5 +1,7 @@
-import { type EditorState, RangeSetBuilder, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { RangeSetBuilder, StateField } from '@codemirror/state'
+import type { EditorState, Line } from '@codemirror/state'
+import { Decoration, EditorView } from '@codemirror/view'
+import type { DecorationSet } from '@codemirror/view'
 import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
 import { TeX } from 'mathjax-full/js/input/tex.js'
@@ -21,16 +23,19 @@ const mathDocument = mathjax.document('', {
 
 // Cache SVG by input — rendering is sync so this is purely to avoid recomputing on every rebuild.
 const svgCache = new Map<string, string>()
+
 const renderMath = (latex: string, display: boolean) => {
 	const key = `${display ? 'd' : 'i'} ${latex}`
 	const cached = svgCache.get(key)
 	if (cached) return cached
 	let svg: string
+
 	try {
 		svg = adaptor.innerHTML(mathDocument.convert(latex, { display }))
 	} catch (err) {
 		svg = `<span class="md-math-error">${err instanceof Error ? err.message : String(err)}</span>`
 	}
+
 	svgCache.set(key, svg)
 	return svg
 }
@@ -38,9 +43,11 @@ const renderMath = (latex: string, display: boolean) => {
 // Exported SVG color (settings): `currentColor` (default, inherits at paste target), `theme` (bake the
 // editor foreground), or any CSS color.
 let exportColor = 'currentColor'
+
 export const setMathExportColor = (color: string) => {
 	exportColor = color || 'currentColor'
 }
+
 const exportSvg = (latex: string) => {
 	const svg = renderMath(latex, true)
 	if (exportColor === 'currentColor') return svg
@@ -92,8 +99,8 @@ const blockMathWidget = defineWidget<{ latex: string }>({
 
 // Inline `$…$`, currency-safe: opening `$` not escaped / not part of `$$`, no space just inside, closing `$`
 // not followed by a digit. `\.` allows escaped chars inside.
-const INLINE_MATH_RE = /(?<![\\$])\$(?!\s)((?:[^$\\]|\\.)+?)(?<!\s)\$(?!\d)/g
-const FENCE_MATH_RE = /^```(math|latex|tex)\s*$/i
+const INLINE_MATH_RE = /(?<![\\$])\$(?!\s)((?:[^$\\]|\\.)+)(?<!\s)\$(?!\d)/g
+const FENCE_MATH_RE = /^```(?:latex|math|tex)\s*$/i
 const FENCE_RE = /^```/
 
 // Parse a `$$…$$` block starting at `startNum`; returns the end line and inner LaTeX, or null.
@@ -102,24 +109,64 @@ function parseBlockDollar(doc: EditorState['doc'], startNum: number) {
 	if (!trimmed.startsWith('$$')) return null
 	if (trimmed.length > 3 && trimmed.endsWith('$$')) return { endNum: startNum, latex: trimmed.slice(2, -2).trim() }
 	const content = trimmed.slice(2) ? [trimmed.slice(2)] : []
+
 	for (let next = startNum + 1; next <= doc.lines; next++) {
-		const text = doc.line(next).text
+		const { text } = doc.line(next)
 		const lineTrimmed = text.trim()
+
 		if (lineTrimmed.endsWith('$$')) {
 			const before = lineTrimmed.slice(0, -2)
 			if (before.trim()) content.push(before)
 			return { endNum: next, latex: content.join('\n').trim() }
 		}
+
 		content.push(text)
 	}
+
 	return null
+}
+
+// Parse a ```` ```math|latex|tex ```` fence opened at `startNum`; returns its closing line and inner LaTeX, or
+// null when the fence is never closed.
+function parseFenceMath(doc: EditorState['doc'], startNum: number) {
+	const body: string[] = []
+
+	for (let next = startNum + 1; next <= doc.lines; next++) {
+		const { text } = doc.line(next)
+		if (FENCE_RE.test(text)) return { endNum: next, latex: body.join('\n').trim() }
+		body.push(text)
+	}
+
+	return null
+}
+
+// Last line of the front matter (opening `---` on line 1 through its closing `---`), or 0 when there is none.
+// An unclosed opener swallows the rest of the document, matching how CodeMirror's markdown parser reads it.
+function frontMatterEnd(doc: EditorState['doc']) {
+	if (!/^---\s*$/.test(doc.line(1).text)) return 0
+
+	for (let next = 2; next <= doc.lines; next++) if (/^---\s*$/.test(doc.line(next).text)) return next
+
+	return doc.lines
+}
+
+function addInlineMath(builder: RangeSetBuilder<Decoration>, state: EditorState, line: Line) {
+	INLINE_MATH_RE.lastIndex = 0
+
+	for (let match = INLINE_MATH_RE.exec(line.text); match; match = INLINE_MATH_RE.exec(line.text)) {
+		const from = line.from + match.index
+		const to = from + match[0].length
+		const latex = match[1] ?? ''
+		if (!selectionTouches(state, from, to))
+			builder.add(from, to, Decoration.replace({ widget: inlineMathWidget({ latex }) }))
+	}
 }
 
 // --- Builder ---
 
 function buildMathDecorations(state: EditorState): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
-	const doc = state.doc
+	const { doc } = state
 
 	// A block equation: replace with the SVG when the cursor is away; reveal the source with the SVG rendered
 	// just below while editing (live preview, like mermaid).
@@ -129,43 +176,23 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 		else builder.add(from, to, Decoration.replace({ widget: blockMathWidget({ latex }) }))
 	}
 
-	let inFrontMatter = false
 	let inCodeBlock = false
-	let lineNum = 1
+	let lineNum = frontMatterEnd(doc) + 1
+
 	while (lineNum <= doc.lines) {
 		const line = doc.line(lineNum)
-		const text = line.text
-
-		// Front matter (opening `---` on line 1 through its closing `---`).
-		if (lineNum === 1 && /^---\s*$/.test(text)) {
-			inFrontMatter = true
-			lineNum++
-			continue
-		}
-		if (inFrontMatter) {
-			if (/^---\s*$/.test(text)) inFrontMatter = false
-			lineNum++
-			continue
-		}
+		const { text } = line
 
 		// Fences: `math`/`latex`/`tex` render as block math; other fences are code — skip their contents.
 		if (FENCE_RE.test(text)) {
-			if (!inCodeBlock && FENCE_MATH_RE.test(text)) {
-				let closeNum = lineNum
-				const body: string[] = []
-				for (let next = lineNum + 1; next <= doc.lines; next++) {
-					if (FENCE_RE.test(doc.line(next).text)) {
-						closeNum = next
-						break
-					}
-					body.push(doc.line(next).text)
-				}
-				if (closeNum > lineNum) {
-					addBlock(line.from, doc.line(closeNum).to, body.join('\n').trim())
-					lineNum = closeNum + 1
-					continue
-				}
+			const fence = !inCodeBlock && FENCE_MATH_RE.test(text) ? parseFenceMath(doc, lineNum) : null
+
+			if (fence) {
+				addBlock(line.from, doc.line(fence.endNum).to, fence.latex)
+				lineNum = fence.endNum + 1
+				continue
 			}
+
 			inCodeBlock = !inCodeBlock
 			lineNum++
 			continue
@@ -178,6 +205,7 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 		// Block `$$…$$` (own line).
 		if (text.trim().startsWith('$$')) {
 			const block = parseBlockDollar(doc, lineNum)
+
 			if (block) {
 				addBlock(line.from, doc.line(block.endNum).to, block.latex)
 				lineNum = block.endNum + 1
@@ -185,16 +213,7 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 			}
 		}
 
-		// Inline `$…$`.
-		INLINE_MATH_RE.lastIndex = 0
-		for (let match = INLINE_MATH_RE.exec(text); match; match = INLINE_MATH_RE.exec(text)) {
-			const from = line.from + match.index
-			const to = from + match[0].length
-			const latex = match[1] ?? ''
-			if (!selectionTouches(state, from, to))
-				builder.add(from, to, Decoration.replace({ widget: inlineMathWidget({ latex }) }))
-		}
-
+		addInlineMath(builder, state, line)
 		lineNum++
 	}
 

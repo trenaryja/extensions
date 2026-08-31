@@ -97,20 +97,20 @@ const SHORTCUT_KEYS = new RegExp(`(?<=[${MODIFIER_SYMBOLS}])${characterClass(R.k
 
 // A directory prefix is optional, but an extension is not: without one, `and/or` and `e.g.`
 // both read as paths.
-const PATH_SOURCE = String.raw`(?:[~.]{0,2}/)?(?:[\w.@-]+/)*[\w.@-]+\.[A-Za-z]\w{0,5}`
-const PATH = new RegExp(String.raw`(?<![\w./-])${PATH_SOURCE}(?![\w-])`, 'g')
-const FILE_LINE = new RegExp(String.raw`(?<![\w./-])(${PATH_SOURCE}):(\d+)(?:-(\d+))?(?![\w-])`, 'g')
+const PATH_SOURCE = String.raw`(?:[~.]{0,2}/)?(?:[\w.@-]+/)*[\w.@-]+\.[a-z]\w{0,5}`
+const PATH = new RegExp(String.raw`(?<![\w./-])${PATH_SOURCE}(?![\w-])`, 'gi')
+const FILE_LINE = new RegExp(String.raw`(?<![\w./-])(${PATH_SOURCE}):(\d+)(?:-(\d+))?(?![\w-])`, 'gi')
 const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>()[\]]+/g
 const COMMIT_SHA = /(?<![#\-/.\w])(?:[\da-f]{7,12}|[\da-f]{40})(?![\w-])(?!\.[\da-z])/gi
 const COMMIT_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 // The noun already names the sha, so the replacement swallows it rather than saying it twice.
-const SHA_NOUN_PHRASE = String.raw`(?:(?:the|this|that)\s+)?(?:(?:commits?|shas?|hash(?:es)?|revisions?)\s+){1,2}`
+const SHA_NOUN_PHRASE = String.raw`(?:(?:that|the|this)\s+)?(?:(?:commits?|hash(?:es)?|revisions?|shas?)\s+){1,2}`
 const NAMED_COMMIT_SHA = new RegExp(String.raw`(${SHA_NOUN_PHRASE})?${COMMIT_SHA.source}`, 'gi')
 
 const LONG_FLAG = /(?<![\w-])--([a-z\d]+(?:-[a-z\d]+)*)(?![\w-])/g
 // A lone dash is mostly prose, so a short flag has to earn the match: nothing wordlike before it,
 // no space after it, no digits, and short enough that `-maybe` and `wait - I` cannot qualify.
-const SHORT_FLAG = /(?<![\w-])-([a-zA-Z]{1,3})(?![\w-])/g
+const SHORT_FLAG = /(?<![\w-])-([a-z]{1,3})(?![\w-])/gi
 // A standalone `--` is the argument separator; agent prose writes its pauses as real em dashes.
 const BARE_FLAG = /(?<![\w-])--(?![\w-])/g
 
@@ -120,7 +120,7 @@ const capitalizeLike = (prefix: string, spoken: string) =>
 	/^[A-Z]/.test(prefix) ? spoken.charAt(0).toUpperCase() + spoken.slice(1) : spoken
 
 // Invisible on screen and inside tokens, so it has to go before anything matches on word shape.
-const stripInvisible = (message: string) => message.replace(/[\uFE0E\uFE0F\u200D\u{1F3FB}-\u{1F3FF}]/gu, '')
+const stripInvisible = (message: string) => message.replace(/[\u{fe0e}\u{fe0f}\u{200d}\u{1f3fb}-\u{1f3ff}]/gu, '')
 
 const spokenDomain = (host: string) => host.replace(/^www\./, '').replaceAll('.', ' dot ')
 
@@ -168,6 +168,7 @@ const spokenPath = (path: string) => {
 }
 
 const speakFileLines = (message: string) =>
+	// eslint-disable-next-line max-params -- String.replace hands each capturing group its own argument; the arity is FILE_LINE's, not ours
 	message.replace(FILE_LINE, (match, path: string, first: string, last: string | undefined) => {
 		const spoken = spokenPath(path)
 		if (!spoken) return match
@@ -204,7 +205,7 @@ const speakShortcutKeys = (message: string) =>
 const speakArrows = (message: string) =>
 	message
 		.replace(/(?<=\d[^\S\n]?)(?:->|=>|[→➡])(?=[^\S\n]?\d)/g, ' to ')
-		.replace(/(?:->|=>|[→➡])/g, ' becomes ')
+		.replace(/->|=>|[→➡]/g, ' becomes ')
 		.replace(/←/g, ' from ')
 		.replace(/↔/g, ' to and from ')
 

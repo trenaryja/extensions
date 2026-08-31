@@ -74,11 +74,13 @@ const WAIT_TIMEOUT_MS = 2000
 // assertion instead of parking the test forever.
 const waitForState = async (ready: (state: PlaybackState) => boolean) => {
 	const deadline = Date.now() + WAIT_TIMEOUT_MS
+
 	while (Date.now() < deadline) {
 		const state = await readState()
 		if (state && ready(state)) return state
 		await Bun.sleep(5)
 	}
+
 	return null
 }
 
@@ -93,7 +95,9 @@ const pausingPlayer = (whileParked: (paused: PlaybackState | null) => Promise<vo
 
 		writeFileSync(paths.pause, '')
 		void waitForState((state) => state.phase === 'paused').then(whileParked)
-		return new Promise<void>((resolve) => signal.addEventListener('abort', () => resolve(), { once: true }))
+		return new Promise<void>((resolve) => {
+			signal.addEventListener('abort', () => resolve(), { once: true })
+		})
 	}
 
 	return { played, play }

@@ -13,7 +13,8 @@ import { setMathExportColor } from './decorations/math'
 import { setFormatTablesOnEdit } from './decorations/tables'
 import { CURSOR } from '../snippets'
 import type { CalloutConfig } from '../callouts.data'
-import { type MermaidRenderMode, refreshMermaidTheme } from './decorations/mermaid'
+import { refreshMermaidTheme } from './decorations/mermaid'
+import type { MermaidRenderMode } from './decorations/mermaid'
 
 declare function acquireVsCodeApi(): {
 	postMessage: (msg: unknown) => void
@@ -22,6 +23,9 @@ declare function acquireVsCodeApi(): {
 }
 
 const vscode = acquireVsCodeApi()
+
+// Declared up here because the window-level keydown and theme-change listeners below both read it.
+let view: EditorView | null = null
 
 // Toggle a class while ⌘/Ctrl is held, so links only show the pointer cursor then (a plain click edits).
 const syncModifier = (event: KeyboardEvent | MouseEvent) =>
@@ -42,11 +46,13 @@ window.addEventListener('keydown', (event) => {
 // `data-vscode-theme-name` updates on the body for both committed themes AND live previews.
 const requestShikiTheme = () =>
 	vscode.postMessage({ type: 'requestShikiTheme', name: document.body.dataset.vscodeThemeName ?? '' })
+
 // On any theme change, re-request the Shiki theme AND re-theme mermaid (which reads --vscode-* CSS vars directly).
 const onThemeChange = () => {
 	requestShikiTheme()
 	if (view) refreshMermaidTheme(view)
 }
+
 new MutationObserver(onThemeChange).observe(document.body, {
 	attributes: true,
 	attributeFilter: ['data-vscode-theme-name', 'data-vscode-theme-kind'],
@@ -62,10 +68,15 @@ type Settings = {
 }
 
 type InitMessage = { type: 'init'; content: string; settings: Settings }
+
 type UpdateMessage = { type: 'update'; content: string }
+
 type SettingsUpdateMessage = { type: 'settingsUpdate'; settings: Settings }
+
 type ShikiThemeMessage = { type: 'shikiTheme'; theme: Record<string, unknown> | null }
+
 type InsertMessage = { type: 'insert'; text: string }
+
 type ExtensionMessage = InitMessage | UpdateMessage | SettingsUpdateMessage | ShikiThemeMessage | InsertMessage
 
 let currentSettings: Settings = {
@@ -75,7 +86,6 @@ let currentSettings: Settings = {
 	mathExportColor: 'currentColor',
 	formatTablesOnEdit: true,
 }
-let view: EditorView | null = null
 let sendTimer: ReturnType<typeof setTimeout> | null = null
 
 function getMermaidMode(): MermaidRenderMode {
@@ -88,14 +98,17 @@ type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
 // Walk up from a document position to the enclosing Link/Image (or bare autolink URL) and return its URL.
 function linkUrlAt(editorView: EditorView, pos: number): string | null {
 	let node: MarkdownNode | null = syntaxTree(editorView.state).resolveInner(pos, 0)
+
 	while (node) {
 		if (node.name === 'URL') return editorView.state.sliceDoc(node.from, node.to)
 		if (node.name === 'Link' || node.name === 'Image') {
 			const urlNode = node.getChild('URL')
 			return urlNode ? editorView.state.sliceDoc(urlNode.from, urlNode.to) : null
 		}
+
 		node = node.parent
 	}
+
 	return null
 }
 
@@ -146,7 +159,7 @@ function applyExternalUpdate(content: string) {
 	if (currentContent === content) return
 
 	// Replace entire doc while preserving scroll position as much as possible
-	const scrollTop = view.scrollDOM.scrollTop
+	const { scrollTop } = view.scrollDOM
 	view.dispatch({
 		changes: { from: 0, to: view.state.doc.length, insert: content },
 	})
@@ -165,72 +178,74 @@ window.addEventListener('unhandledrejection', (event) => {
 	vscode.postMessage({ type: 'webviewError', message: String(event.reason), stack: '' })
 })
 
+// Hand the settings that other modules keep their own copy of to those modules.
+function applySettings(settings: Settings) {
+	currentSettings = settings
+	setMathExportColor(settings.mathExportColor)
+	setFormatTablesOnEdit(settings.formatTablesOnEdit)
+}
+
+// A snippet carries a CURSOR marker saying where the caret lands once it's inserted.
+function insertSnippet(text: string) {
+	if (!view) return
+	const { from, to } = view.state.selection.main
+	const atLineStart = from === 0 || view.state.doc.sliceString(from - 1, from) === '\n'
+	const raw = (atLineStart ? '' : '\n') + text
+	const marker = raw.indexOf(CURSOR)
+	const snippet = marker >= 0 ? raw.replace(CURSOR, '') : raw
+	view.dispatch({
+		changes: { from, to, insert: snippet },
+		selection: { anchor: from + (marker >= 0 ? marker : snippet.length) },
+	})
+	view.focus()
+}
+
+// If the editor itself fails to construct there's no editor left to show the error in, so paint it into the
+// bare container and forward it to the host.
+function createInitialEditor(content: string) {
+	try {
+		view = createEditor(content)
+		view.focus()
+		// Harness-only: expose the view so the headless driver can assert caret/selection state.
+		if ((window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
+			(window as unknown as { __mdView?: EditorView }).__mdView = view
+	} catch (err) {
+		const container = document.getElementById('editor')
+
+		if (container) {
+			container.style.cssText = 'padding:2rem;color:#ff6464;font-family:monospace;white-space:pre-wrap'
+			container.textContent = `Editor init failed:\n${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
+		}
+
+		vscode.postMessage({
+			type: 'webviewError',
+			message: String(err),
+			stack: err instanceof Error ? (err.stack ?? '') : '',
+		})
+	}
+}
+
+// `init` arrives on every host-side reload, so it has to cope with an editor that already exists. Settings
+// land before the editor is built — the decoration extensions read them as they render.
+function initEditor(msg: InitMessage) {
+	applySettings(msg.settings)
+	if (view) applyExternalUpdate(msg.content)
+	else createInitialEditor(msg.content)
+	if (view) applyCallouts(view, msg.settings.callouts, msg.settings.calloutDefaultTitle)
+}
+
 window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 	const msg = event.data
 
-	if (msg.type === 'shikiTheme') {
-		setShikiTheme(msg.theme)
-		return
-	}
+	if (msg.type === 'shikiTheme') setShikiTheme(msg.theme)
+	else if (msg.type === 'insert') insertSnippet(msg.text)
+	else if (msg.type === 'init') initEditor(msg)
+	else if (msg.type === 'update') applyExternalUpdate(msg.content)
+	else if (msg.type === 'settingsUpdate') {
+		applySettings(msg.settings)
 
-	if (msg.type === 'insert') {
 		if (view) {
-			const { from, to } = view.state.selection.main
-			const atLineStart = from === 0 || view.state.doc.sliceString(from - 1, from) === '\n'
-			const raw = (atLineStart ? '' : '\n') + msg.text
-			const marker = raw.indexOf(CURSOR)
-			const text = marker >= 0 ? raw.replace(CURSOR, '') : raw
-			view.dispatch({
-				changes: { from, to, insert: text },
-				selection: { anchor: from + (marker >= 0 ? marker : text.length) },
-			})
-			view.focus()
-		}
-		return
-	}
-
-	if (msg.type === 'init') {
-		currentSettings = msg.settings
-		setMathExportColor(currentSettings.mathExportColor)
-		setFormatTablesOnEdit(currentSettings.formatTablesOnEdit)
-		if (view) {
-			// Already have an editor — just update content and settings
-			applyExternalUpdate(msg.content)
-		} else {
-			try {
-				view = createEditor(msg.content)
-				view.focus()
-				// Harness-only: expose the view so the headless driver can assert caret/selection state.
-				if ((window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
-					(window as unknown as { __mdView?: EditorView }).__mdView = view
-			} catch (err) {
-				const container = document.getElementById('editor')
-				if (container) {
-					container.style.cssText = 'padding:2rem;color:#ff6464;font-family:monospace;white-space:pre-wrap'
-					container.textContent = `Editor init failed:\n${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
-				}
-				vscode.postMessage({
-					type: 'webviewError',
-					message: String(err),
-					stack: err instanceof Error ? (err.stack ?? '') : '',
-				})
-			}
-		}
-		if (view) applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
-		return
-	}
-
-	if (msg.type === 'update') {
-		applyExternalUpdate(msg.content)
-		return
-	}
-
-	if (msg.type === 'settingsUpdate') {
-		currentSettings = msg.settings
-		setMathExportColor(currentSettings.mathExportColor)
-		setFormatTablesOnEdit(currentSettings.formatTablesOnEdit)
-		if (view) {
-			applyCallouts(view, currentSettings.callouts, currentSettings.calloutDefaultTitle)
+			applyCallouts(view, msg.settings.callouts, msg.settings.calloutDefaultTitle)
 			// Mermaid's field only rebuilds on doc/selection changes or its refresh effect — without this,
 			// a mermaidRenderMode change wouldn't apply until the next edit or caret move.
 			refreshMermaidTheme(view)

@@ -59,6 +59,7 @@ export const readWav = async (path: string): Promise<Wav> => {
 export const encodeWav = ({ format, data }: Wav) => {
 	const bytes = new Uint8Array(HEADER_BYTES + data.length)
 	const view = new DataView(bytes.buffer)
+
 	const tag = (at: number, text: string) => {
 		for (let i = 0; i < text.length; i++) view.setUint8(at + i, text.charCodeAt(i))
 	}

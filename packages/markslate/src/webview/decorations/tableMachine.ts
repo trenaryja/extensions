@@ -97,70 +97,67 @@ const exitDoc = (side: 'top' | 'bottom', extra: Effect[] = []): Result => ({
 	effects: [...extra, { e: 'hideSelection' }, { e: 'exitDoc', side }],
 })
 
-export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
-	// Leaving the island entirely — commit an in-progress edit first, then hand back to the document.
-	if (event.t === 'exit') {
-		if (state.mode === 'document') return { next: state, effects: [] }
-		const commit: Effect[] = state.mode === 'editing' ? [{ e: 'commit', cell: state.cell }] : []
-		return { next: { mode: 'document' }, effects: [...commit, { e: 'hideSelection' }] }
-	}
+const stay = (state: GridState): Result => ({ next: state, effects: [] })
 
-	if (state.mode === 'document') {
-		if (event.t === 'enter') {
-			const bottom = dims.rows - 1
-			const cell: Cell =
-				event.corner === 'top-left'
-					? { row: HEADER_ROW, col: 0 }
-					: event.corner === 'bottom-left'
-						? { row: bottom, col: 0 }
-						: { row: bottom, col: dims.cols - 1 } // bottom-right
-			return select(cell)
+function reduceDocument(state: GridState, event: GridEvent, dims: Dims): Result {
+	if (event.t === 'enter') {
+		const bottom = dims.rows - 1
+		const cell: Cell =
+			event.corner === 'top-left'
+				? { row: HEADER_ROW, col: 0 }
+				: event.corner === 'bottom-left'
+					? { row: bottom, col: 0 }
+					: { row: bottom, col: dims.cols - 1 } // bottom-right
+		return select(cell)
+	}
+	if (event.t === 'click') return select(event.cell)
+	return stay(state)
+}
+
+function reduceSelected(state: Extract<GridState, { mode: 'selected' }>, event: GridEvent, dims: Dims): Result {
+	switch (event.t) {
+		case 'move': {
+			const target = step(state.focus, event.dir, dims)
+			if (target === 'top' || target === 'bottom')
+				// A bare arrow off the edge exits to the document; Shift+arrow would collapse the range being
+				// built, so clamp (keep the current selection) like a spreadsheet does.
+				return event.shift ? extend(state.anchor, state.focus) : exitDoc(target)
+			return event.shift ? extend(state.anchor, target) : select(target)
 		}
-		if (event.t === 'click') return select(event.cell)
-		return { next: state, effects: [] }
-	}
-
-	if (state.mode === 'selected') {
-		switch (event.t) {
-			case 'move': {
-				const target = step(state.focus, event.dir, dims)
-				if (target === 'top' || target === 'bottom')
-					// A bare arrow off the edge exits to the document; Shift+arrow would collapse the range being
-					// built, so clamp (keep the current selection) like a spreadsheet does.
-					return event.shift ? extend(state.anchor, state.focus) : exitDoc(target)
-				return event.shift ? extend(state.anchor, target) : select(target)
-			}
-			case 'commitMove': {
-				const target = commitStep(state.focus, event.dir, dims)
-				return target === 'top' || target === 'bottom' ? exitDoc(target) : select(target)
-			}
-			case 'beginEdit':
-				return {
-					next: { mode: 'editing', cell: state.focus },
-					effects: [{ e: 'focusCell', cell: state.focus, seed: event.seed }],
-				}
-			case 'escape':
-				return exitDoc('top')
-			case 'click':
-				return event.shift ? extend(state.anchor, event.cell) : select(event.cell)
-			case 'dragTo':
-				return extend(state.anchor, event.cell)
-			case 'selectAll':
-				return extend({ row: HEADER_ROW, col: 0 }, { row: dims.rows - 1, col: dims.cols - 1 })
-			case 'clear':
-				return { next: state, effects: [{ e: 'clearRange', anchor: state.anchor, focus: state.focus }] }
-			case 'copy':
-				return { next: state, effects: [{ e: 'copyRange', anchor: state.anchor, focus: state.focus, cut: false }] }
-			case 'cut':
-				return { next: state, effects: [{ e: 'copyRange', anchor: state.anchor, focus: state.focus, cut: true }] }
-			case 'paste':
-				return { next: state, effects: [{ e: 'pasteAt', cell: topLeft(state.anchor, state.focus) }] }
-			default:
-				return { next: state, effects: [] }
+		case 'commitMove': {
+			const target = commitStep(state.focus, event.dir, dims)
+			return target === 'top' || target === 'bottom' ? exitDoc(target) : select(target)
 		}
+		case 'beginEdit':
+			return {
+				next: { mode: 'editing', cell: state.focus },
+				effects: [{ e: 'focusCell', cell: state.focus, seed: event.seed }],
+			}
+		case 'escape':
+			return exitDoc('top')
+		case 'click':
+			return event.shift ? extend(state.anchor, event.cell) : select(event.cell)
+		case 'dragTo':
+			return extend(state.anchor, event.cell)
+		case 'selectAll':
+			return extend({ row: HEADER_ROW, col: 0 }, { row: dims.rows - 1, col: dims.cols - 1 })
+		case 'clear':
+			return { next: state, effects: [{ e: 'clearRange', anchor: state.anchor, focus: state.focus }] }
+		case 'copy':
+			return { next: state, effects: [{ e: 'copyRange', anchor: state.anchor, focus: state.focus, cut: false }] }
+		case 'cut':
+			return { next: state, effects: [{ e: 'copyRange', anchor: state.anchor, focus: state.focus, cut: true }] }
+		case 'paste':
+			return { next: state, effects: [{ e: 'pasteAt', cell: topLeft(state.anchor, state.focus) }] }
+		// `enter` only fires from the document; `edgeStep` only while editing; `exit` is handled by `reduce`.
+		case 'enter':
+		case 'edgeStep':
+		case 'exit':
+			return stay(state)
 	}
+}
 
-	// editing
+function reduceEditing(state: Extract<GridState, { mode: 'editing' }>, event: GridEvent, dims: Dims): Result {
 	switch (event.t) {
 		case 'commitMove': {
 			const target = commitStep(state.cell, event.dir, dims)
@@ -208,7 +205,30 @@ export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
 					{ e: 'focusSink' },
 				],
 			}
-		default:
-			return { next: state, effects: [] } // arrows / typing inside a cell are native contenteditable
+		// Arrows and typing inside a cell are native contenteditable; the rest only fire in another mode.
+		case 'move':
+		case 'enter':
+		case 'beginEdit':
+		case 'dragTo':
+		case 'selectAll':
+		case 'clear':
+		case 'copy':
+		case 'cut':
+		case 'paste':
+		case 'exit':
+			return stay(state)
 	}
+}
+
+export function reduce(state: GridState, event: GridEvent, dims: Dims): Result {
+	// Leaving the island entirely — commit an in-progress edit first, then hand back to the document.
+	if (event.t === 'exit') {
+		if (state.mode === 'document') return stay(state)
+		const commit: Effect[] = state.mode === 'editing' ? [{ e: 'commit', cell: state.cell }] : []
+		return { next: { mode: 'document' }, effects: [...commit, { e: 'hideSelection' }] }
+	}
+
+	if (state.mode === 'document') return reduceDocument(state, event, dims)
+	if (state.mode === 'selected') return reduceSelected(state, event, dims)
+	return reduceEditing(state, event, dims)
 }

@@ -170,6 +170,7 @@ export default function Command() {
 	// Previewing narrates for real, so it takes over any narration already playing.
 	const speak = async (voice: Voice, text: string) => {
 		const toast = await showToast({ style: Toast.Style.Animated, title: `Previewing ${voice.name}…` })
+
 		try {
 			await playText(text, `${voice.name} preview`, { backend: browsing.backend, voice: voice.id })
 			toast.style = Toast.Style.Success

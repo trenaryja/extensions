@@ -74,7 +74,7 @@ export const registerCommands = (context: vscode.ExtensionContext, commands: rea
  */
 export const createConfig =
 	<S extends z.ZodObject>(schema: S) =>
-	<K extends keyof z.infer<S> & string>(key: K): z.infer<S>[K] => {
+	<K extends string & keyof z.infer<S>>(key: K): z.infer<S>[K] => {
 		const field = schema.shape[key] as z.ZodType
 		const parsed = field.safeParse(vscode.workspace.getConfiguration().get(key))
 		return (parsed.success ? parsed.data : field.parse(undefined)) as z.infer<S>[K]

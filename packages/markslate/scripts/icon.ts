@@ -44,13 +44,16 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 		const canvas = document.createElement('canvas')
 		const ctx = canvas.getContext('2d')!
 		const SAMPLE = 100
+
 		const measure = (glyph: string) => {
 			ctx.font = `${WEIGHT} ${SAMPLE}px ${FONT}`
 			const m = ctx.measureText(glyph)
 			return { A: m.actualBoundingBoxAscent, D: m.actualBoundingBoxDescent, W: m.width }
 		}
+
 		const mm = measure('M')
 		const ss = measure('§')
+
 		const layout = (band: number, gap: number) => {
 			const scaleM = band / (mm.A + mm.D)
 			const scaleS = band / (ss.A + ss.D)
@@ -58,6 +61,7 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 			const widthS = ss.W * scaleS
 			return { scaleM, scaleS, widthM, widthS, gap, band, pairWidth: widthM + gap + widthS }
 		}
+
 		const radius = (l: ReturnType<typeof layout>) => Math.hypot(l.pairWidth, l.band) / 2
 		const scale = Math.min(1, (0.85 * M) / radius(layout(M, GAP)))
 		const l = layout(M * scale, GAP * scale)

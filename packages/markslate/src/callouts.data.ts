@@ -42,6 +42,7 @@ const FALLBACK_ICON = '$(note)'
  * definition (aliases map to their primary) → the user's `default` override. Unknown types get the fallback
  * icon and no color, so the renderer falls back to its neutral accent.
  */
+// eslint-disable-next-line complexity -- the score is the two `??` layering cascades below; there are no branches to split
 export const resolveCallout = (config: CalloutConfig, type: string) => {
 	const name = type.toLowerCase()
 	const primary = ALIAS_TO_PRIMARY[name] ?? name

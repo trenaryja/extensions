@@ -272,13 +272,13 @@ const voices = async (args: string[]) => {
 	emit(flags.json, available, () => available.map((x) => `${x.id}  ${x.name}  ${x.language}`).join('\n'))
 }
 
-const describeWorker = (status: WorkerStatus) =>
+const describeWorker = (workerState: WorkerStatus) =>
 	[
-		`pid ${status.pid}`,
-		`up ${clock(status.uptime)}`,
-		`idle ${clock(status.idle)}/${clock(status.idleTimeout)}`,
-		`${status.inFlight} in flight`,
-		`pipelines ${status.pipelines.join(',') || 'none'}`,
+		`pid ${workerState.pid}`,
+		`up ${clock(workerState.uptime)}`,
+		`idle ${clock(workerState.idle)}/${clock(workerState.idleTimeout)}`,
+		`${workerState.inFlight} in flight`,
+		`pipelines ${workerState.pipelines.join(',') || 'none'}`,
 	].join('  ')
 
 const worker = async (args: string[]) => {
@@ -291,9 +291,9 @@ const worker = async (args: string[]) => {
 	}
 	if (action !== 'status') throw new Error('worker takes status or stop: narrate worker <status|stop>')
 
-	const status = await workerStatus()
-	if (!status) return emit(flags.json, { running: false }, () => 'not running')
-	return emit(flags.json, { running: true, ...status }, () => describeWorker(status))
+	const workerState = await workerStatus()
+	if (!workerState) return emit(flags.json, { running: false }, () => 'not running')
+	return emit(flags.json, { running: true, ...workerState }, () => describeWorker(workerState))
 }
 
 const printNormalized = async (args: string[]) => {

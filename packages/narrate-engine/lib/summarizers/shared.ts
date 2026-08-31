@@ -8,8 +8,7 @@ import { buildPrompt } from './prompt'
 const runInScratch = async (
 	command: string[],
 	prompt: string,
-	signal: AbortSignal,
-	env: Record<string, string> = {},
+	{ signal, env = {} }: { signal: AbortSignal; env?: Record<string, string> },
 ) => {
 	ensureStateDirs()
 	const child = Bun.spawn(command, {
@@ -41,5 +40,5 @@ const runInScratch = async (
 export const createCliSummarizer = (id: SummarizerId, command: string[], env?: Record<string, string>): Summarizer => ({
 	id,
 	available: async () => !!Bun.which(command[0]!),
-	summarize: (text, signal) => runInScratch(command, buildPrompt(text), signal, env),
+	summarize: (text, signal) => runInScratch(command, buildPrompt(text), { signal, env }),
 })

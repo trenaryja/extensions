@@ -87,6 +87,7 @@ const resolveEditor = (
 
 		if (msg.type === 'edit') {
 			pendingWebviewEdit = true
+
 			try {
 				const edit = new vscode.WorkspaceEdit()
 				edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), msg.content)
@@ -94,6 +95,7 @@ const resolveEditor = (
 			} finally {
 				pendingWebviewEdit = false
 			}
+
 			return
 		}
 
@@ -123,7 +125,7 @@ const resolveEditor = (
 	})
 	// Backup for committed theme changes (the webview also drives this live via requestShikiTheme).
 	const themeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
-		if (e.affectsConfiguration('workbench.colorTheme')) sendShikiTheme('')
+		if (e.affectsConfiguration('workbench.colorTheme')) void sendShikiTheme('')
 	})
 	const viewStateDisposable = webviewPanel.onDidChangeViewState(() => {
 		if (webviewPanel.active) activePanel = webviewPanel

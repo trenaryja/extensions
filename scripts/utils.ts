@@ -2,17 +2,18 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as prettier from 'prettier'
 
+export const toMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
 export const formatFile = async (filePath: string): Promise<void> => {
 	try {
 		const content = fs.readFileSync(filePath, 'utf8')
 		const rootPackageJsonPath = path.join(process.cwd(), 'package.json')
 		const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8'))
-		const prettierConfig = rootPackageJson.prettier || {}
+		const prettierConfig = rootPackageJson.prettier ?? {}
 		const formatted = await prettier.format(content, { ...prettierConfig, filepath: filePath })
 		fs.writeFileSync(filePath, formatted)
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error)
-		console.warn(`Warning: Could not format file ${filePath}: ${message}`)
+		console.warn(`Warning: Could not format file ${filePath}: ${toMessage(error)}`)
 	}
 }
 

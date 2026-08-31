@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs'
-import { type ConfigSchema, configToContributes } from './config'
+import { configToContributes } from './config'
+import type { ConfigSchema } from './config'
 import type { CommandEntry } from './registry'
 
 export type ContributeInput = {
@@ -62,5 +63,6 @@ export const syncContributes = async (
 		pkg.contributes = next
 		await fs.writeFile(packageJsonPath, `${JSON.stringify(pkg, null, '\t')}\n`)
 	}
+
 	return { drifted }
 }
