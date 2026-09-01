@@ -14,8 +14,8 @@
 		"vscode:prepublish": "bun run build"
 	},
 	"devDependencies": {
-		"@repo/config": "workspace:*",
 		"@repo/vscode-utils": "workspace:*",
+		"@trenaryja/config": "^0.0.3",
 		"@types/vscode": "^1.107.0",
 		"bun-types": "^1.3.14",
 		"esbuild": "^0.27.0",

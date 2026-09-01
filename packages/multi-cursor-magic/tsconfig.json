@@ -1,5 +1,5 @@
 {
-	"extends": "@repo/config/typescript/base.json",
+	"extends": "@trenaryja/config/tsconfig/base",
 	"compilerOptions": {
 		"composite": true,
 		"incremental": true,

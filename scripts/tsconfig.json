@@ -1,5 +1,5 @@
 {
-	"extends": "../packages/config/typescript/base.json",
+	"extends": "@trenaryja/config/tsconfig/base",
 	"compilerOptions": { "composite": true, "noEmit": true, "types": ["node"] },
 	"include": ["."],
 	"exclude": ["node_modules"]

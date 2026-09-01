@@ -19,7 +19,7 @@
 		"check": "tsc"
 	},
 	"devDependencies": {
-		"@repo/config": "workspace:*",
+		"@trenaryja/config": "^0.0.3",
 		"@types/node": "^26.1.1",
 		"@types/vscode": "^1.107.0",
 		"esbuild": "^0.27.0",

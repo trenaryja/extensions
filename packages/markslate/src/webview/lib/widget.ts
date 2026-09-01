@@ -19,7 +19,7 @@ export const defineWidget = <T>(spec: WidgetSpec<T>) => {
 			super()
 		}
 
-		eq(other: FunctionalWidget) {
+		override eq(other: FunctionalWidget) {
 			return spec.eq(this.value, other.value)
 		}
 
@@ -27,7 +27,7 @@ export const defineWidget = <T>(spec: WidgetSpec<T>) => {
 			return spec.toDOM(this.value, view)
 		}
 
-		ignoreEvent(event: Event) {
+		override ignoreEvent(event: Event) {
 			return spec.ignoreEvent ? spec.ignoreEvent(event) : true
 		}
 	}

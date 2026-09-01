@@ -37,8 +37,8 @@
 		"remeda": "^2.32.0"
 	},
 	"devDependencies": {
-		"@repo/config": "workspace:*",
 		"@repo/vscode-utils": "workspace:*",
+		"@trenaryja/config": "^0.0.3",
 		"@types/chroma-js": "^3.1.2",
 		"@types/vscode": "^1.107.0",
 		"@vscode/vsce": "^3.7.1",

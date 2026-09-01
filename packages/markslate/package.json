@@ -53,9 +53,9 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@repo/config": "workspace:*",
 		"@repo/vscode-utils": "workspace:*",
 		"@tailwindcss/cli": "^4.3.3",
+		"@trenaryja/config": "^0.0.3",
 		"@types/vscode": "^1.100.0",
 		"@vscode/codicons": "^0.0.45",
 		"@vscode/vsce": "^3.7.1",
