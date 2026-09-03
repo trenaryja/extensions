@@ -15,16 +15,14 @@
 		"src/**/*"
 	],
 	"scripts": {
-		"fix": "prettier -w .",
-		"check": "tsc"
+		"fix": "prettier -w . && bunx eslint --fix .",
+		"check": "tsc && bunx eslint . --max-warnings=0"
 	},
 	"devDependencies": {
-		"@trenaryja/config": "^0.0.3",
 		"@types/node": "^26.1.1",
 		"@types/vscode": "^1.107.0",
 		"esbuild": "^0.27.0",
-		"playwright-core": "^1.61.1",
-		"prettier": "^3.8.3"
+		"playwright-core": "^1.61.1"
 	},
 	"dependencies": {
 		"zod": "^4.4.3"

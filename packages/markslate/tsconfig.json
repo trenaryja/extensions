@@ -4,9 +4,8 @@
 		"composite": true,
 		"incremental": true,
 		"outDir": "dist",
-		"noEmit": true,
-		"types": ["bun-types"]
+		"types": ["bun"]
 	},
-	"include": ["src", "scripts", "tests", "harness"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "dist"]
 }

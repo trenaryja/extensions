@@ -8,21 +8,21 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"fix": "prettier -w . && bunx eslint --fix . && turbo run fix",
-		"check": "tsc -b && prettier -c . && bunx eslint . --max-warnings=0 && turbo run check",
+		"fix": "prettier -w . && bunx eslint --fix . --ignore-pattern apps --ignore-pattern packages && turbo run fix",
+		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0 --ignore-pattern apps --ignore-pattern packages && turbo run check",
 		"format": "prettier -w .",
 		"get-latest": "bun update --latest -i",
 		"reinstall": "rm -rf node_modules && rm bun.lock && bun install",
 		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
 	},
 	"devDependencies": {
-		"@inquirer/prompts": "^8.5.2",
+		"@inquirer/prompts": "^8.7.0",
 		"@trenaryja/config": "^0.0.4",
-		"@types/node": "^26.2.0",
+		"@types/node": "^26.4.1",
 		"prettier": "^3.9.6",
-		"remeda": "^2.39.0",
-		"tsx": "^4.23.12",
-		"turbo": "^2.10.9",
+		"remeda": "^2.45.0",
+		"tsx": "^4.23.13",
+		"turbo": "^2.10.12",
 		"typescript": "6.0.3"
 	},
 	"prettier": {
@@ -32,12 +32,17 @@
 		"printWidth": 120,
 		"useTabs": true
 	},
+	"devEngines": {
+		"packageManager": {
+			"name": "bun",
+			"version": "^1.0.0"
+		}
+	},
 	"trustedDependencies": [
 		"@raycast/api",
 		"@vscode/vsce-sign",
 		"esbuild",
 		"keytar",
 		"unrs-resolver"
-	],
-	"packageManager": "bun@1.3.11"
+	]
 }

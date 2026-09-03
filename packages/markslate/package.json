@@ -30,8 +30,8 @@
 		"harness": "bun run harness/screenshot.ts",
 		"icon": "bun scripts/icon.ts",
 		"record": "bun harness/record.ts",
-		"fix": "bun run contribute && prettier -w .",
-		"check": "bun run contribute:check && tsc && prettier -c . && bun run build",
+		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"check": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
 		"test": "bun test",
 		"vsce:login": "vsce login trenaryja",
 		"vsce:package": "vsce package --no-dependencies",
@@ -55,16 +55,13 @@
 	"devDependencies": {
 		"@repo/vscode-utils": "workspace:*",
 		"@tailwindcss/cli": "^4.3.3",
-		"@trenaryja/config": "^0.0.3",
 		"@types/vscode": "^1.100.0",
 		"@vscode/codicons": "^0.0.45",
 		"@vscode/vsce": "^3.7.1",
-		"bun-types": "latest",
 		"daisyui": "^5.6.18",
 		"esbuild": "^0.27.2",
 		"playwright-core": "^1.61.1",
-		"tailwindcss": "^4.3.3",
-		"tsx": "^4.21.0"
+		"tailwindcss": "^4.3.3"
 	},
 	"engines": {
 		"vscode": "^1.100.0"

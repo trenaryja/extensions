@@ -9,8 +9,8 @@
 	"scripts": {
 		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && ([ \"$(uname)\" != Darwin ] || swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift)",
 		"test": "bun test",
-		"fix": "prettier -w .",
-		"check": "tsc --noEmit && prettier -c . && bun test"
+		"fix": "prettier -w . && bunx eslint --fix .",
+		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && bun test"
 	},
 	"dependencies": {
 		"mdast-util-to-string": "^4.0.0",
@@ -21,9 +21,6 @@
 		"unist-util-visit": "^5.1.0"
 	},
 	"devDependencies": {
-		"@trenaryja/config": "^0.0.3",
-		"@types/bun": "^1.3.11",
-		"@types/mdast": "^4.0.4",
-		"typescript": "^6.0.0"
+		"@types/mdast": "^4.0.4"
 	}
 }

@@ -2,9 +2,8 @@
 	"extends": "@trenaryja/config/tsconfig/base",
 	"compilerOptions": {
 		"composite": true,
-		"noEmit": true,
 		"types": ["node"]
 	},
-	"include": ["src"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules"]
 }

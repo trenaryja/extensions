@@ -2,10 +2,8 @@
 	"extends": "@trenaryja/config/tsconfig/base",
 	"compilerOptions": {
 		"composite": true,
-		"noEmit": true,
-		"jsx": "react-jsx",
 		"types": ["node"]
 	},
-	"include": ["src", "raycast-env.d.ts"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "dist"]
 }

@@ -1,10 +1,8 @@
 {
 	"extends": "@trenaryja/config/tsconfig/base",
 	"compilerOptions": {
-		"composite": true,
-		"noEmit": true,
-		"types": ["bun-types"]
+		"composite": true
 	},
-	"include": ["*.ts", "scripts"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "dist"]
 }

@@ -1,27 +1,6 @@
 {
-	"references": [
-		{
-			"path": "packages/vscode-utils"
-		},
-		{
-			"path": "packages/markslate"
-		},
-		{
-			"path": "packages/multi-cursor-magic"
-		},
-		{
-			"path": "packages/template-vscode-extension"
-		},
-		{
-			"path": "packages/narrate"
-		},
-		{
-			"path": "packages/narrate-engine"
-		},
-		{
-			"path": "scripts"
-		}
-	],
-	"files": [],
-	"exclude": ["node_modules"]
+	"extends": "@trenaryja/config/tsconfig/base",
+	"compilerOptions": { "types": ["node"] },
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["node_modules", "dist", "apps", "packages"]
 }

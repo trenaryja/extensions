@@ -17,8 +17,8 @@
 	"scripts": {
 		"dev": "ray develop",
 		"build": "ray build",
-		"fix": "prettier -w .",
-		"check": "tsc --noEmit && prettier -c ."
+		"fix": "prettier -w . && bunx eslint --fix .",
+		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0"
 	},
 	"commands": [
 		{
@@ -60,14 +60,14 @@
 			"name": "speed-up",
 			"title": "Speed Up",
 			"subtitle": "Narrate",
-			"description": "Raise the playback rate by 0.25\u00d7 without restarting.",
+			"description": "Raise the playback rate by 0.25× without restarting.",
 			"mode": "no-view"
 		},
 		{
 			"name": "slow-down",
 			"title": "Slow Down",
 			"subtitle": "Narrate",
-			"description": "Lower the playback rate by 0.25\u00d7 without restarting.",
+			"description": "Lower the playback rate by 0.25× without restarting.",
 			"mode": "no-view"
 		}
 	],
@@ -118,8 +118,6 @@
 	},
 	"devDependencies": {
 		"@repo/narrate-engine": "workspace:*",
-		"@trenaryja/config": "^0.0.3",
-		"@types/react": "^19.2.18",
-		"typescript": "^6.0.0"
+		"@types/react": "^19.2.18"
 	}
 }
