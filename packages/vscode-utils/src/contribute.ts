@@ -23,9 +23,9 @@ export const buildContributes = ({ commands = [], config, customEditors, extra }
 			omitUndefined({ command, title, category, icon }),
 		)
 
-	const keybindings = commands
-		.filter((entry) => entry.key)
-		.map(({ command, key, mac, when }) => omitUndefined({ command, key, mac, when }))
+	const keybindings = commands.flatMap(({ command, keybindings: bindings = [] }) =>
+		bindings.map((binding) => omitUndefined({ command, ...binding })),
+	)
 	if (keybindings.length) contributes.keybindings = keybindings
 
 	const menus: Record<string, unknown[]> = {}

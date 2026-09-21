@@ -27,6 +27,15 @@ export type CommandApi = {
 	context: vscode.ExtensionContext
 }
 
+export type Keybinding = {
+	/** Every platform, unless `mac` overrides it. */
+	key: string
+	mac?: string
+	when?: string
+	/** Passed to the handler after `api` — how one command learns which binding fired it. */
+	args?: unknown
+}
+
 export type CommandEntry = {
 	/** Fully-qualified command id, e.g. `myExtension.doThing`. */
 	command: string
@@ -34,10 +43,8 @@ export type CommandEntry = {
 	category?: string
 	/** Codicon reference for menu/title buttons, e.g. `$(book)`. */
 	icon?: string
-	/** Keybinding for all platforms unless `mac` overrides it. */
-	key?: string
-	mac?: string
-	when?: string
+	/** When two match, the later one wins. */
+	keybindings?: readonly Keybinding[]
 	menus?: CommandMenu[]
 	/** The command implementation. Gets `vscode` + `context` injected — never import `vscode` here. */
 	handler: (api: CommandApi, ...args: unknown[]) => unknown
