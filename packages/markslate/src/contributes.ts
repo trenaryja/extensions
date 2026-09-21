@@ -58,9 +58,7 @@ export const commands = defineCommands([
 		title: 'Toggle Raw/Preview',
 		category: 'MarkSlate',
 		icon: '$(book)',
-		key: 'ctrl+shift+m',
-		mac: 'cmd+shift+m',
-		when: 'resourceExtname == .md',
+		keybindings: [{ key: 'ctrl+shift+m', mac: 'cmd+shift+m', when: 'resourceExtname == .md' }],
 		menus: [{ id: 'editor/title', group: 'navigation', when: 'resourceExtname == .md' }],
 		handler: async ({ vscode }) => {
 			const { activeTab } = vscode.window.tabGroups.activeTabGroup
