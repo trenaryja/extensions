@@ -8,6 +8,7 @@ export type SettingMeta = {
 	order?: number
 	enumDescriptions?: string[]
 	markdownEnumDescriptions?: string[]
+	enumItemLabels?: string[]
 	deprecationMessage?: string
 	markdownDeprecationMessage?: string
 }
