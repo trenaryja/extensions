@@ -16,7 +16,7 @@
 	],
 	"scripts": {
 		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc && bunx eslint . --max-warnings=0"
+		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0"
 	},
 	"devDependencies": {
 		"@types/node": "^26.1.1",
