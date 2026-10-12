@@ -1,0 +1,10 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			// The binary lands in ../hear-yourself/assets, which turbo can't track, so a cache hit would skip a needed copy.
+			"cache": false
+		}
+	}
+}

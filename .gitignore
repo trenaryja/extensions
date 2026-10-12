@@ -28,6 +28,7 @@ build
 dist
 *.tsbuildinfo
 *.bun-build
+target
 
 # Debug
 npm-debug.log*
