@@ -1,0 +1,47 @@
+{
+	"$schema": "https://www.raycast.com/schemas/extension.json",
+	"name": "hear-yourself",
+	"title": "Hear Yourself",
+	"description": "Hear your microphone in your headphones in real time.",
+	"icon": "extension-icon.png",
+	"author": "trenaryja",
+	"license": "MIT",
+	"private": true,
+	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/extensions.git",
+		"directory": "packages/hear-yourself"
+	},
+	"scripts": {
+		"dev": "ray develop",
+		"build": "ray build",
+		"fix": "prettier -w . && bunx eslint --fix .",
+		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0"
+	},
+	"commands": [
+		{
+			"name": "menu-bar",
+			"title": "Hear Yourself",
+			"subtitle": "Menu Bar",
+			"description": "Show monitoring status, devices and latency in the menu bar.",
+			"mode": "menu-bar"
+		},
+		{
+			"name": "toggle-monitoring",
+			"title": "Toggle Monitoring",
+			"subtitle": "Hear Yourself",
+			"description": "Start or stop hearing your microphone.",
+			"mode": "no-view"
+		}
+	],
+	"dependencies": {
+		"@raycast/api": "^2.1.1",
+		"@raycast/utils": "^2.3.0",
+		"remeda": "^2.39.0"
+	},
+	"devDependencies": {
+		"@repo/hear-yourself-core": "workspace:*",
+		"@types/react": "^19.2.18"
+	}
+}
