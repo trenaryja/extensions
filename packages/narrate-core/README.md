@@ -90,7 +90,7 @@ sentence, seconds from the start of the narration, `-1` until that sentence has 
 far), `position` (seconds, where playback is now), `sentenceIndex` (derived from `position`),
 `skipped` (indices whose synthesis failed, heard as 0.3 s of silence), optional `error`, and
 `updatedAt`. A consumer can import the type instead of restating it:
-`import type { PlaybackState } from '@repo/narrate-engine/types'`.
+`import type { PlaybackState } from '@repo/narrate-core/types'`.
 `narrate status` reports `{ "phase": "idle" }` when there is no state file, and when an active phase
 is left behind by a runner that is no longer alive.
 
@@ -104,9 +104,3 @@ is left behind by a runner that is no longer alive.
   The worker stays up between narrations — reloading the model each time costs about 6 s — and exits
   after `$NARRATE_WORKER_IDLE` seconds idle (default 300). `narrate worker status` shows it.
 - `summarize`: `claude` or `opencode` on PATH.
-
-## Design
-
-[`CONTEXT.md`](CONTEXT.md) for the architecture principles and glossary; [`docs/adr/`](docs/adr) for
-the decisions behind the backends, summarizers, engine/view split, normalization, sources, and where
-the engine lives.

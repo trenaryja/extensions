@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Action, ActionPanel, Form, Icon, List, popToRoot, showToast, Toast, useNavigation } from '@raycast/api'
 import { useCachedPromise } from '@raycast/utils'
 import * as R from 'remeda'
-import { BACKEND_IDS } from '@repo/narrate-engine/types'
+import { BACKEND_IDS } from '@repo/narrate-core/types'
 import {
 	clearVoice,
 	currentBackend,

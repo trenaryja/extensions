@@ -147,7 +147,7 @@ describe('commit shas', () => {
 
 describe('file paths', () => {
 	test('speaks a path inside inline code as basename and extension', () => {
-		expect(normalize('Edit `packages/narrate-engine/lib/normalize.ts` next.')).toBe('Edit normalize dot t s next.')
+		expect(normalize('Edit `packages/narrate-core/lib/normalize.ts` next.')).toBe('Edit normalize dot t s next.')
 	})
 
 	test('speaks a bare filename in prose', () => {

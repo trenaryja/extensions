@@ -117,7 +117,8 @@
 		"remeda": "^2.39.0"
 	},
 	"devDependencies": {
-		"@repo/narrate-engine": "workspace:*",
-		"@types/react": "^19.2.18"
+		"@repo/narrate-core": "workspace:*",
+		"@types/react": "^19.2.18",
+		"react": "^19.0.0"
 	}
 }

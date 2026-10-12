@@ -4,7 +4,7 @@ import { userInfo } from 'node:os'
 import { join } from 'node:path'
 import { environment, getPreferenceValues, LocalStorage } from '@raycast/api'
 import * as R from 'remeda'
-import { isLivePhase } from '@repo/narrate-engine/types'
+import { isLivePhase } from '@repo/narrate-core/types'
 import type {
 	BackendId,
 	HistoryEntry,
@@ -14,7 +14,7 @@ import type {
 	Sentence,
 	TranscriptMessage,
 	Voice,
-} from '@repo/narrate-engine/types'
+} from '@repo/narrate-core/types'
 
 export type { BackendId, HistoryEntry, Phase, PlaybackState, Sentence, TranscriptMessage, Voice }
 
@@ -28,7 +28,7 @@ const RATE_MAX = 4
 
 let binary: string | undefined
 
-// @repo/narrate-engine compiles the CLI into assets/, which Raycast copies into the built extension.
+// @repo/narrate-core compiles the CLI into assets/, which Raycast copies into the built extension.
 const resolveBinary = () => {
 	if (binary) return binary
 	binary = join(environment.assetsPath, 'narrate')

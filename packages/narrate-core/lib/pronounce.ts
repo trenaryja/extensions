@@ -134,7 +134,7 @@ const spokenUrl = (url: string) => {
 
 const speakUrls = (message: string) =>
 	message.replace(URL_PATTERN, (match) => {
-		const [trailingPunctuation = ''] = match.match(/[.,;:!?)]+$/) ?? []
+		const [trailingPunctuation = ''] = /[.,;:!?)]+$/.exec(match) ?? []
 		return spokenUrl(match.slice(0, match.length - trailingPunctuation.length)) + trailingPunctuation
 	})
 
