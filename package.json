@@ -8,30 +8,24 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"fix": "prettier -w . && bunx eslint --fix . --ignore-pattern apps --ignore-pattern packages && turbo run fix",
-		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0 --ignore-pattern apps --ignore-pattern packages && turbo run check",
+		"fix": "prettier -w . '!apps' '!packages' && bunx eslint --fix . --ignore-pattern apps --ignore-pattern packages && turbo run fix",
+		"check": "tsc && prettier -c . '!apps' '!packages' && bunx eslint . --max-warnings=0 --ignore-pattern apps --ignore-pattern packages && turbo run check",
 		"format": "prettier -w .",
-		"get-latest": "bun update --latest -i",
-		"reinstall": "rm -rf node_modules && rm bun.lock && bun install",
-		"new:vscode-extension": "tsx ./scripts/new-vscode-extension.ts"
+		"get-latest": "bun update --latest --interactive",
+		"reinstall": "rm -rf node_modules bun.lock && bun install",
+		"new:vscode-extension": "bun scripts/new-vscode-extension.ts"
+	},
+	"dependencies": {
+		"prettier": "^3.9.8"
 	},
 	"devDependencies": {
-		"@inquirer/prompts": "^8.7.0",
-		"@trenaryja/config": "^0.0.4",
-		"@types/node": "^26.4.1",
-		"prettier": "^3.9.6",
-		"remeda": "^2.45.0",
-		"tsx": "^4.23.13",
-		"turbo": "^2.10.12",
-		"typescript": "6.0.3"
+		"@inquirer/prompts": "^8.7.2",
+		"@trenaryja/config": "^0.0.8",
+		"@types/node": "^26.6.2",
+		"remeda": "^2.50.0",
+		"turbo": "^2.11.2"
 	},
-	"prettier": {
-		"singleQuote": true,
-		"jsxSingleQuote": true,
-		"semi": false,
-		"printWidth": 120,
-		"useTabs": true
-	},
+	"prettier": "@trenaryja/config/prettier",
 	"devEngines": {
 		"packageManager": {
 			"name": "bun",

@@ -6,7 +6,7 @@
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*"]
 		},
-		"check": {},
+		"check": { "dependsOn": ["^build"] },
 		"fix": {},
 		"dev": {
 			"dependsOn": ["^build"],

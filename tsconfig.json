@@ -1,6 +1,1 @@
-{
-	"extends": "@trenaryja/config/tsconfig/base",
-	"compilerOptions": { "types": ["node"] },
-	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["node_modules", "dist", "apps", "packages"]
-}
+{ "extends": "@trenaryja/config/tsconfig/workspace" }
