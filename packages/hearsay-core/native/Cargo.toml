@@ -1,0 +1,28 @@
+[package]
+name = "hearsay-native"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anyhow = "1.0.95"
+cpal = "0.16.0"
+earshot = "1.2.2"
+hound = "3.5.1"
+log = "0.4.25"
+regex = "1"
+rtrb = "0.4.0"
+rubato = "0.16.2"
+rustfft = "6.4.0"
+serde_json = "1.0.151"
+strsim = "0.11.0"
+whisper-rs = "0.16.0"
+
+# Metal is the only GPU backend worth wiring here: hearsay is Apple Silicon only on macOS, and
+# Windows/Linux fall back to whisper.cpp's CPU path rather than shipping a CUDA/Vulkan build per box.
+[target.'cfg(target_os = "macos")'.dependencies]
+whisper-rs = { version = "0.16.0", features = ["metal"] }
+
+[profile.release]
+lto = true
+strip = true

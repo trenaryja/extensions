@@ -1,0 +1,10 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			// cargo owns its own incremental cache and native/target is gitignored, so turbo has no output to track.
+			"cache": false
+		}
+	}
+}

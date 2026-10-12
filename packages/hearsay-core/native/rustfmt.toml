@@ -1,0 +1,4 @@
+# src/audio_toolkit/ is vendored from Handy and stays byte-diffable against upstream so a re-sync is a
+# plain diff: rustfmt defaults, not the repo's hard tabs, and Handy's 2021 style edition.
+edition = "2024"
+style_edition = "2021"

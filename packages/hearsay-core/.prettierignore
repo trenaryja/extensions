@@ -1,0 +1,3 @@
+# Prettier only reads the ignore file in its CWD, so this package's own `check` can't see the root
+# .gitignore that already covers cargo's output.
+native/target/
