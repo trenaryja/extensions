@@ -1,11 +1,1 @@
-{
-	"extends": "@trenaryja/config/tsconfig/base",
-	"compilerOptions": {
-		"composite": true,
-		"incremental": true,
-		"outDir": "dist"
-	},
-	"include": ["**/*.ts", "**/*.tsx"],
-	"files": ["lib/countries.json", "lib/states.json"],
-	"exclude": ["node_modules", "dist"]
-}
+{ "extends": "@trenaryja/config/tsconfig/node" }
