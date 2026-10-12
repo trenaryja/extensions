@@ -7,10 +7,10 @@
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",
 	"scripts": {
-		"build": "bunx tsx ./scripts/build.ts",
-		"dev": "bunx tsx ./scripts/build.ts --watch",
+		"build": "bun ./scripts/build.ts",
+		"dev": "bun ./scripts/build.ts --watch",
 		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc && bunx eslint . --max-warnings=0 && bun run build",
+		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
 		"vscode:prepublish": "bun run build"
 	},
 	"devDependencies": {
