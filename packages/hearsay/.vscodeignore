@@ -1,0 +1,16 @@
+.turbo/**
+node_modules/**
+scripts/**
+src/**
+.gitignore
+tsconfig.json
+*.vsix
+
+dist/tsconfig.tsbuildinfo
+
+# Don't ignore these important files
+!README.md
+!LICENSE
+!CHANGELOG.md
+!package.json
+!assets/**
