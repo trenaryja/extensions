@@ -2,6 +2,21 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "build: hearsay",
+			"type": "shell",
+			// Through turbo, so the Rust helper hearsay's build script copies into `assets/` gets built first.
+			"command": "bunx turbo run build --filter=hearsay",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
 			"label": "build: markslate",
 			"type": "shell",
 			"command": "bun run build",

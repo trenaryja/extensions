@@ -14,6 +14,14 @@
 			"preLaunchTask": "build: markslate"
 		},
 		{
+			"name": "Ext: Hearsay",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/hearsay", "--disable-extensions"],
+			"preLaunchTask": "build: hearsay"
+		},
+		{
 			"name": "Ext: Multi-Cursor Magic",
 			"type": "extensionHost",
 			"request": "launch",
