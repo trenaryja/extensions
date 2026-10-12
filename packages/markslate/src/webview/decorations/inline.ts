@@ -4,7 +4,7 @@ import { Decoration, ViewPlugin } from '@codemirror/view'
 import { inRawSource, rawSourceRanges } from './active'
 
 // Strikethrough isn't in the CommonMark tree (it's GFM), so it stays a lightweight regex pass.
-const STRIKE_RE = /~~(.+?)~~/g
+const STRIKE_RE = /~~.+?~~/g
 
 // Hidden syntax collapses out of layout entirely (no line-height cost) and is atomic, so the cursor
 // skips over it — until the selection enters the span, at which point the raw markdown is revealed.

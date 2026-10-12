@@ -1,11 +1,1 @@
-{
-	"extends": "@trenaryja/config/tsconfig/vite",
-	"compilerOptions": {
-		"composite": true,
-		"incremental": true,
-		"outDir": "dist",
-		"types": ["bun"]
-	},
-	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["node_modules", "dist"]
-}
+{ "extends": "@trenaryja/config/tsconfig/dom" }
