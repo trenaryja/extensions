@@ -51,7 +51,7 @@ const addLaunchConfig = (titleCaseName: string, kebabName: string) => {
 	const vscodeDir = path.join(process.cwd(), '.vscode')
 	if (!fs.existsSync(vscodeDir)) fs.mkdirSync(vscodeDir, { recursive: true })
 	const launchJsonPath = path.join(vscodeDir, 'launch.json')
-	let launchJson = { version: '0.2.0', configurations: [] as { name: string }[] }
+	let launchJson: { version: string; configurations?: { name: string }[] } = { version: '0.2.0' }
 
 	if (fs.existsSync(launchJsonPath)) {
 		try {
@@ -69,7 +69,7 @@ const addLaunchConfig = (titleCaseName: string, kebabName: string) => {
 		args: [`--extensionDevelopmentPath=\${workspaceFolder}/packages/${kebabName}`],
 	}
 
-	if (!launchJson.configurations) launchJson.configurations = []
+	launchJson.configurations ??= []
 
 	if (launchJson.configurations.some((config) => config.name === newConfig.name)) {
 		console.log(`ℹ️ Launch configuration for ${titleCaseName} already exists`)
