@@ -118,20 +118,20 @@ export default function Command() {
 					]}
 					actions={
 						<ActionPanel>
-							<Action title='Play' icon={Icon.Play} onAction={() => play(message)} />
+							<Action title='Play' icon={Icon.Play} onAction={() => void play(message)} />
 							<Action
 								title={summarizer() === 'off' ? 'Summarize & Play…' : 'Summarize & Play'}
 								icon={Icon.Stars}
 								shortcut={{ modifiers: ['cmd', 'shift'], key: 's' }}
-								onAction={() => summarize(message)}
+								onAction={() => void summarize(message)}
 							/>
 							<Action
 								title='Copy Message Text'
 								icon={Icon.Clipboard}
 								shortcut={{ modifiers: ['cmd'], key: 'c' }}
-								onAction={() => copy(message)}
+								onAction={() => void copy(message)}
 							/>
-							<Action title='Open Playback Status' icon={Icon.List} onAction={openStatus} />
+							<Action title='Open Playback Status' icon={Icon.List} onAction={() => void openStatus()} />
 						</ActionPanel>
 					}
 				/>

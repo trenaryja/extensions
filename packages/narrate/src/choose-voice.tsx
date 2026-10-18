@@ -153,7 +153,7 @@ export default function Command() {
 		R.groupBy(sectionOf),
 	)
 
-	const setActive = async (voice: Voice) => {
+	const choose = async (voice: Voice) => {
 		await selectBackend(browsing.backend)
 		await selectVoice(browsing.backend, voice.id)
 		revalidateActive()
@@ -243,12 +243,12 @@ export default function Command() {
 									)}
 									actions={
 										<ActionPanel>
-											<Action title='Set as Active Voice' icon={Icon.CheckCircle} onAction={() => setActive(voice)} />
+											<Action title='Set as Active Voice' icon={Icon.CheckCircle} onAction={() => void choose(voice)} />
 											<Action
 												title='Preview'
 												icon={Icon.Play}
 												shortcut={{ modifiers: ['cmd'], key: 'p' }}
-												onAction={() => speak(voice, phrase ?? PREVIEW_SAMPLE)}
+												onAction={() => void speak(voice, phrase ?? PREVIEW_SAMPLE)}
 											/>
 											<Action.Push
 												title='Edit Preview Text'
@@ -257,7 +257,7 @@ export default function Command() {
 												target={
 													<PreviewTextForm
 														initial={phrase ?? PREVIEW_SAMPLE}
-														onSpeak={(text) => speak(voice, text)}
+														onSpeak={(text) => void speak(voice, text)}
 														onSave={async (text) => {
 															await setPreviewText(text)
 															revalidatePhrase()
@@ -269,7 +269,7 @@ export default function Command() {
 												title={`Use the Default ${backendTitle} Voice`}
 												icon={Icon.Undo}
 												shortcut={{ modifiers: ['cmd', 'shift'], key: 'backspace' }}
-												onAction={reset}
+												onAction={() => void reset()}
 											/>
 										</ActionPanel>
 									}

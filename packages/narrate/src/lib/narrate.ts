@@ -54,7 +54,7 @@ const resolvePath = () => {
 }
 
 const cacheLimit = () => {
-	const limit = getPreferenceValues<Preferences>().cacheLimitMb?.trim()
+	const limit = getPreferenceValues<Preferences>().cacheLimitMb.trim()
 	return limit ? { NARRATE_CACHE_MB: limit } : {}
 }
 
@@ -105,7 +105,7 @@ export const selectVoice = (backend: BackendId, voiceId: string) => LocalStorage
 
 export const clearVoice = (backend: BackendId) => LocalStorage.removeItem(voiceKey(backend))
 
-// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- a stored-but-blank phrase must fall back too, which `??` would not do
+// `||`: a stored-but-blank phrase must fall back too.
 export const previewText = async () => (await LocalStorage.getItem<string>('previewText'))?.trim() || PREVIEW_SAMPLE
 
 export const setPreviewText = (text: string) => LocalStorage.setItem('previewText', text.trim())

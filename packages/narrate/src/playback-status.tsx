@@ -27,11 +27,11 @@ const usePlaybackStatus = () => {
 
 	useEffect(() => {
 		let cancelled = false
-		const tick = () =>
+		const tick = () => {
 			status()
 				.then((next) => cancelled || setState(next))
 				.catch((reason) => cancelled || setError(errorMessage(reason)))
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises -- tick already ends in .catch; the rule cannot see through the binding
+		}
 		tick()
 		const timer = setInterval(tick, POLL_MS)
 
@@ -44,8 +44,9 @@ const usePlaybackStatus = () => {
 	return { state, error }
 }
 
-const report = (title: string, work: Promise<unknown>) =>
+const report = (title: string, work: Promise<unknown>) => {
 	work.catch((error) => showToast({ style: Toast.Style.Failure, title, message: errorMessage(error) }))
+}
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 
@@ -97,7 +98,7 @@ export default function Command() {
 
 	const jump = (index: number) => {
 		setFollow(true)
-		return report('Could not seek', seek(index))
+		report('Could not seek', seek(index))
 	}
 
 	const paused = active && state.phase === 'paused'
@@ -163,7 +164,7 @@ export default function Command() {
 				<List.Section title={follow ? 'Following' : 'Auto-follow off — ↵ on a sentence to jump'} subtitle={subtitle}>
 					{state.sentences.map((sentence, index) => (
 						<List.Item
-							// eslint-disable-next-line @eslint-react/no-array-index-key -- the index IS the identity here: it is also the row id the selection tracks
+							// the index IS the identity here: it is also the row id the selection tracks
 							key={index}
 							id={String(index)}
 							title={sentence.text}
