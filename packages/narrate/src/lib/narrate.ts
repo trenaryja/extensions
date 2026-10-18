@@ -4,23 +4,16 @@ import { userInfo } from 'node:os'
 import { join } from 'node:path'
 import { environment, getPreferenceValues, LocalStorage } from '@raycast/api'
 import * as R from 'remeda'
-import { isLivePhase } from '@repo/narrate-core/types'
-import type {
-	BackendId,
-	HistoryEntry,
-	Origin,
-	Phase,
-	PlaybackState,
-	Sentence,
-	TranscriptMessage,
-	Voice,
-} from '@repo/narrate-core/types'
+import { z } from 'zod'
+import { HistoryEntry, isLivePhase, PlaybackState, TranscriptMessage, Voice } from '@repo/narrate-core/types'
+import type { BackendId, Origin, Phase, Sentence } from '@repo/narrate-core/types'
 
 export type { BackendId, HistoryEntry, Phase, PlaybackState, Sentence, TranscriptMessage, Voice }
 
-export type Status = PlaybackState | { phase: 'idle' }
+const Status = z.union([PlaybackState, z.object({ phase: z.literal('idle') })])
+export type Status = z.infer<typeof Status>
 
-export type Started = { pid: number; label: string; sentenceTotal: number }
+const Started = z.object({ pid: z.number(), label: z.string(), sentenceTotal: z.number() })
 
 export const RATE_STEP = 0.25
 const RATE_MIN = 0.25
@@ -58,10 +51,26 @@ const cacheLimit = () => {
 	return limit ? { NARRATE_CACHE_MB: limit } : {}
 }
 
-const run = async <T>(args: string[], input?: string) => {
+const Failure = z.object({ error: z.string() })
+
+const parseReply = <Reply>(reply: z.ZodType<Reply>, args: string[], stdout: string) => {
+	const parsed = reply.safeParse(JSON.parse(stdout))
+	if (!parsed.success) throw new Error(`narrate ${args.join(' ')}: ${z.prettifyError(parsed.error)}`)
+	return parsed.data
+}
+
+const failureOf = (stderr: string, code: number | null) => {
+	try {
+		return new Error(Failure.parse(JSON.parse(stderr)).error)
+	} catch {
+		return new Error(stderr.trim() || `narrate exited with ${code}`)
+	}
+}
+
+const run = async <Reply>(reply: z.ZodType<Reply>, args: string[], input?: string) => {
 	const PATH = await resolvePath()
 
-	return new Promise<T>((resolve, reject) => {
+	return new Promise<Reply>((resolve, reject) => {
 		const child = spawn(resolveBinary(), [...args, '--json'], {
 			// Left unset when the preference is empty, so the engine's own default applies.
 			// Raycast's process has no USER, and the claude CLI reads its keychain account name from it.
@@ -74,12 +83,11 @@ const run = async <T>(args: string[], input?: string) => {
 		child.stderr?.on('data', (data: Buffer) => (stderr += data.toString()))
 		child.on('error', reject)
 		child.on('close', (code) => {
-			if (code === 0) return resolve(JSON.parse(stdout) as T)
-
+			if (code !== 0) return reject(failureOf(stderr, code))
 			try {
-				reject(new Error((JSON.parse(stderr) as { error: string }).error))
-			} catch {
-				reject(new Error(stderr.trim() || `narrate exited with ${code}`))
+				resolve(parseReply(reply, args, stdout))
+			} catch (error) {
+				reject(error)
 			}
 		})
 		if (input !== undefined) child.stdin?.end(input)
@@ -119,11 +127,11 @@ const speechFlags = async (override?: SpeechOverride) => {
 	return ['--backend', backend, '--speed', speed.trim() || '1', ...(voice ? ['--voice', voice] : [])]
 }
 
-export const listMessages = (limit = 50) => run<TranscriptMessage[]>(['list', '--limit', String(limit)])
+export const listMessages = (limit = 50) => run(z.array(TranscriptMessage), ['list', '--limit', String(limit)])
 
-export const history = (limit = 50) => run<HistoryEntry[]>(['history', '--limit', String(limit)])
+export const history = (limit = 50) => run(z.array(HistoryEntry), ['history', '--limit', String(limit)])
 
-export const playMessage = async (id: string) => run<Started>(['play', '--message', id, ...(await speechFlags())])
+export const playMessage = async (id: string) => run(Started, ['play', '--message', id, ...(await speechFlags())])
 
 const playArgs = async (label: string, origin: Origin, override?: SpeechOverride) => [
 	'play',
@@ -135,19 +143,19 @@ const playArgs = async (label: string, origin: Origin, override?: SpeechOverride
 ]
 
 export const playText = async (text: string, label: string, override?: SpeechOverride) =>
-	run<Started>(await playArgs(label, 'selection', override), text)
+	run(Started, await playArgs(label, 'selection', override), text)
 
 // The entry's text is already normalized, and its speech settings are deliberately dropped: a replay is
 // meant to be heard in whatever voice the owner is on now.
 export const replay = async (entry: HistoryEntry) =>
-	run<Started>([...(await playArgs(entry.label, entry.origin)), '--raw'], entry.text)
+	run(Started, [...(await playArgs(entry.label, entry.origin)), '--raw'], entry.text)
 
-export const listVoices = (backend: BackendId) => run<Voice[]>(['voices', '--backend', backend])
+export const listVoices = (backend: BackendId) => run(z.array(Voice), ['voices', '--backend', backend])
 
 export const summarizer = () => getPreferenceValues<Preferences>().summarizer
 
 export const summarizeAndPlay = async (id: string) =>
-	run<{ summary: string; playback: Started }>([
+	run(z.object({ summary: z.string(), playback: Started }), [
 		'summarize',
 		'--message',
 		id,
@@ -157,19 +165,20 @@ export const summarizeAndPlay = async (id: string) =>
 		...(await speechFlags()),
 	])
 
-export const messageText = async (id: string) => (await run<{ text: string }>(['normalize', '--message', id])).text
+export const messageText = async (id: string) =>
+	(await run(z.object({ text: z.string() }), ['normalize', '--message', id])).text
 
-export const status = () => run<Status>(['status'])
+export const status = () => run(Status, ['status'])
 
-export const stop = () => run<{ stopped: boolean }>(['stop'])
+export const stop = () => run(z.object({ stopped: z.boolean() }), ['stop'])
 
-export const seek = (index: number) => run<{ index: number }>(['seek', String(index)])
+export const seek = (index: number) => run(z.object({ index: z.number() }), ['seek', String(index)])
 
-export const rate = (speed: number) => run<{ speed: number }>(['rate', String(speed)])
+export const rate = (speed: number) => run(z.object({ speed: z.number() }), ['rate', String(speed)])
 
-export const pause = () => run<{ paused: boolean }>(['pause'])
+export const pause = () => run(z.object({ paused: z.boolean() }), ['pause'])
 
-export const resume = () => run<{ resumed: boolean }>(['resume'])
+export const resume = () => run(z.object({ resumed: z.boolean() }), ['resume'])
 
 export const isActive = (state: Status): state is PlaybackState => state.phase !== 'idle' && isLivePhase(state.phase)
 
