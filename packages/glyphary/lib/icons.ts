@@ -3,15 +3,24 @@ import { createRequire } from 'node:module'
 import { dirname } from 'node:path'
 import * as R from 'remeda'
 import { IconsManifest } from 'react-icons/lib'
+import { z } from 'zod'
 
 type IconTree = { tag: string; attr: Record<string, string>; child: IconTree[] }
+
+const IconTree: z.ZodType<IconTree> = z.lazy(() =>
+	z.object({ tag: z.string(), attr: z.record(z.string(), z.string()), child: z.array(IconTree) }),
+)
+
+export const PackageJson = z.object({ version: z.string() })
 
 export type Icon = { set: string; drawable: string; svg: string }
 export type IconSet = { id: string; name: string; icons: Icon[] }
 
 const reactIconsDir = dirname(createRequire(import.meta.url).resolve('react-icons/package.json'))
 
-export const reactIconsVersion: string = JSON.parse(readFileSync(`${reactIconsDir}/package.json`, 'utf8')).version
+export const { version: reactIconsVersion } = PackageJson.parse(
+	JSON.parse(readFileSync(`${reactIconsDir}/package.json`, 'utf8')),
+)
 
 /** IconBase injects these on the root `<svg>`; Ionicons 5 outlines and Grommet inherit stroke color from them and render invisible without. */
 const rootDefaults = { stroke: 'currentColor', fill: 'currentColor', strokeWidth: '0' }
@@ -59,10 +68,10 @@ const exportPattern = /^module\.exports\.(\w+) = function[^\n]*\n\s*return GenIc
 const loadSet = (id: string) =>
 	R.sortBy(
 		[...readFileSync(`${reactIconsDir}/${id}/index.js`, 'utf8').matchAll(exportPattern)].map(
-			([, exportName, tree]) => ({
+			([, exportName = '', tree = '']) => ({
 				set: id,
-				drawable: drawableName(id, exportName!),
-				svg: renderSvg(JSON.parse(tree!)),
+				drawable: drawableName(id, exportName),
+				svg: renderSvg(IconTree.parse(JSON.parse(tree))),
 			}),
 		),
 		(icon) => icon.drawable,

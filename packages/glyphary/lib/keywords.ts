@@ -1,22 +1,36 @@
 import { mkdtemp, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import * as R from 'remeda'
+import { z } from 'zod'
 import type { Catalog } from '../picker/search'
-import { byPreference } from './icons'
+import { byPreference, PackageJson } from './icons'
 import type { IconSet } from './icons'
 
-type TablerIcon = { name: string; tags: (string | number)[] }
+const LucideTags = z.record(z.string(), z.array(z.string()))
 
-type SimpleIcon = { title: string; slug: string; aliases?: { aka?: string[]; loc?: Record<string, string> } }
+const TablerIcons = z.record(
+	z.string(),
+	z.object({ name: z.string(), tags: z.array(z.union([z.string(), z.number()])) }),
+)
 
-type PhosphorIcon = { name: string; tags: string[] }
+const SimpleIcons = z.array(
+	z.object({
+		title: z.string(),
+		slug: z.string(),
+		aliases: z
+			.object({ aka: z.array(z.string()).optional(), loc: z.record(z.string(), z.string()).optional() })
+			.optional(),
+	}),
+)
+
+const PhosphorModule = z.object({ icons: z.array(z.object({ name: z.string(), tags: z.array(z.string()) })) })
 
 /** Tag words per concept, from upstream packages too large to install for one metadata file each. */
-type TagSnapshot = {
-	versions: Record<string, string>
-	generic: Record<string, string[]>
-	brand: Record<string, string[]>
-}
+const TagSnapshot = z.object({
+	versions: z.record(z.string(), z.string()),
+	generic: z.record(z.string(), z.array(z.string())),
+	brand: z.record(z.string(), z.array(z.string())),
+})
 
 const snapshotPath = `${import.meta.dir}/tags.json`
 
@@ -68,10 +82,12 @@ const fetchOk = async (url: string) => {
 }
 
 const latestFile = async (name: string, file: string) => {
-	const { version } = await (await fetchOk(`https://cdn.jsdelivr.net/npm/${name}@latest/package.json`)).json()
+	const { version } = PackageJson.parse(
+		await (await fetchOk(`https://cdn.jsdelivr.net/npm/${name}@latest/package.json`)).json(),
+	)
 	return {
 		name,
-		version: String(version),
+		version,
 		response: await fetchOk(`https://cdn.jsdelivr.net/npm/${name}@${version}/${file}`),
 	}
 }
@@ -95,13 +111,13 @@ export const refreshTags = async () => {
 		latestFile('@phosphor-icons/core', 'dist/index.mjs'),
 		latestFile('simple-icons', 'data/simple-icons.json'),
 	])
-	const lucideTags: Record<string, string[]> = await lucide.response.json()
-	const tablerIcons: Record<string, TablerIcon> = await tabler.response.json()
-	const simpleIcons: SimpleIcon[] = await simple.response.json()
+	const lucideTags = LucideTags.parse(await lucide.response.json())
+	const tablerIcons = TablerIcons.parse(await tabler.response.json())
+	const simpleIcons = SimpleIcons.parse(await simple.response.json())
 	/** Phosphor publishes its tags only as JavaScript; this runs the same file `bun install` would. */
 	const phosphorModule = `${await mkdtemp(`${tmpdir()}/phosphor-`)}/index.mjs`
 	await Bun.write(phosphorModule, phosphor.response)
-	const { icons: phosphorIcons }: { icons: PhosphorIcon[] } = await import(phosphorModule)
+	const { icons: phosphorIcons } = PhosphorModule.parse(await import(phosphorModule))
 
 	for (const [name, keywords] of R.entries(lucideTags)) add(generic, name, keywords)
 	for (const icon of R.values(tablerIcons)) add(generic, icon.name, icon.tags.map(String))
@@ -120,7 +136,7 @@ export const refreshTags = async () => {
 
 	const record = (tags: typeof generic) =>
 		R.fromEntries(R.sortBy([...tags], ([key]) => key).map(([key, known]) => [key, [...known]]))
-	const snapshot: TagSnapshot = {
+	const snapshot: z.infer<typeof TagSnapshot> = {
 		versions: R.fromEntries([lucide, tabler, phosphor, simple].map(({ name, version }) => [name, version])),
 		generic: record(generic),
 		brand: record(brand),
@@ -131,7 +147,7 @@ export const refreshTags = async () => {
 
 /** Picker catalog: each icon's extra search words point into shared groups, since icons of one concept share their tags. */
 export const searchCatalog = async (sets: readonly IconSet[]): Promise<Catalog> => {
-	const { generic, brand }: TagSnapshot = JSON.parse(await readFile(snapshotPath, 'utf8'))
+	const { generic, brand } = TagSnapshot.parse(JSON.parse(await readFile(snapshotPath, 'utf8')))
 	const keywordGroups: string[] = []
 	const groupOf = new Map<string, number>()
 

@@ -1,10 +1,18 @@
-import { createSearch } from './search'
-import type { Catalog } from './search'
+import { Catalog, createSearch } from './search'
 
-/** Injected by PickerActivity; absent when the page is opened outside the app. */
 type Bridge = { picking: () => boolean; pick: (drawable: string) => void }
 
-const bridge: Bridge | undefined = Reflect.get(window, 'Glyphary')
+const isBridge = (value: unknown): value is Bridge =>
+	typeof value === 'object' &&
+	value !== null &&
+	'picking' in value &&
+	'pick' in value &&
+	typeof value.picking === 'function' &&
+	typeof value.pick === 'function'
+
+/** Injected by PickerActivity; absent when the page is opened outside the app. */
+const injected: unknown = Reflect.get(window, 'Glyphary')
+const bridge = isBridge(injected) ? injected : undefined
 const cellWidth = 88
 const cellHeight = 104
 
@@ -21,7 +29,7 @@ const grid = element('#grid')
 const toast = element('#toast')
 const toastText = element('#toast > .alert')
 
-const catalog: Catalog = await (await fetch('/icons.json')).json()
+const catalog = Catalog.parse(await (await fetch('/icons.json')).json())
 const index = createSearch(catalog)
 setSelect.append(
 	new Option(`All sets (${index.names.length.toLocaleString()})`, ''),
@@ -46,7 +54,8 @@ const showToast = (text: string) => {
 const choose = (drawable: string) => (bridge?.picking() ? bridge.pick(drawable) : showToast(drawable))
 
 const cell = (position: number, columns: number, width: number) => {
-	const drawable = index.names[matches[position]!]!
+	const drawable = index.names[matches[position] ?? -1]
+	if (drawable === undefined) throw new Error(`No icon at result ${position}`)
 	const button = document.createElement('button')
 	button.className = 'btn btn-ghost absolute h-auto flex-col flex-nowrap justify-start gap-1 px-1 py-2 font-normal'
 	Object.assign(button.style, {

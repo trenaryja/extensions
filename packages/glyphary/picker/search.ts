@@ -1,8 +1,16 @@
+import { z } from 'zod'
+
 /** `keywords[i]` indexes `keywordGroups` for `icons[i]`, or is -1; sets arrive in preference order, which breaks ties. */
-export type Catalog = {
-	sets: { id: string; name: string; icons: string[]; keywords: number[] }[]
-	keywordGroups: string[]
-}
+export const Catalog = z.object({
+	sets: z.array(
+		z.object({ id: z.string(), name: z.string(), icons: z.array(z.string()), keywords: z.array(z.number()) }),
+	),
+	keywordGroups: z.array(z.string()),
+})
+export type Catalog = z.infer<typeof Catalog>
+
+/** Out-of-range cells never win a minimum. */
+const cellAt = (row: readonly number[], index: number) => row[index] ?? Infinity
 
 /** Optimal string alignment distance, abandoned once every cell in a row exceeds `limit`. */
 const typoDistance = (a: string, b: string, limit: number) => {
@@ -15,9 +23,9 @@ const typoDistance = (a: string, b: string, limit: number) => {
 
 		for (let j = 1; j <= b.length; j++) {
 			const cost = a[i - 1] === b[j - 1] ? 0 : 1
-			let best = Math.min(row[j]! + 1, nextRow[j - 1]! + 1, row[j - 1]! + cost)
+			let best = Math.min(cellAt(row, j) + 1, cellAt(nextRow, j - 1) + 1, cellAt(row, j - 1) + cost)
 			if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
-				best = Math.min(best, previousRow[j - 2]! + 1)
+				best = Math.min(best, cellAt(previousRow, j - 2) + 1)
 			nextRow.push(best)
 		}
 
@@ -26,7 +34,7 @@ const typoDistance = (a: string, b: string, limit: number) => {
 		row = nextRow
 	}
 
-	return row[b.length]!
+	return row[b.length] ?? limit + 1
 }
 
 /** 0 when `token` doesn't match `word`; exact > prefix > substring > typo. */
@@ -89,7 +97,7 @@ export const createSearch = (catalog: Catalog) => {
 		tokenScore.fill(0)
 
 		const raise = (id: number, score: number) => {
-			if (score > tokenScore[id]!) tokenScore[id] = score
+			if (score > (tokenScore[id] ?? 0)) tokenScore[id] = score
 		}
 
 		const scan = (
@@ -107,12 +115,12 @@ export const createSearch = (catalog: Catalog) => {
 		scan(joinedNames, false, (id, quality) => raise(id, quality * weights.joinedName))
 		scan(keywordWords, true, (posting, quality) => {
 			const score = quality * weights.keyword * (1 - 0.04 * Math.min(posting % 64, 10))
-			for (const id of groupIcons[Math.floor(posting / 64)]!) raise(id, score)
+			for (const id of groupIcons[Math.floor(posting / 64)] ?? []) raise(id, score)
 		})
 		// Exact or prefix only: `luc` narrows to Lucide, `cide` shouldn't.
 		scan(setWords, false, (setIndex, quality) => {
 			if (quality < 0.7) return
-			const [start, end] = setRanges[setIndex]!
+			const [start, end] = setRanges[setIndex] ?? [0, 0]
 			for (let id = start; id < end; id++) raise(id, quality * weights.set)
 		})
 	}
@@ -123,7 +131,7 @@ export const createSearch = (catalog: Catalog) => {
 			.toLowerCase()
 			.split(/[^a-z0-9]+/)
 			.filter(Boolean)
-		const [start, end] = setIndex === undefined ? [0, names.length] : setRanges[setIndex]!
+		const [start, end] = setIndex === undefined ? [0, names.length] : (setRanges[setIndex] ?? [0, 0])
 		if (tokens.length === 0) return Array.from({ length: end - start }, (_, i) => start + i)
 		total.fill(0)
 
@@ -131,20 +139,22 @@ export const createSearch = (catalog: Catalog) => {
 			scoreToken(token)
 
 			for (let id = start; id < end; id++) {
-				const score = tokenScore[id]!
-				total[id] = score && (index === 0 || total[id]) ? total[id]! + score : 0
+				const score = tokenScore[id] ?? 0
+				const sum = total[id] ?? 0
+				total[id] = score && (index === 0 || sum) ? sum + score : 0
 			}
 		}
 
 		const ids: number[] = []
 
-		for (let id = start; id < end; id++)
-			if (total[id]) {
-				total[id] = total[id]! - wordCounts[id]! * weights.perNameWord
-				ids.push(id)
-			}
+		for (let id = start; id < end; id++) {
+			const sum = total[id]
+			if (!sum) continue
+			total[id] = sum - (wordCounts[id] ?? 0) * weights.perNameWord
+			ids.push(id)
+		}
 
-		return ids.sort((a, b) => total[b]! - total[a]! || a - b)
+		return ids.sort((a, b) => (total[b] ?? 0) - (total[a] ?? 0) || a - b)
 	}
 
 	return { names, search }

@@ -47,7 +47,7 @@ const toolchain = () => {
 	const buildTools = `${root}/build-tools/${newest(`${root}/build-tools`, /^[\d.]+$/)}`
 	return {
 		androidJar: `${root}/platforms/${platform}/android.jar`,
-		targetSdk: Number(/\d+/.exec(platform)![0]),
+		targetSdk: Number.parseInt(platform.slice('android-'.length), 10),
 		buildTools,
 	}
 }
