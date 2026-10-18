@@ -135,7 +135,7 @@ const download = async (entry: CatalogEntry, target: string, options: ResolveOpt
 		} catch (error) {
 			await rm(partial, { force: true })
 			if (options.signal?.aborted) throw error
-			failures.push(`  ${mirror} — ${error instanceof Error ? error.message : error}`)
+			failures.push(`  ${mirror} — ${error instanceof Error ? error.message : String(error)}`)
 		}
 	}
 
