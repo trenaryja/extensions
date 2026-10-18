@@ -110,7 +110,7 @@ export const parseUsState = (input: string) => {
 	const normalizedInput = input.toLowerCase()
 	return (
 		US_STATES.find(
-			(state) => state.name?.toLowerCase() === normalizedInput || state.isoCode?.toLowerCase() === normalizedInput,
+			(state) => state.name.toLowerCase() === normalizedInput || state.isoCode.toLowerCase() === normalizedInput,
 		) ?? null
 	)
 }
@@ -119,8 +119,7 @@ export const parseCountry = (input: string) => {
 	const normalizedInput = input.toLowerCase()
 	return (
 		COUNTRIES.find(
-			(country) =>
-				country.name?.toLowerCase() === normalizedInput || country.isoCode?.toLowerCase() === normalizedInput,
+			(country) => country.name.toLowerCase() === normalizedInput || country.isoCode.toLowerCase() === normalizedInput,
 		) ?? null
 	)
 }
