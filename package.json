@@ -7,26 +7,25 @@
 	],
 	"scripts": {
 		"build": "turbo run build",
+		"chk": "tren chk && turbo run chk",
+		"ci": "tren ci",
 		"dev": "turbo run dev",
-		"fix": "prettier -w . '!apps' '!packages' && bunx eslint --fix . --ignore-pattern apps --ignore-pattern packages && turbo run fix",
-		"check": "tsc && prettier -c . '!apps' '!packages' && bunx eslint . --max-warnings=0 --ignore-pattern apps --ignore-pattern packages && turbo run check",
+		"fix": "tren fix && turbo run fix",
 		"format": "prettier -w .",
-		"get-latest": "bun update --latest --interactive",
-		"reinstall": "rm -rf node_modules bun.lock && bun install",
 		"new:vscode-extension": "bun scripts/new-vscode-extension.ts"
 	},
+	"prettier": "@trenaryja/config/prettier",
 	"dependencies": {
-		"prettier": "^3.9.8"
+		"prettier": "^3.9.10"
 	},
 	"devDependencies": {
-		"@inquirer/prompts": "^8.7.2",
-		"@trenaryja/config": "^0.0.8",
-		"@types/node": "^26.6.2",
-		"remeda": "^2.50.0",
-		"turbo": "^2.11.2",
-		"zod": "^4.4.3"
+		"@inquirer/prompts": "^8.7.5",
+		"@trenaryja/config": "^0.3.0",
+		"@types/node": "^26.6.6",
+		"remeda": "^2.57.0",
+		"turbo": "^2.11.10",
+		"zod": "^4.6.7"
 	},
-	"prettier": "@trenaryja/config/prettier",
 	"devEngines": {
 		"packageManager": {
 			"name": "bun",

@@ -16,7 +16,7 @@ Justin Trenary's editor and launcher extensions — VS Code and Raycast — in o
 
 ```sh
 bun install
-bun run check   # typecheck, format check, build everything
+bun run chk     # typecheck, format check, lint
 bun run fix     # apply formatting and lint fixes
 ```
 

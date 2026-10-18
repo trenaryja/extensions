@@ -1,7 +1,7 @@
 import { confirm, input } from '@inquirer/prompts'
-import { execSync } from 'child_process'
-import * as fs from 'fs'
-import * as path from 'path'
+import { execSync } from 'node:child_process'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as R from 'remeda'
 import { z } from 'zod'
 import { copyFiles, formatFile, toMessage } from './utils'
@@ -45,9 +45,9 @@ const nameExtensionSource = (extensionDir: string, kebabName: string) => {
 	const extensionTsPath = path.join(extensionDir, 'extension.ts')
 	if (!fs.existsSync(extensionTsPath)) return null
 	const source = fs.readFileSync(extensionTsPath, 'utf8')
-	const named = source.replace(
+	const named = source.replaceAll(
 		/Congratulations, your extension "[^"]+" is now active!/g,
-		`Congratulations, your extension "${kebabName}" is now active!`,
+		() => `Congratulations, your extension "${kebabName}" is now active!`,
 	)
 	fs.writeFileSync(extensionTsPath, named)
 	return extensionTsPath
@@ -58,21 +58,19 @@ const LaunchJson = z.looseObject({
 	version: z.string(),
 	configurations: z.array(z.looseObject({ name: z.string() })).optional(),
 })
-type LaunchJson = z.infer<typeof LaunchJson>
-
 const addLaunchConfig = (titleCaseName: string, kebabName: string) => {
 	const vscodeDir = path.join(process.cwd(), '.vscode')
 	if (!fs.existsSync(vscodeDir)) fs.mkdirSync(vscodeDir, { recursive: true })
 	const launchJsonPath = path.join(vscodeDir, 'launch.json')
+	type LaunchJson = z.infer<typeof LaunchJson>
 	let launchJson: LaunchJson = { version: '0.2.0' }
 
-	if (fs.existsSync(launchJsonPath)) {
+	if (fs.existsSync(launchJsonPath))
 		try {
 			launchJson = LaunchJson.parse(JSON.parse(fs.readFileSync(launchJsonPath, 'utf8')))
 		} catch (error) {
 			console.warn(`Warning: Could not parse existing launch.json: ${toMessage(error)}`)
 		}
-	}
 
 	const newConfig = {
 		name: `Ext: ${titleCaseName}`,
@@ -147,7 +145,4 @@ async function main() {
 	}
 }
 
-main().catch((error) => {
-	console.error('Error:', error)
-	process.exit(1)
-})
+await main()

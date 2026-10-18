@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as prettier from 'prettier'
 
 export const toMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
@@ -27,8 +27,6 @@ export const copyFiles = (source: string, destination: string) => {
 		if (entry.isDirectory()) {
 			fs.mkdirSync(destPath, { recursive: true })
 			copyFiles(srcPath, destPath)
-		} else {
-			fs.copyFileSync(srcPath, destPath)
-		}
+		} else fs.copyFileSync(srcPath, destPath)
 	}
 }
