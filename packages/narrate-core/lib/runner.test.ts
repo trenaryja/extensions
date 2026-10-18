@@ -24,7 +24,7 @@ mkdirSync(SOURCE_DIR, { recursive: true })
 const fakeBackend = (failing?: string): SpeechBackend => ({
 	id: 'say',
 	defaultVoiceId: 'fake',
-	voices: async () => [],
+	voices: () => Promise.resolve([]),
 	synthesize: async (text) => {
 		if (text === failing) throw new Error(`synthesis failed for ${text}`)
 		const index = SENTENCES.findIndex((sentence) => sentence === text)
@@ -86,7 +86,7 @@ const waitForState = async (ready: (state: PlaybackState) => boolean) => {
 
 // Pauses during the first paragraph, runs `whileParked` once the runner has parked, and plays
 // everything after that normally.
-const pausingPlayer = (whileParked: (paused: PlaybackState | null) => Promise<void>) => {
+const pausingPlayer = (whileParked: (paused: PlaybackState | null) => Promise<void> | undefined) => {
 	const played: string[] = []
 
 	const play = async (path: string, _speed: number, signal: AbortSignal) => {
@@ -242,7 +242,7 @@ test('seek while paused moves the position and stays paused', async () => {
 })
 
 test('a paused runner still stops', async () => {
-	const { played, play } = pausingPlayer(async () => {
+	const { played, play } = pausingPlayer(() => {
 		writeFileSync(paths.stop, '')
 	})
 

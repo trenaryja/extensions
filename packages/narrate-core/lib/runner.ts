@@ -51,13 +51,14 @@ type Cursor = { sentence: number; skew: number }
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
+/** True once `ms` pass, false if `signal` aborts first. */
 const wait = (ms: number, signal: AbortSignal) =>
-	new Promise<void>((resolve) => {
+	new Promise<boolean>((resolve) => {
 		const done = () => {
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- done and timer are a cycle: done clears the timer that calls it. Hoisting timer to a `let` is the only reordering, and it is worse
+			// done and timer are a cycle: done clears the timer that calls it. Hoisting timer to a `let` is the only reordering, and it is worse
 			clearTimeout(timer)
 			signal.removeEventListener('abort', done)
-			resolve()
+			resolve(!signal.aborted)
 		}
 
 		const timer = setTimeout(done, ms)
@@ -235,10 +236,9 @@ const createRenderer = ({ segments, startSegment, state, controller, backend, vo
 
 		const wavPath = join(paths.segments, `${index}.wav`)
 		await writeWav(wavPath, concatWav(audio))
-		/* eslint-disable require-atomic-updates -- render() chains every renderSegment onto renderQueue, so no second one is ever in flight to interleave with this write */
-		renderedSeconds = offset + played
+		// render() chains every renderSegment onto renderQueue, so renderedSeconds is still `offset` here.
+		renderedSeconds += played
 		state.duration = renderedSeconds
-		/* eslint-enable require-atomic-updates */
 		settled.add(index)
 		await writeState(state)
 		return { wavPath, offset, duration: played }
@@ -310,9 +310,7 @@ const createPlayer = ({ state, controller, play, segments, chunks, cursors }: Pl
 	const trackPosition = async (segment: Segment, startTime: number, signal: AbortSignal) => {
 		const startedAt = Date.now()
 
-		while (!signal.aborted) {
-			await wait(POSITION_MS, signal)
-			if (signal.aborted) return
+		while (!signal.aborted && (await wait(POSITION_MS, signal))) {
 			const heard = startTime + ((Date.now() - startedAt) / 1000) * state.speed
 			await publishPosition(segment.offset + Math.min(heard, segment.duration))
 		}
@@ -336,7 +334,6 @@ const createPlayer = ({ state, controller, play, segments, chunks, cursors }: Pl
 			}
 
 			if (control.type === 'rate') {
-				// eslint-disable-next-line require-atomic-updates -- state is this run's only playback record and this loop is its only writer while parked
 				state.speed = control.speed
 				await writeState(state)
 			}
@@ -363,7 +360,6 @@ const createPlayer = ({ state, controller, play, segments, chunks, cursors }: Pl
 		const startTime = Math.max(0, (sentence && sentence.start >= 0 ? sentence.start : segment.offset) - segment.offset)
 		const path = await audioFor(segment, startTime + cursor.skew)
 
-		// eslint-disable-next-line require-atomic-updates -- state is this run's only playback record and the runner drives one segment at a time
 		state.phase = 'playing'
 		await publishPosition(segment.offset + startTime + cursor.skew)
 

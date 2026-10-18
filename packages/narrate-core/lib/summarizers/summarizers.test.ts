@@ -29,8 +29,8 @@ test('buildPrompt states the spoken-summary constraints', () => {
 describe.each([...SUMMARIZER_IDS])('%s summarizer', (summarizerId) => {
 	const summarizer = getSummarizer(summarizerId)
 
-	test('reports availability from the binary on PATH', async () => {
-		expect(await summarizer.available()).toBe(!!Bun.which(BINARY_BY_SUMMARIZER[summarizerId]))
+	test('reports availability from the binary on PATH', () => {
+		expect(summarizer.available()).toBe(!!Bun.which(BINARY_BY_SUMMARIZER[summarizerId]))
 	})
 
 	test.skipIf(skipLive)(

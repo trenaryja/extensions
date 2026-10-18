@@ -203,8 +203,8 @@ describe('transcriptSource', () => {
 		expect(resolved.text).not.toContain('hidden reasoning')
 	})
 
-	test('throws when the id is unknown', async () => {
-		await expect(transcriptSource('session-beta:missing', { root }).resolve()).rejects.toThrow(
+	test('throws when the id is unknown', () => {
+		expect(transcriptSource('session-beta:missing', { root }).resolve()).rejects.toThrow(
 			'No transcript message with id session-beta:missing',
 		)
 	})

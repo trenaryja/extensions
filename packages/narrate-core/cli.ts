@@ -255,7 +255,7 @@ const history = async (args: string[]) => {
 const summarize = async (args: string[]) => {
 	const { flags } = parseFlags(args, SUMMARIZE_FLAGS)
 	const summarizer = getSummarizer(pickId(SUMMARIZER_IDS, flags.summarizer, { fallback: 'claude', flag: 'summarizer' }))
-	if (!(await summarizer.available())) throw new Error(`${summarizer.id} is not on PATH`)
+	if (!summarizer.available()) throw new Error(`${summarizer.id} is not on PATH`)
 
 	const source = await readSource(flags)
 	const summary = await summarizer.summarize(source.text, NEVER_ABORTED)

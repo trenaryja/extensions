@@ -73,9 +73,9 @@ test.skipIf(!live)(
 
 test.skipIf(!live)(
 	'kokoro reports an unknown voice as an error',
-	async () => {
+	() => {
 		const backend = getBackend('kokoro')
-		await expect(backend.synthesize('hello', 'af_nope', neverAborts())).rejects.toThrow(/kokoro worker/)
+		expect(backend.synthesize('hello', 'af_nope', neverAborts())).rejects.toThrow(/kokoro worker/)
 	},
 	300_000,
 )
@@ -150,7 +150,6 @@ const voicesWithHelper = async (helperPath: string) => {
 		return await getBackend('say').voices()
 	} finally {
 		if (original === undefined) delete process.env.NARRATE_VOICE_METADATA
-		// eslint-disable-next-line require-atomic-updates -- restoring a value captured before the await is the point; nothing else writes this var
 		else process.env.NARRATE_VOICE_METADATA = original
 	}
 }

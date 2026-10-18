@@ -120,7 +120,7 @@ const capitalizeLike = (prefix: string, spoken: string) =>
 	/^[A-Z]/.test(prefix) ? spoken.charAt(0).toUpperCase() + spoken.slice(1) : spoken
 
 // Invisible on screen and inside tokens, so it has to go before anything matches on word shape.
-const stripInvisible = (message: string) => message.replace(/[\u{fe0e}\u{fe0f}\u{200d}\u{1f3fb}-\u{1f3ff}]/gu, '')
+const stripInvisible = (message: string) => message.replace(/\u{fe0e}|\u{fe0f}|\u{200d}|\p{Emoji_Modifier}/gu, '')
 
 const spokenDomain = (host: string) => host.replace(/^www\./, '').replaceAll('.', ' dot ')
 

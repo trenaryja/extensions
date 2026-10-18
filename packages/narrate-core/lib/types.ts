@@ -63,7 +63,7 @@ export type SummarizerId = (typeof SUMMARIZER_IDS)[number]
 
 export type Summarizer = {
 	id: SummarizerId
-	available: () => Promise<boolean>
+	available: () => boolean
 	summarize: (text: string, signal: AbortSignal) => Promise<string>
 }
 
