@@ -36,7 +36,9 @@ export function createWebviewHtml({
 	const src = webview.asWebviewUri(scriptUri)
 	const nonce = getNonce()
 	const csp = `default-src 'none'; img-src ${webview.cspSource} vscode-resource: https: data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';${cspAddons}`
-	const linkTags = styleUris.map((uri) => `\n  <link rel="stylesheet" href="${webview.asWebviewUri(uri)}" />`).join('')
+	const linkTags = styleUris
+		.map((uri) => `\n  <link rel="stylesheet" href="${webview.asWebviewUri(uri).toString()}" />`)
+		.join('')
 	const styleTag = headStyles ? `\n  <style>\n${headStyles}\n  </style>` : ''
 	const bodyContent = bodyHtml ? `${bodyHtml}\n  ` : ''
 	return `<!DOCTYPE html>
@@ -48,7 +50,7 @@ export function createWebviewHtml({
   <title>${title}</title>
 </head>
 <body>
-  ${bodyContent}<script nonce="${nonce}" src="${src}"></script>
+  ${bodyContent}<script nonce="${nonce}" src="${src.toString()}"></script>
 </body>
 </html>`
 }
