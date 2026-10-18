@@ -37,8 +37,12 @@ const runInScratch = async (
 	}
 }
 
-export const createCliSummarizer = (id: SummarizerId, command: string[], env?: Record<string, string>): Summarizer => ({
+export const createCliSummarizer = (
+	id: SummarizerId,
+	command: [string, ...string[]],
+	env?: Record<string, string>,
+): Summarizer => ({
 	id,
-	available: () => !!Bun.which(command[0]!),
+	available: () => !!Bun.which(command[0]),
 	summarize: (text, signal) => runInScratch(command, buildPrompt(text), { signal, env }),
 })

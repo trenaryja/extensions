@@ -2,6 +2,7 @@ import { stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
 import * as R from 'remeda'
+import { z } from 'zod'
 import { paths } from '../state'
 import type { Source, SourceText, TranscriptMessage } from '../types'
 
@@ -18,21 +19,23 @@ export type ListMessagesOptions = TranscriptOptions & {
 	minChars?: number
 }
 
-type TranscriptLine = {
-	type?: string
-	uuid?: string
-	sessionId?: string
-	cwd?: string
-	timestamp?: string
-	isSidechain?: boolean
-	message?: { content?: { type?: string; text?: string }[] }
-}
+const TranscriptLine = z.object({
+	type: z.string().optional(),
+	uuid: z.string().optional(),
+	sessionId: z.string().optional(),
+	cwd: z.string().optional(),
+	timestamp: z.string().optional(),
+	isSidechain: z.boolean().optional(),
+	message: z
+		.object({ content: z.array(z.object({ type: z.string().optional(), text: z.string().optional() })).optional() })
+		.optional(),
+})
 
 type Entry = { message: TranscriptMessage; text: string }
 
-const parseLine = (raw: string): TranscriptLine | null => {
+const parseLine = (raw: string) => {
 	try {
-		return JSON.parse(raw)
+		return TranscriptLine.safeParse(JSON.parse(raw)).data ?? null
 	} catch {
 		return null
 	}

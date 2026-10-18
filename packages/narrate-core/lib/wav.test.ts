@@ -37,7 +37,7 @@ test('concatenating appends the payloads and adds the durations', async () => {
 	const { read } = await roundTrip(concatWav(pieces), 'concat.wav')
 
 	expect(wavSeconds(read)).toBeCloseTo(0.875, 6)
-	expect(read.data).toEqual(new Uint8Array([...pieces[0]!.data, ...pieces[1]!.data, ...pieces[2]!.data]))
+	expect(read.data).toEqual(new Uint8Array(pieces.flatMap((piece) => [...piece.data])))
 })
 
 test('slicing keeps everything from the requested second onward', async () => {
@@ -49,10 +49,10 @@ test('slicing keeps everything from the requested second onward', async () => {
 })
 
 test('slicing a concatenation lands on the piece boundary', () => {
-	const pieces = [ramp(0.25, 0), ramp(0.5, 1000)]
-	const sliced = sliceWav(concatWav(pieces), 0.25)
+	const [first, second] = [ramp(0.25, 0), ramp(0.5, 1000)]
+	const sliced = sliceWav(concatWav([first, second]), 0.25)
 
-	expect(sliced.data).toEqual(pieces[1]!.data)
+	expect(sliced.data).toEqual(second.data)
 })
 
 test('slicing past the end yields no audio rather than a negative length', () => {

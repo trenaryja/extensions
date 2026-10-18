@@ -166,8 +166,8 @@ describe('lead chunk', () => {
 	test('carves a short lead off a long first sentence', () => {
 		const parts = texts(opener)
 		expect(parts.length).toBe(2)
-		expect(parts[0]!.length).toBeGreaterThanOrEqual(40)
-		expect(parts[0]!.length).toBeLessThanOrEqual(120)
+		expect(parts[0]?.length).toBeGreaterThanOrEqual(40)
+		expect(parts[0]?.length).toBeLessThanOrEqual(120)
 		expect(parts.flatMap(words)).toEqual(words(opener))
 	})
 

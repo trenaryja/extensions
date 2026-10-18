@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
-import { BACKEND_IDS } from '../types'
+import { BACKEND_IDS, Voice } from '../types'
 import { annotateVoices, parseVoices } from './say'
 import type { VoiceMetadata } from './say'
 import { getBackend } from '.'
@@ -24,7 +24,7 @@ describe.each([...BACKEND_IDS])('%s backend', (backendId) => {
 	test.skipIf(missing)('lists at least one voice', async () => {
 		const voices = await backend.voices()
 		expect(voices.length).toBeGreaterThan(0)
-		expect(voices[0]).toMatchObject({ id: expect.any(String), language: expect.any(String) })
+		expect(() => Voice.parse(voices[0])).not.toThrow()
 	})
 
 	test.skipIf(missing)('exposes an installed default voice', async () => {

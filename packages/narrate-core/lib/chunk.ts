@@ -29,10 +29,10 @@ const isSentenceDot = (line: string, index: number) => {
 const endsSentence = (line: string, terminator: number, end: number) => {
 	if (line[terminator] === '.' && !isSentenceDot(line, terminator)) return false
 	if (end >= line.length) return true
-	if (!WHITESPACE.test(line[end]!)) return false
+	if (!WHITESPACE.test(line.charAt(end))) return false
 	let next = end
-	while (next < line.length && WHITESPACE.test(line[next]!)) next += 1
-	return next >= line.length || SENTENCE_OPENER.test(line[next]!)
+	while (next < line.length && WHITESPACE.test(line.charAt(next))) next += 1
+	return next >= line.length || SENTENCE_OPENER.test(line.charAt(next))
 }
 
 const splitSentences = (line: string) => {
@@ -40,9 +40,9 @@ const splitSentences = (line: string) => {
 	let start = 0
 
 	for (let i = 0; i < line.length; i++) {
-		if (!TERMINATORS.has(line[i]!)) continue
+		if (!TERMINATORS.has(line.charAt(i))) continue
 		let end = i + 1
-		while (end < line.length && (TERMINATORS.has(line[end]!) || CLOSERS.has(line[end]!))) end += 1
+		while (end < line.length && (TERMINATORS.has(line.charAt(end)) || CLOSERS.has(line.charAt(end)))) end += 1
 
 		if (endsSentence(line, i, end)) {
 			sentences.push(line.slice(start, end))
@@ -66,16 +66,16 @@ const clauseBreaks = (text: string) =>
 
 const wordBreak = (text: string, start: number, limit: number) => {
 	let stop = limit
-	while (stop > start && !WHITESPACE.test(text[stop]!)) stop -= 1
+	while (stop > start && !WHITESPACE.test(text.charAt(stop))) stop -= 1
 
 	// A single word longer than the budget overruns rather than being cut in half.
 	if (stop <= start) {
 		stop = limit
-		while (stop < text.length && !WHITESPACE.test(text[stop]!)) stop += 1
+		while (stop < text.length && !WHITESPACE.test(text.charAt(stop))) stop += 1
 	}
 
 	let resume = stop
-	while (resume < text.length && WHITESPACE.test(text[resume]!)) resume += 1
+	while (resume < text.length && WHITESPACE.test(text.charAt(resume))) resume += 1
 	return { stop, resume }
 }
 

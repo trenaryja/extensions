@@ -1,7 +1,8 @@
 import { appendFile } from 'node:fs/promises'
 import * as R from 'remeda'
 import { paths, writeAtomic } from './state'
-import type { HistoryEntry, PlaybackState } from './types'
+import { HistoryEntry } from './types'
+import type { PlaybackState } from './types'
 
 const DEFAULT_LIMIT_ENTRIES = 200
 
@@ -28,9 +29,9 @@ export const appendHistory = async (state: PlaybackState, text: string) => {
 }
 
 // A crash mid-append leaves a torn last line; it costs its own entry, not the whole file.
-const parseEntry = (line: string): HistoryEntry | null => {
+const parseEntry = (line: string) => {
 	try {
-		return JSON.parse(line)
+		return HistoryEntry.safeParse(JSON.parse(line)).data ?? null
 	} catch {
 		return null
 	}

@@ -2,10 +2,12 @@ import type { Socket } from 'bun'
 import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import * as R from 'remeda'
+import { z } from 'zod'
 import workerScript from '../../worker/kokoro_worker.py' with { type: 'text' }
 import workerProject from '../../worker/pyproject.toml' with { type: 'text' }
 import { ensureStateDirs, paths } from '../state'
-import type { SpeechBackend, Synthesis, Voice, VoiceGender, WorkerStatus } from '../types'
+import { Synthesis, WorkerStatus } from '../types'
+import type { SpeechBackend, Voice, VoiceGender } from '../types'
 import { cachePath, readCachedSynthesis, writeCachedSynthesis } from './shared'
 
 // Voice ids are <language><gender>_<name>, so the first two letters carry the locale and the gender.
@@ -80,6 +82,9 @@ const toVoice = (id: string): Voice => ({
 })
 
 const WORKER_SCRIPT = 'kokoro_worker.py'
+
+// bun-types types every `.toml` import as parsed data, whatever its `with { type: 'text' }` says.
+if (typeof workerProject !== 'string') throw new Error('worker/pyproject.toml was bundled as data, not text')
 
 // The compiled binary carries the worker as text: it has to reach disk before uv can run it, and a
 // stale copy on disk would keep running yesterday's protocol.
@@ -179,7 +184,11 @@ const connectToWorker = async () => {
 	return connection
 }
 
-const exchange = async <Reply>({ socket, reply }: Connection, request: object, signal?: AbortSignal) => {
+const WorkerFailure = z.object({ error: z.string() })
+
+type Exchange<Reply> = { payload: object; reply: z.ZodType<Reply>; signal?: AbortSignal }
+
+const exchange = async <Reply>({ socket, reply: line }: Connection, { payload, reply, signal }: Exchange<Reply>) => {
 	// `reply` rejects on close, which says nothing about why, so the abort carries its own reason.
 	const { promise: cancelled, reject } = Promise.withResolvers<never>()
 	cancelled.catch(() => undefined)
@@ -194,30 +203,30 @@ const exchange = async <Reply>({ socket, reply }: Connection, request: object, s
 
 	try {
 		signal?.throwIfAborted()
-		socket.write(`${JSON.stringify(request)}\n`)
-		const response = JSON.parse(await Promise.race([reply, cancelled]))
-		if ('error' in response) throw new Error(`kokoro worker: ${response.error}`)
-		return response as Reply
+		socket.write(`${JSON.stringify(payload)}\n`)
+		const response: unknown = JSON.parse(await Promise.race([line, cancelled]))
+		const failure = WorkerFailure.safeParse(response)
+		if (failure.success) throw new Error(`kokoro worker: ${failure.data.error}`)
+		const parsed = reply.safeParse(response)
+		if (!parsed.success) throw new Error(`kokoro worker: unexpected reply: ${z.prettifyError(parsed.error)}`)
+		return parsed.data
 	} finally {
 		signal?.removeEventListener('abort', abandon)
 		socket.end()
 	}
 }
 
-const request = async <Reply>(payload: object, signal?: AbortSignal) =>
-	exchange<Reply>(await connectToWorker(), payload, signal)
-
 // Answers null when no worker is running, rather than starting one to ask.
 export const workerStatus = async () => {
 	const connection = await openConnection()
 	if (!connection) return null
-	return exchange<WorkerStatus>(connection, { op: 'status' })
+	return exchange(connection, { payload: { op: 'status' }, reply: WorkerStatus })
 }
 
 export const stopWorker = async () => {
 	const connection = await openConnection()
 	if (!connection) return false
-	await exchange<{ stopping: true }>(connection, { op: 'stop' })
+	await exchange(connection, { payload: { op: 'stop' }, reply: z.object({ stopping: z.literal(true) }) })
 	return true
 }
 
@@ -233,7 +242,8 @@ export const kokoroBackend: SpeechBackend = {
 		const cached = await readCachedSynthesis(wavPath)
 		if (cached) return cached
 
-		const synthesis = await request<Synthesis>({ text, voice: voiceId, out: wavPath }, signal)
+		const payload = { text, voice: voiceId, out: wavPath }
+		const synthesis = await exchange(await connectToWorker(), { payload, reply: Synthesis, signal })
 		// The sidecar is what makes a wav cacheable, so one left behind by an abandoned request is never served.
 		await writeCachedSynthesis(synthesis)
 		return synthesis

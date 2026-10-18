@@ -18,7 +18,8 @@
 		"remark-gfm": "^4.0.1",
 		"remeda": "^2.39.0",
 		"strip-markdown": "^6.0.0",
-		"unist-util-visit": "^5.1.0"
+		"unist-util-visit": "^5.1.0",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@types/mdast": "^4.0.4"

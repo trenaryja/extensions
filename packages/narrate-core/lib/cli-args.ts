@@ -24,16 +24,22 @@ const coerce = (kind: Exclude<FlagKind, 'boolean'>, name: string, raw: string | 
 	return value
 }
 
+// The mapped return type splits booleans from optionals, which the accumulator can't be typed as.
+const fitsSpec = <Spec extends FlagSpec>(
+	flags: Record<string, boolean | number | string>,
+	spec: Spec,
+): flags is ParsedArgs<Spec>['flags'] =>
+	R.entries(spec).every(
+		([name, kind]) => (kind !== 'boolean' && flags[name] === undefined) || typeof flags[name] === kind,
+	)
+
 export const parseFlags = <Spec extends FlagSpec>(args: string[], spec: Spec): ParsedArgs<Spec> => {
 	const flags: Record<string, boolean | number | string> = {}
 	for (const [name, kind] of R.entries(spec)) if (kind === 'boolean') flags[name] = false
 	const positional: string[] = []
-	let index = 0
+	const remaining = args.values()
 
-	while (index < args.length) {
-		const arg = args[index]! // while-guard: index < args.length
-		index += 1
-
+	for (const arg of remaining) {
 		if (!arg.startsWith('--')) {
 			if (isDashed(arg)) throw new Error(`unknown flag: ${arg}`)
 			positional.push(arg)
@@ -52,13 +58,11 @@ export const parseFlags = <Spec extends FlagSpec>(args: string[], spec: Spec): P
 			continue
 		}
 
-		const raw = inline ?? args[index]
-		if (inline === undefined) index += 1
-		flags[name] = coerce(kind, name, raw)
+		flags[name] = coerce(kind, name, inline ?? remaining.next().value)
 	}
 
-	// The mapped return type splits booleans from optionals; the accumulator can't be typed that way.
-	return { flags: flags as ParsedArgs<Spec>['flags'], positional }
+	if (!fitsSpec(flags, spec)) throw new Error('parsed flags drifted from their spec')
+	return { flags, positional }
 }
 
 type PickIdOptions<Id extends string> = { fallback: Id; flag: string }

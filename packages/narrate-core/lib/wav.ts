@@ -13,8 +13,7 @@ const bytesPerSecond = (format: WavFormat) => format.sampleRate * frameBytes(for
 
 export const wavSeconds = ({ format, data }: Wav) => data.length / bytesPerSecond(format)
 
-const chunkId = (bytes: Uint8Array, at: number) =>
-	String.fromCharCode(bytes[at]!, bytes[at + 1]!, bytes[at + 2]!, bytes[at + 3]!)
+const chunkId = (bytes: Uint8Array, at: number) => String.fromCharCode(...bytes.subarray(at, at + 4))
 
 // A RIFF header is 12 bytes, then [4-byte id][4-byte size] chunks: `fmt ` carries the channel count,
 // sample rate and bit depth, `data` the payload. Both live well inside the first 64 KB of any wav.

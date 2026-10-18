@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
+import { z } from 'zod'
 import { ensureStateDirs, paths } from '../state'
-import type { BackendId, SpeechBackend, Synthesis } from '../types'
+import { Synthesis } from '../types'
+import type { BackendId, SpeechBackend } from '../types'
 import { wavDuration } from '../wav'
 
 type CommandBuilder = (text: string, voiceId: string, outputPath: string) => string[]
@@ -43,10 +45,12 @@ const wavSynthesis = async (wavPath: string) => ({ wavPath, duration: await wavD
 export const readCachedSynthesis = async (wavPath: string): Promise<Synthesis | null> => {
 	const wav = Bun.file(wavPath)
 	if (!((await wav.exists()) && wav.size > 0)) return null
-	const sidecar = Bun.file(sidecarPath(wavPath))
+	const path = sidecarPath(wavPath)
+	const sidecar = Bun.file(path)
 	if (!(await sidecar.exists())) return null
-	const { duration, words } = await sidecar.json()
-	return { wavPath, duration, words }
+	const parsed = Synthesis.omit({ wavPath: true }).safeParse(await sidecar.json())
+	if (!parsed.success) throw new Error(`${path}: ${z.prettifyError(parsed.error)}`)
+	return { wavPath, ...parsed.data }
 }
 
 export const writeCachedSynthesis = ({ wavPath, duration, words }: Synthesis) =>

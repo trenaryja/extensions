@@ -150,7 +150,7 @@ const speakCommitShas = (message: string) => {
 		sha,
 		distinct.length === 1 ? 'the commit' : `commit "${COMMIT_LETTERS[index] ?? index + 1}"`,
 	])
-	return message.replace(NAMED_COMMIT_SHA, (match, noun = '') => {
+	return message.replace(NAMED_COMMIT_SHA, (match, noun: string = '') => {
 		const name = names[match.slice(noun.length)]
 		if (!name) return match
 		return capitalizeLike(noun, name)
@@ -168,7 +168,6 @@ const spokenPath = (path: string) => {
 }
 
 const speakFileLines = (message: string) =>
-	// eslint-disable-next-line max-params -- String.replace hands each capturing group its own argument; the arity is FILE_LINE's, not ours
 	message.replace(FILE_LINE, (match, path: string, first: string, last: string | undefined) => {
 		const spoken = spokenPath(path)
 		if (!spoken) return match

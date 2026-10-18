@@ -7,8 +7,8 @@ import { chunk } from './chunk'
 import { appendHistory, pruneHistory } from './history'
 import { playWav } from './player'
 import { ensureStateDirs, paths, readState, requestStop, writeState } from './state'
-import { isLivePhase } from './types'
-import type { BackendId, Chunk, Origin, PlaybackState, SeekTarget, SpeechBackend } from './types'
+import { isLivePhase, SeekTarget } from './types'
+import type { BackendId, Chunk, Origin, PlaybackState, SpeechBackend } from './types'
 import type { Wav, WavFormat } from './wav'
 import { concatWav, readWav, silentWav, sliceWav, wavSeconds, writeWav } from './wav'
 
@@ -93,10 +93,9 @@ const clearSignals = () => Promise.all(SIGNALS.map((path) => rm(path, { force: t
 
 const parseSeekTarget = (raw: string): SeekTarget | null => {
 	try {
-		const parsed = JSON.parse(raw)
-		if (Number.isInteger(parsed?.sentence)) return { sentence: Math.max(0, parsed.sentence) }
-		if (Number.isFinite(parsed?.seconds)) return { seconds: Math.max(0, parsed.seconds) }
-		return null
+		const { data: target } = SeekTarget.safeParse(JSON.parse(raw))
+		if (!target) return null
+		return 'sentence' in target ? { sentence: Math.max(0, target.sentence) } : { seconds: Math.max(0, target.seconds) }
 	} catch {
 		return null
 	}

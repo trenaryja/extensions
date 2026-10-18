@@ -39,7 +39,7 @@ test('a reader polling a state that is being rewritten never sees a torn documen
 	let reads = 0
 
 	const writing = (async () => {
-		for (let round = 0; round < 40; round++) await writeState(stateOf(sizes[round % sizes.length]!))
+		for (let pass = 0; pass < 5; pass++) for (const size of sizes) await writeState(stateOf(size))
 	})()
 
 	const reading = (async () => {

@@ -2,7 +2,8 @@ import { mkdirSync } from 'node:fs'
 import { readFile, rename } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { PlaybackState, SeekTarget } from './types'
+import { PlaybackState } from './types'
+import type { SeekTarget } from './types'
 
 const ROOT = process.env.NARRATE_STATE_DIR ?? join(homedir(), '.local', 'state', 'narrate')
 
@@ -54,7 +55,7 @@ export const writeState = (state: PlaybackState) =>
 // "nothing is playing", which is what a caller does with a null anyway.
 export const readState = async () => {
 	try {
-		return JSON.parse(await readFile(paths.state, 'utf8')) as PlaybackState
+		return PlaybackState.safeParse(JSON.parse(await readFile(paths.state, 'utf8'))).data ?? null
 	} catch {
 		return null
 	}

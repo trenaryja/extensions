@@ -2,6 +2,7 @@ import { afterAll, beforeEach, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
+import * as R from 'remeda'
 import type { PlaybackState, SpeechBackend } from './types'
 import { silentWav, wavDuration, writeWav } from './wav'
 
@@ -65,7 +66,8 @@ const spans = (state: Awaited<ReturnType<typeof run>>) =>
 
 const closeTo = (actual: number[][], expected: number[][]) => {
 	expect(actual.length).toBe(expected.length)
-	actual.forEach((span, index) => span.forEach((value, edge) => expect(value).toBeCloseTo(expected[index]![edge]!, 6)))
+	for (const [span, want] of R.zip(actual, expected))
+		for (const [value, edge] of R.zip(span, want)) expect(value).toBeCloseTo(edge, 6)
 }
 
 const WAIT_TIMEOUT_MS = 2000
@@ -123,8 +125,8 @@ test('plays one contiguous wav per paragraph and ends done', async () => {
 	const state = await run({}, { backend: fakeBackend(), play })
 
 	expect(played.map((entry) => entry.name)).toEqual(['0.wav', '1.wav'])
-	expect(played[0]!.seconds).toBeCloseTo(1.2, 6)
-	expect(played[1]!.seconds).toBeCloseTo(0.8, 6)
+	expect(played[0]?.seconds).toBeCloseTo(1.2, 6)
+	expect(played[1]?.seconds).toBeCloseTo(0.8, 6)
 	expect(state.phase).toBe('done')
 	expect(state.skipped).toEqual([])
 	expect((await readState())?.phase).toBe('done')
@@ -155,9 +157,9 @@ test('seek to a sentence restarts playback at that sentence, mid-paragraph', asy
 	const state = await run({}, { backend: fakeBackend(), play })
 
 	expect(played.map((entry) => entry.name)).toEqual(['0.wav', 'seek.wav'])
-	expect(played[1]!.position).toBeCloseTo(1.7, 6)
+	expect(played[1]?.position).toBeCloseTo(1.7, 6)
 	// Sentence 4 starts 0.5 s into a 0.8 s paragraph.
-	expect(played[1]!.seconds).toBeCloseTo(0.3, 6)
+	expect(played[1]?.seconds).toBeCloseTo(0.3, 6)
 	expect(state.phase).toBe('done')
 	expect(state.sentenceIndex).toBe(4)
 })
@@ -169,8 +171,8 @@ test('seek to a time starts part-way through the sentence holding it', async () 
 	const state = await run({}, { backend: fakeBackend(), play })
 
 	expect(played.map((entry) => entry.name)).toEqual(['0.wav', 'seek.wav'])
-	expect(played[1]!.position).toBeCloseTo(1.5, 6)
-	expect(played[1]!.seconds).toBeCloseTo(0.5, 6)
+	expect(played[1]?.position).toBeCloseTo(1.5, 6)
+	expect(played[1]?.seconds).toBeCloseTo(0.5, 6)
 	expect(state.sentenceIndex).toBe(4)
 })
 
@@ -261,7 +263,7 @@ test('stop mid-paragraph leaves the position where it was heard', async () => {
 	expect(played.map((entry) => entry.name)).toEqual(['0.wav'])
 	expect(state.phase).toBe('stopped')
 	expect(state.sentenceIndex).toBe(0)
-	expect(state.position).toBeLessThan(state.sentences[1]!.start)
+	expect(state.sentences[1]?.start).toBeGreaterThan(state.position)
 })
 
 test('a sentence whose synthesis fails becomes a 0.3 s gap in the same wav', async () => {
@@ -277,7 +279,7 @@ test('a sentence whose synthesis fails becomes a 0.3 s gap in the same wav', asy
 		[1.4, 1.7],
 	])
 	expect(played.map((entry) => entry.name)).toEqual(['0.wav', '1.wav'])
-	expect(played[0]!.seconds).toBeCloseTo(0.9, 6)
+	expect(played[0]?.seconds).toBeCloseTo(0.9, 6)
 	expect(state.phase).toBe('done')
 	expect(await Bun.file(paths.log).text()).toContain('synthesis failed for Bravo one.')
 })
