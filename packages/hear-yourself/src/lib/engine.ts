@@ -3,28 +3,37 @@ import { chmodSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { environment, LocalStorage } from '@raycast/api'
 import * as R from 'remeda'
+import { z } from 'zod'
 
-export type Running = {
-	running: true
-	pid: number
-	input: string
-	output: string
-	sampleRate: number
-	blocksize: number
-	volume: number
+const Running = z.object({
+	running: z.literal(true),
+	pid: z.number(),
+	input: z.string(),
+	output: z.string(),
+	sampleRate: z.number(),
+	blocksize: z.number(),
+	volume: z.number(),
 	/** Null while audio flows; otherwise paused, listing whichever pinned devices are unplugged. */
-	waitingFor: string[] | null
-	switchInput: string | null
-	switchOutput: string | null
-	inputPeakDb: number | null
-	starved: number
-	discarded: number
-	bufferedMs: number | null
-}
+	waitingFor: z.array(z.string()).nullable(),
+	switchInput: z.string().nullable(),
+	switchOutput: z.string().nullable(),
+	inputPeakDb: z.number().nullable(),
+	starved: z.number(),
+	discarded: z.number(),
+	bufferedMs: z.number().nullable(),
+})
+export type Running = z.infer<typeof Running>
 
-export type Status = Running | { running: false }
+const Status = z.discriminatedUnion('running', [Running, z.object({ running: z.literal(false) })])
+export type Status = z.infer<typeof Status>
 
-export type Devices = { inputs: string[]; outputs: string[]; defaultInput: string | null; defaultOutput: string | null }
+const Devices = z.object({
+	inputs: z.array(z.string()),
+	outputs: z.array(z.string()),
+	defaultInput: z.string().nullable(),
+	defaultOutput: z.string().nullable(),
+})
+export type Devices = z.infer<typeof Devices>
 
 // Unset keys fall through to the engine's own defaults.
 export type Settings = { input?: string; output?: string; blocksize?: number; volume?: number }
@@ -40,8 +49,14 @@ const resolveBinary = () => {
 	return binary
 }
 
-const run = <T>(args: readonly string[]) =>
-	new Promise<T>((resolve, reject) => {
+const parseReply = <Reply>(reply: z.ZodType<Reply>, args: readonly string[], stdout: string) => {
+	const parsed = reply.safeParse(JSON.parse(stdout))
+	if (!parsed.success) throw new Error(`hear-yourself-core ${args[0] ?? ''}: ${z.prettifyError(parsed.error)}`)
+	return parsed.data
+}
+
+const run = <Reply>(reply: z.ZodType<Reply>, args: readonly string[]) =>
+	new Promise<Reply>((resolve, reject) => {
 		const child = spawn(resolveBinary(), args, { stdio: ['ignore', 'pipe', 'pipe'] })
 		let stdout = ''
 		let stderr = ''
@@ -49,8 +64,12 @@ const run = <T>(args: readonly string[]) =>
 		child.stderr.on('data', (data: Buffer) => (stderr += data.toString()))
 		child.on('error', reject)
 		child.on('close', (code) => {
-			if (code === 0) return resolve(JSON.parse(stdout) as T)
-			reject(new Error(stderr.trim() || `hear-yourself-core exited with ${code}`))
+			if (code !== 0) return reject(new Error(stderr.trim() || `hear-yourself-core exited with ${code}`))
+			try {
+				resolve(parseReply(reply, args, stdout))
+			} catch (error) {
+				reject(error)
+			}
 		})
 	})
 
@@ -66,15 +85,15 @@ const flags = async () => [
 	notifyUrl(),
 ]
 
-export const status = () => run<Status>(['status'])
+export const status = () => run(Status, ['status'])
 
-export const devices = () => run<Devices>(['devices'])
+export const devices = () => run(Devices, ['devices'])
 
-export const start = async () => run<Running>(['start', ...(await flags())])
+export const start = async () => run(Running, ['start', ...(await flags())])
 
-export const stop = () => run<{ stopped: boolean }>(['stop'])
+export const stop = () => run(z.object({ stopped: z.boolean() }), ['stop'])
 
-export const toggle = async () => run<Status>(['toggle', ...(await flags())])
+export const toggle = async () => run(Status, ['toggle', ...(await flags())])
 
 export const restart = async () => {
 	await stop()

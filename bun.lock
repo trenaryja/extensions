@@ -38,6 +38,7 @@
         "@raycast/api": "^2.1.1",
         "@raycast/utils": "^2.3.0",
         "remeda": "^2.39.0",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@repo/hear-yourself-core": "workspace:*",
