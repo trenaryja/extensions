@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import { z } from 'zod'
 import * as vscode from 'vscode'
 import type { CommandEntry } from './registry'
 
@@ -66,7 +66,7 @@ export function defaultWebviewOptions(extensionUri: vscode.Uri, extraRoots: vsco
 export const registerCommands = (context: vscode.ExtensionContext, commands: readonly CommandEntry[]) => {
 	for (const { command, handler } of commands)
 		context.subscriptions.push(
-			vscode.commands.registerCommand(command, (...args) => handler({ vscode, context }, ...args)),
+			vscode.commands.registerCommand(command, (...args: unknown[]) => handler({ vscode, context }, ...args)),
 		)
 }
 
@@ -75,9 +75,9 @@ export const registerCommands = (context: vscode.ExtensionContext, commands: rea
  * to the schema default if the stored value is missing or invalid — so a bad setting never throws.
  */
 export const createConfig =
-	<S extends z.ZodObject>(schema: S) =>
-	<K extends string & keyof z.infer<S>>(key: K): z.infer<S>[K] => {
-		const field = schema.shape[key] as z.ZodType
-		const parsed = field.safeParse(vscode.workspace.getConfiguration().get(key))
-		return (parsed.success ? parsed.data : field.parse(undefined)) as z.infer<S>[K]
+	<Shape extends z.core.$ZodShape>(schema: z.ZodObject<Shape>) =>
+	<K extends string & keyof Shape>(key: K): z.output<Shape[K]> => {
+		const field: Shape[K] = schema.shape[key]
+		const parsed = z.safeParse(field, vscode.workspace.getConfiguration().get(key))
+		return parsed.success ? parsed.data : z.parse(field, undefined)
 	}

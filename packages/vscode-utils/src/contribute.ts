@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs'
+import { z } from 'zod'
 import { configToContributes } from './config'
 import type { ConfigSchema } from './config'
 import type { CommandEntry } from './registry'
@@ -49,7 +50,9 @@ export const syncContributes = async (
 	input: ContributeInput,
 	{ check = false }: { check?: boolean } = {},
 ) => {
-	const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'))
+	const parsed = z.record(z.string(), z.unknown()).safeParse(JSON.parse(await fs.readFile(packageJsonPath, 'utf8')))
+	if (!parsed.success) throw new Error(`${packageJsonPath}: not a JSON object`)
+	const pkg = parsed.data
 	const next = buildContributes(input)
 	const drifted = JSON.stringify(pkg.contributes ?? null) !== JSON.stringify(next)
 
@@ -59,10 +62,7 @@ export const syncContributes = async (
 		return { drifted: false }
 	}
 
-	if (drifted) {
-		pkg.contributes = next
-		await fs.writeFile(packageJsonPath, `${JSON.stringify(pkg, null, '\t')}\n`)
-	}
+	if (drifted) await fs.writeFile(packageJsonPath, `${JSON.stringify({ ...pkg, contributes: next }, null, '\t')}\n`)
 
 	return { drifted }
 }
