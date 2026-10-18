@@ -16,7 +16,7 @@ import {
 	status,
 	stop,
 } from './lib/narrate'
-import type { HistoryEntry, Sentence, Status } from './lib/narrate'
+import type { HistoryEntry, PlaybackState, Sentence, Status } from './lib/narrate'
 import { relativeTime } from './lib/relative-time'
 
 const POLL_MS = 1000
@@ -76,7 +76,45 @@ const historyAccessories = (entry: HistoryEntry) =>
 		R.filter(R.isNonNullish),
 	)
 
-// eslint-disable-next-line complexity -- the score is JSX `{cond && …}` and `?.`/`??` fallbacks, not control flow
+const playbackSubtitle = (state: PlaybackState) =>
+	[
+		state.phase,
+		`${state.sentenceIndex + 1}/${state.sentences.length}`,
+		`${clock(state.position)}/${clock(state.duration)}`,
+		`${state.speed}×`,
+		`${state.backend}/${state.voiceId}`,
+	].join(' · ')
+
+const EmptyView = ({ state, error }: { state?: Status; error?: string }) => {
+	const failed = state?.phase === 'error'
+	return (
+		<List.EmptyView
+			title={error ? 'narrate failed' : failed ? 'Narration failed' : 'Nothing playing'}
+			description={error ?? (failed ? state.error : 'Start one from Recent Messages or Read Selection.')}
+			icon={error || failed ? Icon.Warning : Icon.SpeakerOff}
+		/>
+	)
+}
+
+const HistorySection = ({ entries }: { entries: readonly HistoryEntry[] }) => (
+	<List.Section title='History'>
+		{entries.map((entry) => (
+			<List.Item
+				key={entry.finishedAt}
+				title={entry.label}
+				icon={Icon.SpeechBubble}
+				accessories={historyAccessories(entry)}
+				actions={
+					<ActionPanel>
+						<Action title='Play Again' icon={Icon.Play} onAction={() => report('Could not replay', replay(entry))} />
+						<Action.CopyToClipboard title='Copy Text' content={entry.text} />
+					</ActionPanel>
+				}
+			/>
+		))}
+	</List.Section>
+)
+
 export default function Command() {
 	const { state, error } = usePlaybackStatus()
 	const { data, isLoading: loadingHistory, revalidate } = useCachedPromise(history, [])
@@ -135,16 +173,6 @@ export default function Command() {
 		</>
 	)
 
-	const subtitle = active
-		? [
-				state.phase,
-				`${state.sentenceIndex + 1}/${state.sentences.length}`,
-				`${clock(state.position)}/${clock(state.duration)}`,
-				`${state.speed}×`,
-				`${state.backend}/${state.voiceId}`,
-			].join(' · ')
-		: undefined
-
 	return (
 		<List
 			isLoading={(state === undefined && !error) || loadingHistory}
@@ -153,15 +181,12 @@ export default function Command() {
 			navigationTitle={active ? state.label : 'Narrate'}
 			searchBarPlaceholder='Filter sentences…'
 		>
-			<List.EmptyView
-				title={error ? 'narrate failed' : state?.phase === 'error' ? 'Narration failed' : 'Nothing playing'}
-				description={
-					error ?? (state?.phase === 'error' ? state.error : 'Start one from Recent Messages or Read Selection.')
-				}
-				icon={error || state?.phase === 'error' ? Icon.Warning : Icon.SpeakerOff}
-			/>
+			<EmptyView state={state} error={error} />
 			{active && (
-				<List.Section title={follow ? 'Following' : 'Auto-follow off — ↵ on a sentence to jump'} subtitle={subtitle}>
+				<List.Section
+					title={follow ? 'Following' : 'Auto-follow off — ↵ on a sentence to jump'}
+					subtitle={playbackSubtitle(state)}
+				>
 					{state.sentences.map((sentence, index) => (
 						<List.Item
 							// the index IS the identity here: it is also the row id the selection tracks
@@ -188,28 +213,7 @@ export default function Command() {
 					))}
 				</List.Section>
 			)}
-			{!active && (
-				<List.Section title='History'>
-					{(data ?? []).map((entry) => (
-						<List.Item
-							key={entry.finishedAt}
-							title={entry.label}
-							icon={Icon.SpeechBubble}
-							accessories={historyAccessories(entry)}
-							actions={
-								<ActionPanel>
-									<Action
-										title='Play Again'
-										icon={Icon.Play}
-										onAction={() => report('Could not replay', replay(entry))}
-									/>
-									<Action.CopyToClipboard title='Copy Text' content={entry.text} />
-								</ActionPanel>
-							}
-						/>
-					))}
-				</List.Section>
-			)}
+			{!active && <HistorySection entries={data ?? []} />}
 		</List>
 	)
 }
