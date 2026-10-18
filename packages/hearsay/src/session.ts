@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { dictate, NATIVE_BINARY } from '@repo/hearsay-core'
 import type { DictateEvent, DictateSession } from '@repo/hearsay-core/types'
-import { TOGGLE } from './commands'
 import type { Focus } from './commands'
+import { TOGGLE } from './ids'
 import { getConfig } from './config'
 import { createGhost } from './ghost'
 import { insert } from './insert'
@@ -26,7 +26,7 @@ const create = (context: vscode.ExtensionContext) => {
 	const report = (error: unknown) => {
 		if (error instanceof Error && error.name === 'AbortError') return void output.info('download cancelled')
 		output.error(error instanceof Error ? error : String(error))
-		return vscode.window.showErrorMessage(`Hearsay: ${error instanceof Error ? error.message : error}`)
+		return vscode.window.showErrorMessage(`Hearsay: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
 	const prepareModel = () => resolveConfiguredModel(models, output).catch(report)

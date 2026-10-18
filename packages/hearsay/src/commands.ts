@@ -1,10 +1,8 @@
 import * as R from 'remeda'
 import { defineCommands } from '@repo/vscode-utils/registry'
 import { CATALOG, importSuperwhisper, megabytes, NATIVE_BINARY, SUPERWHISPER_SETTINGS } from '@repo/hearsay-core'
+import { CANCEL, TOGGLE } from './ids'
 import { recordingsDir } from './paths'
-
-export const TOGGLE = 'hearsay.toggle'
-export const CANCEL = 'hearsay.cancel'
 
 /** Where focus was when the key was pressed. `activeTextEditor` stays set behind the terminal and the commit box, so only a keybinding's `when` can tell. */
 export const FOCUSES = ['input', 'terminal'] as const
