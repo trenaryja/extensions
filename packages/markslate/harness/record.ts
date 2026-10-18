@@ -83,7 +83,7 @@ const glide = async (page: Page, to: Point, { duration = 700, arc = 0.14 } = {})
 /** Point within a locator's box — anchored off-center by default so text stays readable. */
 const anchorPoint = async (target: Locator, anchor: Anchor = OFF_CENTER) => {
 	const box = await target.boundingBox()
-	if (!box) throw new Error(`no bounding box for ${target}`)
+	if (!box) throw new Error(`no bounding box for ${target.toString()}`)
 	return { x: box.x + box.width * anchor.x, y: box.y + box.height * anchor.y }
 }
 

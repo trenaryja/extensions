@@ -254,7 +254,7 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 
 // Write to the clipboard via the async API, with an execCommand fallback for older webviews.
 function writeClipboard(text: string) {
-	if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
+	if ('clipboard' in navigator) navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
 	else fallbackCopy(text)
 }
 
@@ -478,9 +478,9 @@ function attachReorder({ handle, axis, index, frame, table, onClick, commit }: R
 
 		const finishListeners = () => {
 			handle.removeEventListener('pointermove', move)
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutual teardown: up/cancel call finishListeners, which must unbind them
+			// mutual teardown: up/cancel call finishListeners, which must unbind them
 			handle.removeEventListener('pointerup', up)
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutual teardown: up/cancel call finishListeners, which must unbind them
+			// mutual teardown: up/cancel call finishListeners, which must unbind them
 			handle.removeEventListener('pointercancel', cancel)
 			if (handle.hasPointerCapture(down.pointerId)) handle.releasePointerCapture(down.pointerId)
 		}
@@ -651,7 +651,7 @@ function gridToMarkdown(grid: string[][]) {
 	const widths = grid[0].map((_, col) => Math.max(3, ...grid.map((line) => (line[col] ?? '').length)))
 	const line = (cells: string[]) => `| ${widths.map((width, i) => (cells[i] ?? '').padEnd(width)).join(' | ')} |`
 	const separator = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`
-	return [line(grid[0] ?? []), separator, ...grid.slice(1).map(line)].join('\n')
+	return [line(grid[0]), separator, ...grid.slice(1).map(line)].join('\n')
 }
 
 // Parse pasted text into a grid — a markdown table, else TSV, else one column of lines.
@@ -707,7 +707,7 @@ function runEffect(effect: Effect, ctx: Ctx) {
 			if (!el) return
 			el.contentEditable = 'false'
 			const raw = el.dataset.raw ?? ''
-			const next = (el.textContent ?? '').replace(/[\r\n]+/g, ' ').trim()
+			const next = el.textContent.replace(/[\r\n]+/g, ' ').trim()
 
 			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell, next))
 			else {
@@ -993,7 +993,8 @@ const tableWidget = defineWidget<TableModel>({
 	// Every event inside the table (cells, handles, borders) is handled by our own DOM — CM never sees it, so a
 	// plain click can't move the cursor into the range and flip it to source. Raw editing is opt-in ("Edit source").
 	ignoreEvent: (event) =>
-		!!(event.target as HTMLElement)?.closest?.(
+		event.target instanceof Element &&
+		!!event.target.closest(
 			'.md-table, .md-table-add, .md-table-corner, .md-table-menu, .md-grid-sink, .md-grid-selbox',
 		),
 	toDOM: (model, view) => {
@@ -1327,15 +1328,13 @@ const formatOnEdit = EditorView.updateListener.of((update) => {
 
 	const isFormatPass = update.transactions.some((tr) => tr.annotation(formatPass))
 
-	if (update.docChanged && !isFormatPass)
-		for (const edge of [...tableEdges(update.state), ...update.state.field(tablesField).raw]) {
-			let touched = false
-			// eslint-disable-next-line max-params -- CodeMirror's iterChangedRanges dictates the callback arity
-			update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
-				if (fromB <= edge.to && toB >= edge.from) touched = true
-			})
-			if (touched) dirty.add(edge.from)
-		}
+	if (update.docChanged && !isFormatPass) {
+		const changed: [from: number, to: number][] = []
+		// eslint-disable-next-line max-params -- CodeMirror's iterChangedRanges dictates the callback arity
+		update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => changed.push([fromB, toB]))
+		for (const edge of [...tableEdges(update.state), ...update.state.field(tablesField).raw])
+			if (changed.some(([from, to]) => from <= edge.to && to >= edge.from)) dirty.add(edge.from)
+	}
 	if (dirty.size) armFormat(update.view)
 })
 

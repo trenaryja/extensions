@@ -79,7 +79,7 @@ function syncPanelToQuery(parts: FindPanelParts, update: ViewUpdate) {
 				queryChanged = true
 				const query = effect.value
 				if (query.search !== findInput.value) findInput.value = query.search
-				if ((query.replace ?? '') !== replaceInput.value) replaceInput.value = query.replace ?? ''
+				if (query.replace !== replaceInput.value) replaceInput.value = query.replace
 				caseFlag.on = query.caseSensitive
 				wordFlag.on = query.wholeWord
 				regexpFlag.on = query.regexp
@@ -97,7 +97,7 @@ function createFindPanel(view: EditorView): Panel {
 	const flag = (name: string, title: string, on: boolean): FindFlag => {
 		const button = iconButton(name, title, () => {
 			button.classList.toggle('md-find-flag-on')
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: a flag click commits, commit rebuilds the query, and refresh reads the flags back
+			// cycle: a flag click commits, commit rebuilds the query, and refresh reads the flags back
 			commit()
 		})
 		button.classList.add('md-find-flag')
@@ -130,7 +130,7 @@ function createFindPanel(view: EditorView): Panel {
 				: current
 					? `${current} of ${total}`
 					: `${total} found`
-		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: findBox holds the flag buttons, whose clicks call commit, which calls refresh
+		// cycle: findBox holds the flag buttons, whose clicks call commit, which calls refresh
 		findBox.classList.toggle('md-find-invalid', !!query.search && !query.valid)
 	}
 
@@ -203,9 +203,9 @@ function createFindPanel(view: EditorView): Panel {
 
 	const setReplace = (show: boolean) => {
 		wrap.classList.toggle('md-find-replacing', show)
-		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- cycle: the sash button's click calls setReplace, which flips the sash's own chevron
+		// cycle: the sash button's click calls setReplace, which flips the sash's own chevron
 		sash.classList.toggle('codicon-chevron-right', !show)
-		// eslint-disable-next-line @typescript-eslint/no-use-before-define -- same cycle as above
+		// same cycle as above
 		sash.classList.toggle('codicon-chevron-down', show)
 	}
 
@@ -217,7 +217,7 @@ function createFindPanel(view: EditorView): Panel {
 	wrap.append(sash, rows)
 
 	findInput.value = initial.search
-	replaceInput.value = initial.replace ?? ''
+	replaceInput.value = initial.replace
 
 	return {
 		dom: wrap,

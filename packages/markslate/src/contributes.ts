@@ -1,6 +1,7 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
 import { CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
 import type { CalloutConfig } from './callouts.data'
+import { EDITOR_VIEW_TYPE } from './ids'
 import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
 // Lazy import keeps this module (and the contributes codegen) free of any top-level `vscode` import.
@@ -8,9 +9,6 @@ const insert = async (text: string) => (await import('./editorProvider')).insert
 const PALETTE_MD = [{ id: 'commandPalette' as const, when: 'resourceExtname == .md' }]
 
 type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
-
-/** Custom-editor view type — the id VS Code opens `.md` files with. */
-export const EDITOR_VIEW_TYPE = 'markslate.editor'
 
 /** Static `contributes.customEditors` entry, fed to the codegen alongside the command registry. */
 export const customEditors = [

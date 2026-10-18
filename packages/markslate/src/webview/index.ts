@@ -241,7 +241,7 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
 	else if (msg.type === 'insert') insertSnippet(msg.text)
 	else if (msg.type === 'init') initEditor(msg)
 	else if (msg.type === 'update') applyExternalUpdate(msg.content)
-	else if (msg.type === 'settingsUpdate') {
+	else {
 		applySettings(msg.settings)
 
 		if (view) {

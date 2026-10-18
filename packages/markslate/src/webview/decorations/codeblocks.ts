@@ -202,7 +202,7 @@ export const codeHoverTools = ViewPlugin.fromClass(
 			this.hovered = open
 		}
 		onOver = (event: Event) => {
-			const line = (event.target as HTMLElement).closest?.<HTMLElement>('.cm-line')
+			const line = event.target instanceof Element ? event.target.closest<HTMLElement>('.cm-line') : null
 			if (!line?.classList.contains('md-cb')) return this.setHovered(null)
 			// Walk back to the block's opening fence line (where the tools live).
 			let open: HTMLElement | null = line
