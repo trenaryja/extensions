@@ -2,8 +2,10 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
+import { z } from 'zod'
 import {
 	createNativeSource,
+	Dictionary,
 	createWhisperBackend,
 	DEFAULT_MODEL_ID,
 	importSuperwhisper,
@@ -16,7 +18,7 @@ import {
 	SUPERWHISPER_SETTINGS,
 	VAD_POLICIES,
 } from './lib'
-import type { Dictionary, DownloadProgress, ListenOptions } from './lib'
+import type { DownloadProgress, ListenOptions } from './lib'
 
 const USAGE = `usage: cli.ts <verb> [--json]
   devices
@@ -68,7 +70,12 @@ const fail = (reason: string): never => {
 	process.exit(1)
 }
 
-const dictionary: Dictionary | undefined = values.dictionary === undefined ? undefined : JSON.parse(values.dictionary)
+const parseDictionary = (json: string) => {
+	const parsed = Dictionary.safeParse(JSON.parse(json))
+	return parsed.success ? parsed.data : fail(`--dictionary: ${z.prettifyError(parsed.error)}`)
+}
+
+const dictionary = values.dictionary === undefined ? undefined : parseDictionary(values.dictionary)
 
 const devices = async () => {
 	const found = await source.devices()

@@ -107,12 +107,15 @@ const download = async (entry: CatalogEntry, target: string, options: ResolveOpt
 
 	const fetchInto = async (url: string) => {
 		const response = await fetch(url, { signal: options.signal })
-		if (!response.ok || !response.body) throw new Error(`HTTP ${response.status} ${response.statusText}`)
+		const { body } = response
+		if (!response.ok || !body) throw new Error(`HTTP ${response.status} ${response.statusText}`)
 
 		const hash = createHash('sha256')
 		let received = 0
 		await pipeline(async function* hashed() {
-			for await (const chunk of response.body!) {
+			for await (const chunk of body) {
+				// bun-types leaves a fetch body's chunk type as `any`.
+				if (!(chunk instanceof Uint8Array)) throw new Error(`${url} streamed a non-byte chunk`)
 				hash.update(chunk)
 				received += chunk.length
 				options.onProgress?.({ received, total: entry.bytes })

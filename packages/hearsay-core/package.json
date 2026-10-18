@@ -13,6 +13,7 @@
 		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml"
 	},
 	"dependencies": {
-		"remeda": "^2.50.0"
+		"remeda": "^2.50.0",
+		"zod": "^4.4.3"
 	}
 }

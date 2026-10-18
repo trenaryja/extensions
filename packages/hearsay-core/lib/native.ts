@@ -1,19 +1,17 @@
 import { spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
 import { createInterface } from 'node:readline'
+import { z } from 'zod'
+import { DictateEvent, InputDevice, ListenEvent, Transcription } from './types'
 import type {
 	AudioSource,
-	DictateEvent,
 	DictateOptions,
 	DictateSession,
 	Dictionary,
-	InputDevice,
-	ListenEvent,
 	ListenOptions,
 	ListenSession,
 	TranscribeBackend,
 	TranscribeOptions,
-	Transcription,
 } from './types'
 
 export const NATIVE_BINARY = `hearsay-native${process.platform === 'win32' ? '.exe' : ''}`
@@ -43,12 +41,18 @@ const start = (binary: string, args: string[]) => {
 	return { child, settled }
 }
 
-const run = async <T>(binary: string, args: string[]) => {
+const parseOutput = <Output>(output: z.ZodType<Output>, args: string[], text: string) => {
+	const parsed = output.safeParse(JSON.parse(text))
+	if (!parsed.success) throw new Error(`${NATIVE_BINARY} ${args[0] ?? ''}: ${z.prettifyError(parsed.error)}`)
+	return parsed.data
+}
+
+const run = async <Output>(binary: string, args: string[], output: z.ZodType<Output>) => {
 	const { child, settled } = start(binary, args)
 	let stdout = ''
 	child.stdout.on('data', (chunk) => (stdout += chunk))
 	await settled()
-	return JSON.parse(stdout) as T
+	return parseOutput(output, args, stdout)
 }
 
 const listenArgs = ({ device, seconds, out, vad }: ListenOptions) => {
@@ -61,11 +65,11 @@ const listenArgs = ({ device, seconds, out, vad }: ListenOptions) => {
 }
 
 /** Every recording verb speaks the same JSON-lines-out, one-command-in protocol. */
-const stream = <T>(binary: string, args: string[]) => {
+const stream = <Event>(binary: string, args: string[], event: z.ZodType<Event>) => {
 	const { child, settled } = start(binary, args)
 
 	async function* events() {
-		for await (const line of createInterface({ input: child.stdout })) yield JSON.parse(line) as T
+		for await (const line of createInterface({ input: child.stdout })) yield parseOutput(event, args, line)
 		await settled()
 	}
 
@@ -81,8 +85,8 @@ const stream = <T>(binary: string, args: string[]) => {
 /** `binary` is explicit so the extension can point at its own VSIX asset without any path guessing here. */
 export const createNativeSource = (binary: string): AudioSource => ({
 	id: 'native',
-	devices: async () => (await run<{ devices: InputDevice[] }>(binary, ['devices'])).devices,
-	listen: (options): ListenSession => stream<ListenEvent>(binary, listenArgs(options)),
+	devices: async () => (await run(binary, ['devices'], z.object({ devices: z.array(InputDevice) }))).devices,
+	listen: (options): ListenSession => stream(binary, listenArgs(options), ListenEvent),
 })
 
 const dictionaryArgs = (dictionary?: Dictionary) => (dictionary ? ['--dictionary', JSON.stringify(dictionary)] : [])
@@ -101,7 +105,7 @@ const transcribeArgs = (model: string, wav: string, { language, prompt, threads,
  */
 export const createWhisperBackend = (binary: string, model: string): TranscribeBackend => ({
 	id: 'whisper',
-	transcribe: (wav, options = {}) => run<Transcription>(binary, transcribeArgs(model, wav, options)),
+	transcribe: (wav, options = {}) => run(binary, transcribeArgs(model, wav, options), Transcription),
 })
 
 const dictateArgs = (model: string, options: DictateOptions) => {
@@ -123,10 +127,10 @@ const dictateArgs = (model: string, options: DictateOptions) => {
  * without waiting for the recording to end. This is what makes a batch model feel like a streaming one.
  */
 export const dictate = (binary: string, model: string, options: DictateOptions = {}): DictateSession =>
-	stream<DictateEvent>(binary, dictateArgs(model, options))
+	stream(binary, dictateArgs(model, options), DictateEvent)
 
 /** The dictionary applied to text with no audio behind it — one process for the whole batch. */
 export const correct = async (binary: string, dictionary: Dictionary, texts: readonly string[]) => {
 	const args = ['correct', ...dictionaryArgs(dictionary), ...texts.flatMap((text) => ['--text', text])]
-	return (await run<{ texts: string[] }>(binary, args)).texts
+	return (await run(binary, args, z.object({ texts: z.array(z.string()) }))).texts
 }

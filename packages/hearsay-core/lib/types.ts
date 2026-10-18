@@ -1,14 +1,19 @@
+import { z } from 'zod'
+
 export const VAD_POLICIES = ['off', 'offline', 'streaming'] as const
 export type VadPolicy = (typeof VAD_POLICIES)[number]
 
-export type InputDevice = { index: string; name: string; isDefault: boolean }
+export const InputDevice = z.object({ index: z.string(), name: z.string(), isDefault: z.boolean() })
+export type InputDevice = z.infer<typeof InputDevice>
 
 /** Emitted one JSON object per line by the helper; `done` or `cancelled` is always last. */
-export type ListenEvent =
-	| { event: 'ready' }
-	| { event: 'level'; bands: number[] }
-	| { event: 'done'; wav: string; samples: number; seconds: number }
-	| { event: 'cancelled' }
+export const ListenEvent = z.discriminatedUnion('event', [
+	z.object({ event: z.literal('ready') }),
+	z.object({ event: z.literal('level'), bands: z.array(z.number()) }),
+	z.object({ event: z.literal('done'), wav: z.string(), samples: z.number(), seconds: z.number() }),
+	z.object({ event: z.literal('cancelled') }),
+])
+export type ListenEvent = z.infer<typeof ListenEvent>
 
 export type ListenOptions = {
 	device?: string
@@ -31,20 +36,26 @@ export type ListenSession = {
  * whisper's prompt and snaps sound-alikes to its spelling; `replacements` swap exact phrases, whole-word
  * and case-insensitive, before that fuzzy pass runs.
  */
-export type Dictionary = { vocabulary?: readonly string[]; replacements?: Readonly<Record<string, string>> }
+export const Dictionary = z.object({
+	vocabulary: z.array(z.string()).readonly().optional(),
+	replacements: z.record(z.string(), z.string()).readonly().optional(),
+})
+export type Dictionary = z.infer<typeof Dictionary>
 
 /**
  * Recording and transcription in one resident process. `partial` is a re-decode of the utterance still
  * being spoken and is replaced wholesale by the next one; `utterance` is final and never revised.
  */
-export type DictateEvent =
-	| { event: 'loaded'; loadMs: number }
-	| { event: 'ready' }
-	| { event: 'level'; bands: number[] }
-	| { event: 'partial'; text: string }
-	| { event: 'utterance'; text: string; raw: string; seconds: number }
-	| { event: 'done'; wav: string; text: string; samples: number; seconds: number }
-	| { event: 'cancelled' }
+export const DictateEvent = z.discriminatedUnion('event', [
+	z.object({ event: z.literal('loaded'), loadMs: z.number() }),
+	z.object({ event: z.literal('ready') }),
+	z.object({ event: z.literal('level'), bands: z.array(z.number()) }),
+	z.object({ event: z.literal('partial'), text: z.string() }),
+	z.object({ event: z.literal('utterance'), text: z.string(), raw: z.string(), seconds: z.number() }),
+	z.object({ event: z.literal('done'), wav: z.string(), text: z.string(), samples: z.number(), seconds: z.number() }),
+	z.object({ event: z.literal('cancelled') }),
+])
+export type DictateEvent = z.infer<typeof DictateEvent>
 
 export type DictateOptions = {
 	device?: string
@@ -84,19 +95,21 @@ export type AudioSource = {
 	listen: (options: ListenOptions) => ListenSession
 }
 
-export type Segment = { start: number; end: number; text: string }
+export const Segment = z.object({ start: z.number(), end: z.number(), text: z.string() })
+export type Segment = z.infer<typeof Segment>
 
-export type Transcription = {
-	text: string
+export const Transcription = z.object({
+	text: z.string(),
 	/** Whisper's own words, before the dictionary corrected them into `text`. */
-	raw: string
-	segments: readonly Segment[]
+	raw: z.string(),
+	segments: z.array(Segment).readonly(),
 	/** Audio duration, next to what decoding it cost — together they give the real-time factor. */
-	seconds: number
-	ms: number
+	seconds: z.number(),
+	ms: z.number(),
 	/** Model load, which a warm backend pays once and a cold one pays per call. */
-	loadMs?: number
-}
+	loadMs: z.number().optional(),
+})
+export type Transcription = z.infer<typeof Transcription>
 
 export type TranscribeOptions = {
 	language?: string
