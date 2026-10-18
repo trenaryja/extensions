@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Glyphary</title>
+		<link rel="stylesheet" href="./style.css" />
+		<script type="module" src="./picker.js"></script>
+	</head>
+	<body class="bg-base-100">
+		<header class="sticky top-0 z-10 flex flex-col gap-2 bg-base-100 p-3">
+			<input id="search" class="input w-full" type="search" placeholder="Search icons" autocomplete="off" autofocus />
+			<div class="flex items-center gap-2">
+				<select id="set" class="select select-sm flex-1"></select>
+				<span id="count" class="badge badge-ghost"></span>
+			</div>
+		</header>
+		<main id="grid" class="relative"></main>
+		<div class="toast toast-center hidden" id="toast"><div class="alert"></div></div>
+	</body>
+</html>

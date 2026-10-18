@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.trenary.glyphary">
+	<application android:label="Glyphary" android:icon="@mipmap/ic_launcher">
+		<activity android:name=".PickerActivity" android:exported="true" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:windowSoftInputMode="adjustResize">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			<!-- Launchers find icon packs by querying these actions. -->
+			<intent-filter>
+				<action android:name="com.novalauncher.THEME" />
+				<action android:name="org.adw.launcher.THEMES" />
+				<action android:name="org.adw.ActivityStarter.THEMES" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+			<!-- Nova lists the pack's own picker instead of its built-in grid, which has no search. -->
+			<intent-filter>
+				<action android:name="com.novalauncher.THEME" />
+				<category android:name="com.novalauncher.category.CUSTOM_ICON_PICKER" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="org.adw.launcher.icons.ACTION_PICK_ICON" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+	</application>
+</manifest>

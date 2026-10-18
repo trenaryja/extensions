@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="glyph">#FFFFFF</color>
+	<!-- Nova tints its picker toolbar from this icon; a transparent one gives a white toolbar that hides its buttons. -->
+	<color name="launcher_background">#1D232A</color>
+</resources>
