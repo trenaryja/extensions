@@ -4,7 +4,7 @@ import * as R from 'remeda'
 import type { Running, Settings } from './lib/engine'
 import { choose, devices, errorMessage, restart, settings, start, status, stop } from './lib/engine'
 
-type Act = (work: () => Promise<unknown>, failure: string) => () => Promise<void>
+type Act = (work: () => Promise<unknown>, failure: string) => () => void
 
 const load = async () => {
 	const [state, available, chosen] = await Promise.all([status(), devices(), settings()])
@@ -63,15 +63,12 @@ export default function Command() {
 	const { data, isLoading, revalidate } = usePromise(load)
 	const running = data?.state.running ? data.state : undefined
 
-	const act: Act = (work, failure) => async () => {
-		try {
-			await work()
-		} catch (error) {
-			await showToast({ style: Toast.Style.Failure, title: failure, message: errorMessage(error) })
-		}
-
-		await revalidate()
-	}
+	const act: Act = (work, failure) => () =>
+		void work()
+			.catch((error: unknown) =>
+				showToast({ style: Toast.Style.Failure, title: failure, message: errorMessage(error) }),
+			)
+			.then(() => revalidate())
 
 	const choice = <K extends keyof Settings>(
 		key: K,
