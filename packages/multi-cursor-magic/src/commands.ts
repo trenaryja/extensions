@@ -121,7 +121,7 @@ export const commands = defineCommands([
 		handler: createCommand({
 			type: 'direct',
 			parseFn: (x) => x,
-			transform: (selection) => (0, eval)(selection),
+			transform: (selection) => String((0, eval)(selection)),
 		}),
 	},
 
