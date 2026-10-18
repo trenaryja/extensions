@@ -7,10 +7,10 @@ export const toMessage = (error: unknown) => (error instanceof Error ? error.mes
 export const formatFile = async (filePath: string): Promise<void> => {
 	try {
 		const content = fs.readFileSync(filePath, 'utf8')
-		const rootPackageJsonPath = path.join(process.cwd(), 'package.json')
-		const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8'))
-		const prettierConfig = rootPackageJson.prettier ?? {}
-		const formatted = await prettier.format(content, { ...prettierConfig, filepath: filePath })
+		const formatted = await prettier.format(content, {
+			...(await prettier.resolveConfig(filePath)),
+			filepath: filePath,
+		})
 		fs.writeFileSync(filePath, formatted)
 	} catch (error) {
 		console.warn(`Warning: Could not format file ${filePath}: ${toMessage(error)}`)
