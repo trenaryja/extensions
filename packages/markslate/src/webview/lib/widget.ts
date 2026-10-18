@@ -15,8 +15,11 @@ type WidgetSpec<T> = {
  */
 export const defineWidget = <T>(spec: WidgetSpec<T>) => {
 	class FunctionalWidget extends WidgetType {
-		constructor(readonly value: T) {
+		readonly value: T
+
+		constructor(value: T) {
 			super()
+			this.value = value
 		}
 
 		override eq(other: FunctionalWidget) {
