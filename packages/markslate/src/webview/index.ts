@@ -170,7 +170,7 @@ window.addEventListener('error', (event) => {
 	vscode.postMessage({
 		type: 'webviewError',
 		message: event.message,
-		stack: (event.error as Error | null)?.stack ?? '',
+		stack: event.error instanceof Error ? (event.error.stack ?? '') : '',
 	})
 })
 
@@ -207,8 +207,7 @@ function createInitialEditor(content: string) {
 		view = createEditor(content)
 		view.focus()
 		// Harness-only: expose the view so the headless driver can assert caret/selection state.
-		if ((window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
-			(window as unknown as { __mdView?: EditorView }).__mdView = view
+		if ('HARNESS_CONTENT' in window) Object.assign(window, { __mdView: view })
 	} catch (err) {
 		const container = document.getElementById('editor')
 

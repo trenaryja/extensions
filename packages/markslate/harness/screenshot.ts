@@ -18,7 +18,7 @@ const content = readFileSync(markdownFile, 'utf8')
 await withPage({ width: 900, height: 1000, deviceScaleFactor: 2 }, async (page) => {
 	page.on('pageerror', (error) => console.error('[pageerror]', error.message))
 	await page.addInitScript((markdown: string) => {
-		;(window as unknown as { HARNESS_CONTENT: string }).HARNESS_CONTENT = markdown
+		Object.assign(window, { HARNESS_CONTENT: markdown })
 	}, content)
 	await page.goto(`file://${join(here, 'index.html')}`)
 	await page.waitForSelector('.cm-content', { timeout: 15000 })

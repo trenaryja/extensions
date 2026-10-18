@@ -42,13 +42,12 @@ const FALLBACK_ICON = '$(note)'
  * definition (aliases map to their primary) → the user's `default` override. Unknown types get the fallback
  * icon and no color, so the renderer falls back to its neutral accent.
  */
-// eslint-disable-next-line complexity -- the score is the two `??` layering cascades below; there are no branches to split
 export const resolveCallout = (config: CalloutConfig, type: string) => {
 	const name = type.toLowerCase()
 	const primary = ALIAS_TO_PRIMARY[name] ?? name
-	const builtin = CALLOUTS[primary]
+	const layers = [config[name], config[primary], CALLOUTS[primary], config.default]
 	return {
-		icon: config[name]?.icon ?? config[primary]?.icon ?? builtin?.icon ?? config.default?.icon ?? FALLBACK_ICON,
-		color: config[name]?.color ?? config[primary]?.color ?? builtin?.color ?? config.default?.color,
+		icon: layers.find((layer) => layer?.icon !== undefined)?.icon ?? FALLBACK_ICON,
+		color: layers.find((layer) => layer?.color !== undefined)?.color,
 	}
 }

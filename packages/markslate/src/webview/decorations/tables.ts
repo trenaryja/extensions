@@ -237,7 +237,7 @@ function openMenu(view: EditorView, at: { x: number; y: number }, items: MenuIte
 	menu.style.top = `${Math.max(8, Math.min(at.y, window.innerHeight - menu.offsetHeight - 8))}px`
 
 	const onDown = (event: Event) => {
-		if (!menu.contains(event.target as Node)) closeMenu()
+		if (!(event.target instanceof Node && menu.contains(event.target))) closeMenu()
 	}
 
 	const onKey = (event: KeyboardEvent) => event.key === 'Escape' && closeMenu()
@@ -394,15 +394,15 @@ type DragItem = { cells: HTMLElement[]; start: number; size: number }
 // Captured at drag start — a drag makes no document edit until the drop, so the widget DOM is frozen and we
 // can animate it freely with transforms.
 function collectDragItems(table: HTMLElement, axis: Axis): DragItem[] {
-	const rows = [...table.querySelectorAll('tbody tr')] as HTMLElement[]
+	const rows = [...table.querySelectorAll<HTMLElement>('tbody tr')]
 	if (axis === 'row')
 		return rows.map((tr) => {
 			const rect = tr.getBoundingClientRect()
 			return { cells: [tr], start: rect.top, size: rect.height }
 		})
-	const headers = [...table.querySelectorAll('thead th')] as HTMLElement[]
+	const headers = [...table.querySelectorAll<HTMLElement>('thead th')]
 	return headers.map((th, col) => {
-		const cells = [th, ...rows.map((tr) => tr.children[col])].filter(Boolean) as HTMLElement[]
+		const cells = [th, ...rows.map((tr) => tr.children[col])].filter((cell) => cell instanceof HTMLElement)
 		const rect = th.getBoundingClientRect()
 		return { cells, start: rect.left, size: rect.width }
 	})
@@ -565,13 +565,14 @@ function ctxFor(view: EditorView, from: number): Ctx | null {
 	return { view, from, model, table, frame, sink, box }
 }
 
-const cellTd = (table: HTMLElement, cell: Cell): HTMLElement | undefined => {
+const cellTd = (table: HTMLElement, cell: Cell) => {
 	const row = cell.row < 0 ? table.querySelector('thead tr') : table.querySelectorAll('tbody tr')[cell.row]
-	return row?.children[cell.col] as HTMLElement | undefined
+	const td = row?.children[cell.col]
+	return td instanceof HTMLElement ? td : undefined
 }
 
 const cellContentEl = (table: HTMLElement, cell: Cell) =>
-	cellTd(table, cell)?.querySelector('.md-td-content') as HTMLElement | undefined
+	cellTd(table, cell)?.querySelector<HTMLElement>('.md-td-content')
 
 const placeCaret = (el: HTMLElement, toStart: boolean) => {
 	const range = document.createRange()
@@ -688,51 +689,56 @@ function pasteRange(ctx: Ctx, cell: Cell) {
 	rewrite(ctx.view, ctx.model, model)
 }
 
-// eslint-disable-next-line complexity -- one arm per Effect variant; the branching belongs to the machine, not the runner
+function focusCell(ctx: Ctx, effect: Extract<Effect, { e: 'focusCell' }>) {
+	// A preceding `commit` in the same event may have rebuilt the widget → resolve against the fresh DOM.
+	const el = cellContentEl(ctxFor(ctx.view, ctx.from)?.table ?? ctx.table, effect.cell)
+	if (!el) return
+	el.contentEditable = 'true'
+	el.textContent = effect.seed ?? el.dataset.raw ?? ''
+	el.focus({ preventScroll: true })
+	if (effect.caret === 'start') placeCaretStart(el)
+	else placeCaretEnd(el)
+}
+
+function commitCell(ctx: Ctx, cell: Cell) {
+	const el = cellContentEl(ctx.table, cell)
+	if (!el) return
+	el.contentEditable = 'false'
+	const raw = el.dataset.raw ?? ''
+	const next = el.textContent.replace(/[\r\n]+/g, ' ').trim()
+
+	if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, cell, next))
+	else {
+		el.textContent = ''
+		appendInline(el, raw)
+	}
+}
+
+function cancelEdit(ctx: Ctx, cell: Cell) {
+	const el = cellContentEl(ctx.table, cell)
+	if (!el) return
+	el.contentEditable = 'false'
+	el.textContent = ''
+	appendInline(el, el.dataset.raw ?? '')
+}
+
+function exitDoc(ctx: Ctx, side: Extract<Effect, { e: 'exitDoc' }>['side']) {
+	const model = ctxFor(ctx.view, ctx.from)?.model ?? ctx.model // fresh: a preceding commit may have resized it
+	const anchor = side === 'bottom' ? Math.min(model.to + 1, ctx.view.state.doc.length) : Math.max(model.from - 1, 0)
+	ctx.view.dispatch({ selection: { anchor }, scrollIntoView: true })
+	ctx.view.focus()
+}
+
 function runEffect(effect: Effect, ctx: Ctx) {
 	switch (effect.e) {
-		case 'focusCell': {
-			// A preceding `commit` in the same event may have rebuilt the widget → resolve against the fresh DOM.
-			const el = cellContentEl(ctxFor(ctx.view, ctx.from)?.table ?? ctx.table, effect.cell)
-			if (!el) return
-			el.contentEditable = 'true'
-			el.textContent = effect.seed ?? el.dataset.raw ?? ''
-			el.focus({ preventScroll: true })
-			if (effect.caret === 'start') placeCaretStart(el)
-			else placeCaretEnd(el)
-			return
-		}
-		case 'commit': {
-			const el = cellContentEl(ctx.table, effect.cell)
-			if (!el) return
-			el.contentEditable = 'false'
-			const raw = el.dataset.raw ?? ''
-			const next = el.textContent.replace(/[\r\n]+/g, ' ').trim()
-
-			if (next !== raw) rewrite(ctx.view, ctx.model, setCell(ctx.model, effect.cell, next))
-			else {
-				el.textContent = ''
-				appendInline(el, raw)
-			}
-
-			return
-		}
-		case 'cancelEdit': {
-			const el = cellContentEl(ctx.table, effect.cell)
-			if (!el) return
-			el.contentEditable = 'false'
-			el.textContent = ''
-			appendInline(el, el.dataset.raw ?? '')
-			return
-		}
-		case 'exitDoc': {
-			const model = ctxFor(ctx.view, ctx.from)?.model ?? ctx.model // fresh: a preceding commit may have resized it
-			const anchor =
-				effect.side === 'bottom' ? Math.min(model.to + 1, ctx.view.state.doc.length) : Math.max(model.from - 1, 0)
-			ctx.view.dispatch({ selection: { anchor }, scrollIntoView: true })
-			ctx.view.focus()
-			return
-		}
+		case 'focusCell':
+			return focusCell(ctx, effect)
+		case 'commit':
+			return commitCell(ctx, effect.cell)
+		case 'cancelEdit':
+			return cancelEdit(ctx, effect.cell)
+		case 'exitDoc':
+			return exitDoc(ctx, effect.side)
 		case 'clearRange':
 			return clearRange(ctx, effect.anchor, effect.focus)
 		case 'copyRange':
@@ -1329,11 +1335,10 @@ const formatOnEdit = EditorView.updateListener.of((update) => {
 	const isFormatPass = update.transactions.some((tr) => tr.annotation(formatPass))
 
 	if (update.docChanged && !isFormatPass) {
-		const changed: [from: number, to: number][] = []
-		// eslint-disable-next-line max-params -- CodeMirror's iterChangedRanges dictates the callback arity
-		update.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => changed.push([fromB, toB]))
+		// Inverted, the changes' A side is the new document, which is where the edges live.
+		const changed = update.changes.invertedDesc
 		for (const edge of [...tableEdges(update.state), ...update.state.field(tablesField).raw])
-			if (changed.some(([from, to]) => from <= edge.to && to >= edge.from)) dirty.add(edge.from)
+			if (changed.touchesRange(edge.from, edge.to)) dirty.add(edge.from)
 	}
 	if (dirty.size) armFormat(update.view)
 })
@@ -1355,5 +1360,5 @@ export const tablesPlugin = [
 ]
 
 // Harness-only: expose the interaction state so the headless driver can assert grid transitions.
-if (typeof window !== 'undefined' && (window as unknown as { HARNESS_CONTENT?: string }).HARNESS_CONTENT !== undefined)
-	(window as unknown as { __gridState?: () => unknown }).__gridState = () => ({ ...gridState, from: activeFrom })
+if (typeof window !== 'undefined' && 'HARNESS_CONTENT' in window)
+	Object.assign(window, { __gridState: () => ({ ...gridState, from: activeFrom }) })

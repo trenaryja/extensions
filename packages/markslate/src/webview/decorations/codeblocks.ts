@@ -71,15 +71,17 @@ const styleFor = (token: ShikiToken) => {
 	return parts.join(';')
 }
 
+const isBundledLanguage = (lang: string): lang is BundledLanguage => lang in bundledLanguages
+
 // Tokenize a block's code with Shiki. Returns null (and kicks off an async language load + refresh) until the
 // highlighter and language are ready; results are cached by lang+theme+code. Offsets are absolute into `code`.
 export function tokenize(lang: string, code: string, theme: string): Token[] | null {
 	const hl = highlighter
-	if (!hl || !(lang in bundledLanguages)) return null
+	if (!hl || !isBundledLanguage(lang)) return null
 	if (!loadedLangs.has(lang)) {
 		if (!loadingLangs.has(lang)) {
 			loadingLangs.add(lang)
-			void hl.loadLanguage(bundledLanguages[lang as BundledLanguage]).then(() => {
+			void hl.loadLanguage(bundledLanguages[lang]).then(() => {
 				loadedLangs.add(lang)
 				loadingLangs.delete(lang)
 				requestRefresh?.()
@@ -205,10 +207,10 @@ export const codeHoverTools = ViewPlugin.fromClass(
 			const line = event.target instanceof Element ? event.target.closest<HTMLElement>('.cm-line') : null
 			if (!line?.classList.contains('md-cb')) return this.setHovered(null)
 			// Walk back to the block's opening fence line (where the tools live).
-			let open: HTMLElement | null = line
+			let open: Element | null = line
 			while (open?.classList.contains('md-cb') && !open.classList.contains('md-cb-open'))
-				open = open.previousElementSibling as HTMLElement | null
-			this.setHovered(open?.classList.contains('md-cb-open') ? open : null)
+				open = open.previousElementSibling
+			this.setHovered(open instanceof HTMLElement && open.classList.contains('md-cb-open') ? open : null)
 		}
 		onLeave = () => this.setHovered(null)
 

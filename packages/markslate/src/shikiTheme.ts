@@ -1,24 +1,37 @@
 import * as vscode from 'vscode'
+import { z } from 'zod'
 
-type ThemeJson = {
-	name?: string
-	type?: string
-	include?: string
-	colors?: Record<string, string>
-	tokenColors?: unknown[]
-}
+// Loose: the theme goes to Shiki whole, so keys read only there must survive. VS Code lets a color be null.
+const ThemeJson = z.looseObject({
+	name: z.string().optional(),
+	type: z.string().optional(),
+	include: z.string().optional(),
+	colors: z.record(z.string(), z.string().nullable()).optional(),
+	tokenColors: z.array(z.unknown()).optional(),
+})
+type ThemeJson = z.infer<typeof ThemeJson>
+
+const ThemeContributions = z.object({
+	contributes: z
+		.object({
+			themes: z
+				.array(z.object({ label: z.string().optional(), id: z.string().optional(), path: z.string() }))
+				.optional(),
+		})
+		.optional(),
+})
 
 // VS Code theme files are usually JSON but occasionally JSONC — try strict parse, then a best-effort strip.
-const parseJsonc = (text: string): ThemeJson | null => {
+const parseJsonc = (text: string) => {
 	try {
-		return JSON.parse(text)
+		return ThemeJson.safeParse(JSON.parse(text)).data ?? null
 	} catch {
 		try {
 			const stripped = text
 				.replace(/\/\*[\s\S]*?\*\//g, '')
 				.replace(/(^|[^:])\/\/.*$/gm, '$1')
 				.replace(/,(\s*[}\]])/g, '$1')
-			return JSON.parse(stripped)
+			return ThemeJson.safeParse(JSON.parse(stripped)).data ?? null
 		} catch {
 			return null
 		}
@@ -56,8 +69,7 @@ const resolveIncludes = async (uri: vscode.Uri, theme: ThemeJson, depth = 0): Pr
  */
 const resolveByLabel = async (label: string): Promise<ThemeJson | null> => {
 	for (const extension of vscode.extensions.all) {
-		const themes = extension.packageJSON?.contributes?.themes as
-			{ label?: string; id?: string; path: string }[] | undefined
+		const themes = ThemeContributions.safeParse(extension.packageJSON).data?.contributes?.themes
 		const match = themes?.find((theme) => theme.label === label || theme.id === label)
 		if (!match) continue
 

@@ -28,7 +28,7 @@ let mouseAt = { ...PARK }
 const load = async (page: Page, doc: string) => {
 	page.on('pageerror', (error) => console.error('[pageerror]', error.message))
 	await page.addInitScript((markdown: string) => {
-		;(window as unknown as { HARNESS_CONTENT: string }).HARNESS_CONTENT = markdown
+		Object.assign(window, { HARNESS_CONTENT: markdown })
 	}, doc)
 	await page.goto(`file://${join(here, 'index.html')}`)
 	await page.waitForSelector('.cm-content', { timeout: 15000 })
@@ -45,7 +45,7 @@ const line = async (page: Page, text: string) => {
 }
 
 const setTheme = (page: Page, kind: 'light' | 'dark') =>
-	page.evaluate((theme: string) => (window as unknown as { __setTheme: (k: string) => void }).__setTheme(theme), kind)
+	page.evaluate((theme) => window.dispatchEvent(new CustomEvent('harness:theme', { detail: theme })), kind)
 
 // ---------- Eased mouse choreography ----------
 

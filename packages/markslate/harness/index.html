@@ -33,7 +33,7 @@
 				--vscode-charts-yellow: #ffc83c;
 				--vscode-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 			}
-			/* Light+ counterparts, toggled by window.__setTheme('light') — the webview's MutationObserver
+			/* Light+ counterparts, toggled by a `harness:theme` event — the webview's MutationObserver
 			   on body[data-vscode-theme-*] re-requests the Shiki theme and re-themes mermaid. */
 			:root[data-lab-theme='light'] {
 				--vscode-editor-background: #ffffff;
@@ -126,11 +126,11 @@
 				setState: () => undefined,
 			})
 			// Flip the harness between the Dark+/Light+ stub palettes (used by demo recordings).
-			window.__setTheme = (kind) => {
+			window.addEventListener('harness:theme', ({ detail: kind }) => {
 				document.documentElement.dataset.labTheme = kind
 				document.body.dataset.vscodeThemeKind = kind === 'light' ? 'vscode-light' : 'vscode-dark'
 				document.body.dataset.vscodeThemeName = kind === 'light' ? 'Light+' : 'Dark+'
-			}
+			})
 		</script>
 	</head>
 	<body data-vscode-theme-kind="vscode-dark" data-vscode-theme-name="Dark+">

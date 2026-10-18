@@ -2,6 +2,7 @@ import { RangeSetBuilder, StateField } from '@codemirror/state'
 import type { EditorState, Line } from '@codemirror/state'
 import { Decoration, EditorView } from '@codemirror/view'
 import type { DecorationSet } from '@codemirror/view'
+import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js'
 import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
 import { TeX } from 'mathjax-full/js/input/tex.js'
@@ -31,7 +32,9 @@ const renderMath = (latex: string, display: boolean) => {
 	let svg: string
 
 	try {
-		svg = adaptor.innerHTML(mathDocument.convert(latex, { display }))
+		const node: unknown = mathDocument.convert(latex, { display })
+		if (!(node instanceof LiteElement)) throw new Error('MathJax rendered no element')
+		svg = adaptor.innerHTML(node)
 	} catch (err) {
 		svg = `<span class="md-math-error">${err instanceof Error ? err.message : String(err)}</span>`
 	}

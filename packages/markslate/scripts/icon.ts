@@ -42,7 +42,8 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 		}
 
 		const canvas = document.createElement('canvas')
-		const ctx = canvas.getContext('2d')!
+		const ctx = canvas.getContext('2d')
+		if (!ctx) throw new Error('canvas has no 2d context')
 		const SAMPLE = 100
 
 		const measure = (glyph: string) => {
@@ -79,8 +80,9 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 					`<text x="${t.x.toFixed(2)}" y="${t.y.toFixed(2)}" text-anchor="middle" style="font-family:${FONT};font-weight:${WEIGHT};font-size:${t.fs.toFixed(2)}px" fill="${STONE[50]}">${t.ch}</text>`,
 			)
 			.join('')
-		document.getElementById('icon')!.innerHTML =
-			`<svg viewBox="0 0 ${VIEW} ${VIEW}" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+		const icon = document.getElementById('icon')
+		if (!icon) throw new Error('no #icon element')
+		icon.innerHTML = `<svg viewBox="0 0 ${VIEW} ${VIEW}" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
 			<rect x="${C - 1.25 * M}" y="${C - 1.25 * M}" width="${2.5 * M}" height="${2.5 * M}" rx="${0.6 * M}" fill="${STONE[950]}"/>
 			<circle cx="${C}" cy="${C}" r="${1.1 * M}" fill="none" stroke="${STONE[600]}" stroke-width="${M / 16}"/>
 			<circle cx="${C}" cy="${C}" r="${0.95 * M}" fill="none" stroke="${STONE[600]}" stroke-width="${M / 16}" stroke-dasharray="${M / 20} ${(3 * M) / 20}" stroke-linecap="round"/>
@@ -89,6 +91,7 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 
 	const svg = await page.$('#icon svg')
 	mkdirSync(dirname(target), { recursive: true })
-	await svg!.screenshot({ path: target, omitBackground: true })
+	if (!svg) throw new Error('#icon svg did not render')
+	await svg.screenshot({ path: target, omitBackground: true })
 })
 console.log(`icon → ${target}`)
