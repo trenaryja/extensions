@@ -3,6 +3,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as R from 'remeda'
+import { z } from 'zod'
 import { copyFiles, formatFile, toMessage } from './utils'
 
 // Null when the directory already exists and the user declines to overwrite it.
@@ -27,11 +28,16 @@ const prepareDirectory = async (extensionDir: string, kebabName: string) => {
 const writePackageJson = (extensionDir: string, titleCaseName: string, kebabName: string) => {
 	const packageJsonPath = path.join(extensionDir, 'package.json')
 	if (!fs.existsSync(packageJsonPath)) throw new Error(`package.json not found in template`)
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
-	packageJson.name = kebabName
-	packageJson.displayName = titleCaseName
-	packageJson.description = `${titleCaseName} VSCode Extension`
-	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
+	const parsed = z.record(z.string(), z.unknown()).safeParse(JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')))
+	if (!parsed.success) throw new Error(`${packageJsonPath}: not a JSON object`)
+	const packageJson = parsed.data
+	const named = {
+		...packageJson,
+		name: kebabName,
+		displayName: titleCaseName,
+		description: `${titleCaseName} VSCode Extension`,
+	}
+	fs.writeFileSync(packageJsonPath, JSON.stringify(named, null, 2))
 	return packageJsonPath
 }
 
@@ -47,15 +53,22 @@ const nameExtensionSource = (extensionDir: string, kebabName: string) => {
 	return extensionTsPath
 }
 
+// Loose: the file is rewritten whole, so keys this script never names must survive the round trip.
+const LaunchJson = z.looseObject({
+	version: z.string(),
+	configurations: z.array(z.looseObject({ name: z.string() })).optional(),
+})
+type LaunchJson = z.infer<typeof LaunchJson>
+
 const addLaunchConfig = (titleCaseName: string, kebabName: string) => {
 	const vscodeDir = path.join(process.cwd(), '.vscode')
 	if (!fs.existsSync(vscodeDir)) fs.mkdirSync(vscodeDir, { recursive: true })
 	const launchJsonPath = path.join(vscodeDir, 'launch.json')
-	let launchJson: { version: string; configurations?: { name: string }[] } = { version: '0.2.0' }
+	let launchJson: LaunchJson = { version: '0.2.0' }
 
 	if (fs.existsSync(launchJsonPath)) {
 		try {
-			launchJson = JSON.parse(fs.readFileSync(launchJsonPath, 'utf8'))
+			launchJson = LaunchJson.parse(JSON.parse(fs.readFileSync(launchJsonPath, 'utf8')))
 		} catch (error) {
 			console.warn(`Warning: Could not parse existing launch.json: ${toMessage(error)}`)
 		}

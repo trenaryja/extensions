@@ -23,7 +23,8 @@
 		"@trenaryja/config": "^0.0.8",
 		"@types/node": "^26.6.2",
 		"remeda": "^2.50.0",
-		"turbo": "^2.11.2"
+		"turbo": "^2.11.2",
+		"zod": "^4.4.3"
 	},
 	"prettier": "@trenaryja/config/prettier",
 	"devEngines": {

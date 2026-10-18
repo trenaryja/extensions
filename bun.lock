@@ -13,6 +13,7 @@
         "@types/node": "^26.6.2",
         "remeda": "^2.50.0",
         "turbo": "^2.11.2",
+        "zod": "^4.4.3",
       },
     },
     "packages/glyphary": {
