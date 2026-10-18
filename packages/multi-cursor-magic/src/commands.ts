@@ -121,8 +121,7 @@ export const commands = defineCommands([
 		handler: createCommand({
 			type: 'direct',
 			parseFn: (x) => x,
-			// eslint-disable-next-line no-eval
-			transform: (selection) => eval(selection),
+			transform: (selection) => (0, eval)(selection),
 		}),
 	},
 
