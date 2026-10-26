@@ -23,14 +23,14 @@ const POLL_MS = 1000
 
 const usePlaybackStatus = () => {
 	const [state, setState] = useState<Status>()
-	const [error, setError] = useState<string>()
+	const [failure, setFailure] = useState<string>()
 
 	useEffect(() => {
 		let cancelled = false
 		const tick = () => {
 			status()
 				.then((next) => cancelled || setState(next))
-				.catch((reason) => cancelled || setError(errorMessage(reason)))
+				.catch((error) => cancelled || setFailure(errorMessage(error)))
 		}
 		tick()
 		const timer = setInterval(tick, POLL_MS)
@@ -41,7 +41,7 @@ const usePlaybackStatus = () => {
 		}
 	}, [])
 
-	return { state, error }
+	return { state, failure }
 }
 
 const report = (title: string, work: Promise<unknown>) => {
@@ -85,13 +85,13 @@ const playbackSubtitle = (state: PlaybackState) =>
 		`${state.backend}/${state.voiceId}`,
 	].join(' · ')
 
-const EmptyView = ({ state, error }: { state?: Status; error?: string }) => {
+const EmptyView = ({ state, failure }: { state?: Status; failure?: string }) => {
 	const failed = state?.phase === 'error'
 	return (
 		<List.EmptyView
-			title={error ? 'narrate failed' : failed ? 'Narration failed' : 'Nothing playing'}
-			description={error ?? (failed ? state.error : 'Start one from Recent Messages or Read Selection.')}
-			icon={error || failed ? Icon.Warning : Icon.SpeakerOff}
+			title={failure ? 'narrate failed' : failed ? 'Narration failed' : 'Nothing playing'}
+			description={failure ?? (failed ? state.error : 'Start one from Recent Messages or Read Selection.')}
+			icon={failure || failed ? Icon.Warning : Icon.SpeakerOff}
 		/>
 	)
 }
@@ -116,7 +116,7 @@ const HistorySection = ({ entries }: { entries: readonly HistoryEntry[] }) => (
 )
 
 export default function Command() {
-	const { state, error } = usePlaybackStatus()
+	const { state, failure } = usePlaybackStatus()
 	const { data, isLoading: loadingHistory, revalidate } = useCachedPromise(history, [])
 	// Auto-follow yanks the selection to the sentence being spoken; arrowing away turns it off until re-enabled.
 	const [follow, setFollow] = useState(true)
@@ -175,13 +175,13 @@ export default function Command() {
 
 	return (
 		<List
-			isLoading={(state === undefined && !error) || loadingHistory}
+			isLoading={(state === undefined && !failure) || loadingHistory}
 			selectedItemId={follow && active ? String(current) : undefined}
 			onSelectionChange={onSelectionChange}
 			navigationTitle={active ? state.label : 'Narrate'}
 			searchBarPlaceholder='Filter sentences…'
 		>
-			<EmptyView state={state} error={error} />
+			<EmptyView state={state} failure={failure} />
 			{active && (
 				<List.Section
 					title={follow ? 'Following' : 'Auto-follow off — ↵ on a sentence to jump'}

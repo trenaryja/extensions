@@ -5,7 +5,7 @@ const mode = watch ? 'development' : 'production'
 
 runBuilds([extensionConfig({ mode, entry: './extension.ts' }), webExtensionConfig({ mode, entry: './extension.ts' })], {
 	watch,
-}).catch((err: unknown) => {
-	console.error(err)
+}).catch((error: unknown) => {
+	console.error(error)
 	process.exit(1)
 })

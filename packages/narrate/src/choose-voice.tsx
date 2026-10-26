@@ -65,8 +65,8 @@ const loadCatalog = () =>
 		R.map(BACKEND_IDS, async (backend): Promise<BackendVoices> => {
 			try {
 				return { backend, voices: await listVoices(backend) }
-			} catch (reason) {
-				return { backend, voices: [], error: errorMessage(reason) }
+			} catch (error) {
+				return { backend, voices: [], error: errorMessage(error) }
 			}
 		}),
 	)
@@ -175,10 +175,10 @@ export default function Command() {
 			await playText(text, `${voice.name} preview`, { backend: browsing.backend, voice: voice.id })
 			toast.style = Toast.Style.Success
 			toast.title = `Previewing ${voice.name}`
-		} catch (reason) {
+		} catch (error) {
 			toast.style = Toast.Style.Failure
 			toast.title = 'Could not preview'
-			toast.message = errorMessage(reason)
+			toast.message = errorMessage(error)
 		}
 	}
 

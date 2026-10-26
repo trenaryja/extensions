@@ -17,7 +17,7 @@ if (!existsSync(built)) {
 mkdirSync(join(root, 'assets'), { recursive: true })
 copyFileSync(built, join(root, 'assets', NATIVE_BINARY))
 
-runBuilds([extensionConfig({ mode: watch ? 'development' : 'production' })], { watch }).catch((err: unknown) => {
-	console.error(err)
+runBuilds([extensionConfig({ mode: watch ? 'development' : 'production' })], { watch }).catch((error: unknown) => {
+	console.error(error)
 	process.exit(1)
 })

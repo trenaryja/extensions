@@ -25,8 +25,8 @@ if (watch) spawn('bunx', [...cssArgs, '--watch'], { cwd: pkgRoot, stdio: 'inheri
 else execFileSync('bunx', [...cssArgs, '--minify'], { cwd: pkgRoot, stdio: 'inherit' })
 
 runBuilds([extensionConfig({ mode }), webExtensionConfig({ mode }), webviewConfig({ mode })], { watch }).catch(
-	(err: unknown) => {
-		console.error(err)
+	(error: unknown) => {
+		console.error(error)
 		process.exit(1)
 	},
 )

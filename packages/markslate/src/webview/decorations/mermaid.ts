@@ -113,12 +113,12 @@ const mermaidWidget = defineWidget<{ code: string }>({
 				lastSvg = svg
 				wrapper.innerHTML = svg
 			})
-			.catch((err: unknown) => {
+			.catch((error: unknown) => {
 				// Keep showing the last good diagram if we have one (avoids an error flash mid-edit); otherwise show it.
 				if (svgByCode.has(value.code) || lastSvg) return
 				const span = document.createElement('span')
 				span.className = 'md-mermaid-error'
-				span.textContent = `Mermaid error: ${err instanceof Error ? err.message : String(err)}`
+				span.textContent = `Mermaid error: ${error instanceof Error ? error.message : String(error)}`
 				wrapper.replaceChildren(span)
 			})
 

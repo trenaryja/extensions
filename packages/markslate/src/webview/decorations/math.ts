@@ -35,8 +35,8 @@ const renderMath = (latex: string, display: boolean) => {
 		const node: unknown = mathDocument.convert(latex, { display })
 		if (!(node instanceof LiteElement)) throw new Error('MathJax rendered no element')
 		svg = adaptor.innerHTML(node)
-	} catch (err) {
-		svg = `<span class="md-math-error">${err instanceof Error ? err.message : String(err)}</span>`
+	} catch (error) {
+		svg = `<span class="md-math-error">${error instanceof Error ? error.message : String(error)}</span>`
 	}
 
 	svgCache.set(key, svg)

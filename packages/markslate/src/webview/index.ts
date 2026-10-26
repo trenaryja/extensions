@@ -208,18 +208,18 @@ function createInitialEditor(content: string) {
 		view.focus()
 		// Harness-only: expose the view so the headless driver can assert caret/selection state.
 		if ('HARNESS_CONTENT' in window) Object.assign(window, { __mdView: view })
-	} catch (err) {
+	} catch (error) {
 		const container = document.getElementById('editor')
 
 		if (container) {
 			container.style.cssText = 'padding:2rem;color:#ff6464;font-family:monospace;white-space:pre-wrap'
-			container.textContent = `Editor init failed:\n${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
+			container.textContent = `Editor init failed:\n${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
 		}
 
 		vscode.postMessage({
 			type: 'webviewError',
-			message: String(err),
-			stack: err instanceof Error ? (err.stack ?? '') : '',
+			message: String(error),
+			stack: error instanceof Error ? (error.stack ?? '') : '',
 		})
 	}
 }
