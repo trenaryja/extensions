@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
 import { Action, ActionPanel, Icon, List, showToast, Toast } from '@raycast/api'
 import { useCachedPromise } from '@raycast/utils'
+import { useEffect, useRef, useState } from 'react'
 import * as R from 'remeda'
+import type { HistoryEntry, PlaybackState, Sentence, Status } from './lib/narrate'
 import {
 	describeRateChange,
 	errorMessage,
@@ -16,7 +17,6 @@ import {
 	status,
 	stop,
 } from './lib/narrate'
-import type { HistoryEntry, PlaybackState, Sentence, Status } from './lib/narrate'
 import { relativeTime } from './lib/relative-time'
 
 const POLL_MS = 1000
@@ -30,7 +30,7 @@ const usePlaybackStatus = () => {
 		const tick = () => {
 			status()
 				.then((next) => cancelled || setState(next))
-				.catch((error) => cancelled || setFailure(errorMessage(error)))
+				.catch((error: unknown) => cancelled || setFailure(errorMessage(error)))
 		}
 		tick()
 		const timer = setInterval(tick, POLL_MS)
@@ -45,7 +45,13 @@ const usePlaybackStatus = () => {
 }
 
 const report = (title: string, work: Promise<unknown>) => {
-	work.catch((error) => showToast({ style: Toast.Style.Failure, title, message: errorMessage(error) }))
+	work.catch((error: unknown) => showToast({ style: Toast.Style.Failure, title, message: errorMessage(error) }))
+}
+
+// showHUD would dismiss the window this view lives in, so the rate change reports as a toast instead.
+const changeRate = async (direction: 1 | -1) => {
+	const change = await nudgeRate(direction)
+	if (change !== null) await showToast({ style: Toast.Style.Success, title: describeRateChange(change) })
 }
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
@@ -142,12 +148,6 @@ export default function Command() {
 	const paused = active && state.phase === 'paused'
 
 	const togglePause = () => (paused ? report('Could not resume', resume()) : report('Could not pause', pause()))
-
-	// showHUD would dismiss the window this view lives in, so the rate change reports as a toast instead.
-	const changeRate = async (direction: 1 | -1) => {
-		const change = await nudgeRate(direction)
-		if (change !== null) await showToast({ style: Toast.Style.Success, title: describeRateChange(change) })
-	}
 
 	// Raycast only intercepts a shortcut carrying cmd, ctrl or opt; a bare-shift one types into the filter field.
 	const controls = (

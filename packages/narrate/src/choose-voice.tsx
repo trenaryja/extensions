@@ -1,8 +1,9 @@
-import { useState } from 'react'
 import { Action, ActionPanel, Form, Icon, List, popToRoot, showToast, Toast, useNavigation } from '@raycast/api'
 import { useCachedPromise } from '@raycast/utils'
-import * as R from 'remeda'
 import { BACKEND_IDS } from '@repo/narrate-core/types'
+import { useState } from 'react'
+import * as R from 'remeda'
+import type { BackendId, Voice } from './lib/narrate'
 import {
 	clearVoice,
 	currentBackend,
@@ -17,7 +18,6 @@ import {
 	selectVoice,
 	setPreviewText,
 } from './lib/narrate'
-import type { BackendId, Voice } from './lib/narrate'
 
 const BACKEND_TITLES: Record<BackendId, string> = { kokoro: 'Kokoro', say: 'macOS say' }
 
@@ -39,7 +39,7 @@ const languageName = (tag: string) => {
 }
 
 const systemLanguage = () => {
-	const [locale] = Intl.DateTimeFormat().resolvedOptions().locale.split('-u-')
+	const [locale] = new Intl.DateTimeFormat().resolvedOptions().locale.split('-u-', 1)
 	return (locale ?? 'en-US').toLowerCase()
 }
 
@@ -81,7 +81,7 @@ type Filter = { backend: BackendId; language: string }
 const encodeFilter = ({ backend, language }: Filter) => `${backend}:${language}`
 
 const decodeFilter = (value: string) => {
-	const [backend = '', language = ''] = value.split(':')
+	const [backend = '', language = ''] = value.split(':', 2)
 	return { backend: R.isIncludedIn(backend, BACKEND_IDS) ? backend : DEFAULT_BACKEND, language }
 }
 

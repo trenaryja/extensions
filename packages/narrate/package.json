@@ -1,25 +1,35 @@
 {
 	"$schema": "https://www.raycast.com/schemas/extension.json",
 	"name": "narrate",
-	"title": "Narrate",
-	"description": "Read Claude Code responses and selected text aloud through the local narrate engine.",
-	"icon": "extension-icon.png",
-	"author": "trenaryja",
-	"license": "MIT",
-	"private": true,
 	"version": "0.0.1",
-	"changelog": true,
+	"private": true,
+	"description": "Read Claude Code responses and selected text aloud through the local narrate engine.",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/trenaryja/extensions.git",
 		"directory": "packages/narrate"
 	},
+	"license": "MIT",
+	"author": "trenaryja",
 	"scripts": {
-		"dev": "ray develop",
 		"build": "ray build",
-		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0"
+		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0",
+		"dev": "ray develop",
+		"fix": "prettier -w . && bunx eslint --fix ."
 	},
+	"dependencies": {
+		"@raycast/api": "^2.9.0",
+		"@raycast/utils": "^2.3.3",
+		"remeda": "^2.54.1",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@repo/narrate-core": "workspace:*",
+		"@types/react": "19.0.10",
+		"react": "^19.3.1"
+	},
+	"icon": "extension-icon.png",
+	"changelog": true,
 	"commands": [
 		{
 			"name": "recent-messages",
@@ -111,15 +121,5 @@
 			"required": false
 		}
 	],
-	"dependencies": {
-		"@raycast/api": "^2.1.1",
-		"@raycast/utils": "^2.3.0",
-		"remeda": "^2.39.0",
-		"zod": "^4.4.3"
-	},
-	"devDependencies": {
-		"@repo/narrate-core": "workspace:*",
-		"@types/react": "^19.2.18",
-		"react": "^19.0.0"
-	}
+	"title": "Narrate"
 }

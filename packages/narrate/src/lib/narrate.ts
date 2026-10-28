@@ -1,14 +1,12 @@
+import { environment, getPreferenceValues, LocalStorage } from '@raycast/api'
+import type { BackendId, Origin } from '@repo/narrate-core/types'
+import { HistoryEntry, isLivePhase, PlaybackState, TranscriptMessage, Voice } from '@repo/narrate-core/types'
 import { spawn } from 'node:child_process'
 import { chmodSync, statSync } from 'node:fs'
 import { userInfo } from 'node:os'
 import { join } from 'node:path'
-import { environment, getPreferenceValues, LocalStorage } from '@raycast/api'
 import * as R from 'remeda'
 import { z } from 'zod'
-import { HistoryEntry, isLivePhase, PlaybackState, TranscriptMessage, Voice } from '@repo/narrate-core/types'
-import type { BackendId, Origin, Phase, Sentence } from '@repo/narrate-core/types'
-
-export type { BackendId, HistoryEntry, Phase, PlaybackState, Sentence, TranscriptMessage, Voice }
 
 const Status = z.union([PlaybackState, z.object({ phase: z.literal('idle') })])
 export type Status = z.infer<typeof Status>
@@ -83,7 +81,7 @@ const run = async <Reply>(reply: z.ZodType<Reply>, args: string[], input?: strin
 		child.stderr?.on('data', (data: Buffer) => (stderr += data.toString()))
 		child.on('error', reject)
 		child.on('close', (code) => {
-			if (code !== 0) return reject(failureOf(stderr, code))
+			if (code !== 0) return void reject(failureOf(stderr, code))
 			try {
 				resolve(parseReply(reply, args, stdout))
 			} catch (error) {
@@ -196,3 +194,13 @@ export const describeRateChange = ({ from, to }: { from: number; to: number }) =
 	from === to ? `${to}× (limit)` : `${from}× → ${to}×`
 
 export const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
+export {
+	type BackendId,
+	type HistoryEntry,
+	type Phase,
+	type PlaybackState,
+	type Sentence,
+	type TranscriptMessage,
+	type Voice,
+} from '@repo/narrate-core/types'

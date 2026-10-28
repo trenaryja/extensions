@@ -1,5 +1,3 @@
-import { basename } from 'node:path'
-import { useState } from 'react'
 import {
 	Action,
 	ActionPanel,
@@ -12,9 +10,11 @@ import {
 	Toast,
 } from '@raycast/api'
 import { useCachedPromise } from '@raycast/utils'
+import { basename } from 'node:path'
+import { useState } from 'react'
 import * as R from 'remeda'
-import { errorMessage, listMessages, messageText, playMessage, summarizeAndPlay, summarizer } from './lib/narrate'
 import type { TranscriptMessage } from './lib/narrate'
+import { errorMessage, listMessages, messageText, playMessage, summarizeAndPlay, summarizer } from './lib/narrate'
 import { openStatus } from './lib/open-status'
 import { relativeTime } from './lib/relative-time'
 

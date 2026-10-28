@@ -1,3 +1,5 @@
 import { nudge } from './lib/nudge'
 
-export default () => nudge(1)
+export default function SpeedUp() {
+	return nudge(1)
+}
