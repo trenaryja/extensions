@@ -1,5 +1,5 @@
-import type * as vscode from 'vscode'
 import { registerCommands } from '@repo/vscode-utils'
+import type * as vscode from 'vscode'
 import { commands } from './commands'
 import { session } from './session'
 

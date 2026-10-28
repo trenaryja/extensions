@@ -1,8 +1,8 @@
+import { NATIVE_BINARY } from '@repo/hearsay-core'
+import { extensionConfig, runBuilds } from '@repo/vscode-utils/build'
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { NATIVE_BINARY } from '@repo/hearsay-core'
-import { extensionConfig, runBuilds } from '@repo/vscode-utils/build'
 
 const watch = process.argv.includes('--watch')
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -17,7 +17,4 @@ if (!existsSync(built)) {
 mkdirSync(join(root, 'assets'), { recursive: true })
 copyFileSync(built, join(root, 'assets', NATIVE_BINARY))
 
-runBuilds([extensionConfig({ mode: watch ? 'development' : 'production' })], { watch }).catch((error: unknown) => {
-	console.error(error)
-	process.exit(1)
-})
+await runBuilds([extensionConfig({ mode: watch ? 'development' : 'production' })], { watch })

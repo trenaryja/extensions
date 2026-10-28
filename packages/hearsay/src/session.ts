@@ -1,14 +1,14 @@
-import * as vscode from 'vscode'
 import { dictate, NATIVE_BINARY } from '@repo/hearsay-core'
 import type { DictateEvent, DictateSession } from '@repo/hearsay-core/types'
+import * as vscode from 'vscode'
 import type { Focus } from './commands'
-import { TOGGLE } from './ids'
 import { getConfig } from './config'
 import { createGhost } from './ghost'
+import { TOGGLE } from './ids'
 import { insert } from './insert'
 import { resolveConfiguredModel } from './model'
-import { createStatus } from './status'
 import { nextRecording, pruneRecordings } from './recordings'
+import { createStatus } from './status'
 
 /** Zero, not just an event the extension ignores: a preview nobody renders still costs a whole whisper pass. */
 const previewInterval = () => (getConfig('hearsay.livePreview') === 'off' ? 0 : getConfig('hearsay.partialMs'))
@@ -102,7 +102,7 @@ const create = (context: vscode.ExtensionContext) => {
 		}
 
 		try {
-			for await (const event of active.events) {
+			for await (const event of active.events)
 				if (event.event === 'ready') {
 					output.info(`recording from ${device || 'the default device'} into ${wav}`)
 					status.show('recording')
@@ -113,7 +113,6 @@ const create = (context: vscode.ExtensionContext) => {
 				else if (event.event === 'utterance') await commit(event)
 				else if (event.event === 'done') await finish(event)
 				else if (event.event === 'cancelled') output.info('cancelled')
-			}
 		} finally {
 			active = undefined
 			clearPreview()
@@ -129,7 +128,7 @@ const create = (context: vscode.ExtensionContext) => {
 
 	// Not `async`: the in-flight promise is the busy flag, so a second press lands before the first resolves.
 	const toggle = (focused?: Focus) => {
-		if (active) return active.stop()
+		if (active) return void active.stop()
 		if (running) return
 		focus = focused
 		output.info(`dictating into ${focus ?? 'the editor'}`)

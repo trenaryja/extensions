@@ -1,5 +1,5 @@
-import { setting } from '@repo/vscode-utils/config'
 import { CATALOG, DEFAULT_MODEL_ID, megabytes, MODEL_IDS } from '@repo/hearsay-core'
+import { setting } from '@repo/vscode-utils/config'
 import { z } from 'zod'
 
 /** Single source of truth for Hearsay settings — generates `contributes.configuration` and the typed accessor. */

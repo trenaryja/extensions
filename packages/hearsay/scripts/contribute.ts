@@ -1,8 +1,8 @@
-import { fileURLToPath } from 'node:url'
 import { syncContributes } from '@repo/vscode-utils/contribute'
+import { fileURLToPath } from 'node:url'
 import { commands } from '../src/commands'
-import { CANCEL, TOGGLE } from '../src/ids'
 import { configSchema } from '../src/config.schema'
+import { CANCEL, TOGGLE } from '../src/ids'
 
 const packageJsonPath = fileURLToPath(new URL('../package.json', import.meta.url))
 const check = process.argv.includes('--check')

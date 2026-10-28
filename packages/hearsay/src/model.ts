@@ -1,6 +1,6 @@
-import * as vscode from 'vscode'
-import { findModel, listModels, resolveModel } from '@repo/hearsay-core'
 import type { ModelId } from '@repo/hearsay-core'
+import { findModel, listModels, resolveModel } from '@repo/hearsay-core'
+import * as vscode from 'vscode'
 import { getConfig } from './config'
 
 /** Picking a model starts its download while a dictation may start another; both wait on the same one. */

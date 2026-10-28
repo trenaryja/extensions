@@ -17,7 +17,7 @@ export const pruneRecordings = async (context: vscode.ExtensionContext) => {
 	const dir = recordingsDir(vscode, context)
 	const entries = await vscode.workspace.fs.readDirectory(dir)
 	// Not `slice(0, -keep)`: a keep of 0 makes that `slice(0, -0)`, which is `slice(0, 0)` and keeps everything.
-	const names = entries.map(([name]) => name).sort()
+	const names = entries.map(([name]) => name).toSorted()
 	for (const name of names.slice(0, names.length - getConfig('hearsay.keepRecordings')))
 		await vscode.workspace.fs.delete(vscode.Uri.joinPath(dir, name))
 }

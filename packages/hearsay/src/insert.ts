@@ -30,7 +30,7 @@ export const insert = async (text: string, continuing = false, focus?: Focus) =>
 	}
 
 	const editor = vscode.window.activeTextEditor
-	if (!editor) return undefined
+	if (!editor) return
 	// One edit for every cursor, so a multi-cursor selection is replaced everywhere in a single undo step.
 	await editor.edit((builder) => {
 		for (const selection of editor.selections) builder.replace(selection, spaced(editor, selection, text))

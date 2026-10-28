@@ -1,5 +1,5 @@
-import * as vscode from 'vscode'
 import * as R from 'remeda'
+import * as vscode from 'vscode'
 
 const BLOCKS = '▁▂▃▄▅▆▇█'
 

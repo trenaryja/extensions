@@ -1,52 +1,8 @@
 {
 	"name": "hearsay",
 	"displayName": "Hearsay",
-	"description": "Local dictation for the editor and the integrated terminal. No account, no setup, no network.",
 	"version": "0.0.0",
-	"publisher": "trenaryja",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/trenaryja/extensions.git",
-		"directory": "packages/hearsay"
-	},
-	"bugs": {
-		"url": "https://github.com/trenaryja/extensions/issues"
-	},
-	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/hearsay",
-	"main": "./dist/extension.js",
-	"extensionKind": [
-		"ui"
-	],
-	"scripts": {
-		"build": "bun ./scripts/build.ts",
-		"dev": "bun ./scripts/build.ts --watch",
-		"contribute": "bun ./scripts/contribute.ts",
-		"contribute:check": "bun ./scripts/contribute.ts --check",
-		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
-		"check": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
-		"vsce:login": "vsce login trenaryja",
-		"vsce:package": "vsce package --no-dependencies",
-		"vsce:publish": "vsce publish --no-dependencies",
-		"vscode:prepublish": "bun run build"
-	},
-	"dependencies": {
-		"remeda": "^2.50.0",
-		"zod": "^4.4.3"
-	},
-	"devDependencies": {
-		"@repo/hearsay-core": "workspace:*",
-		"@repo/vscode-utils": "workspace:*",
-		"@types/vscode": "^1.107.0",
-		"@vscode/vsce": "^3.7.1",
-		"esbuild": "^0.27.2"
-	},
-	"activationEvents": [
-		"onStartupFinished"
-	],
-	"engines": {
-		"vscode": "^1.107.0"
-	},
+	"description": "Local dictation for the editor and the integrated terminal. No account, no setup, no network.",
 	"categories": [
 		"Other"
 	],
@@ -57,13 +13,30 @@
 		"whisper",
 		"voice"
 	],
+	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/hearsay",
+	"bugs": {
+		"url": "https://github.com/trenaryja/extensions/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/extensions.git",
+		"directory": "packages/hearsay"
+	},
+	"license": "MIT",
+	"publisher": "trenaryja",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "bun ./scripts/build.ts",
+		"chk": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"contribute": "bun ./scripts/contribute.ts",
+		"contribute:check": "bun ./scripts/contribute.ts --check",
+		"dev": "bun ./scripts/build.ts --watch",
+		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"vsce:login": "vsce login trenaryja",
+		"vsce:package": "bun run build && vsce package --no-dependencies",
+		"vsce:publish": "bun run build && vsce publish --no-dependencies"
+	},
 	"contributes": {
-		"configurationDefaults": {
-			"terminal.integrated.commandsToSkipShell": [
-				"hearsay.toggle",
-				"hearsay.cancel"
-			]
-		},
 		"commands": [
 			{
 				"command": "hearsay.toggle",
@@ -84,36 +57,6 @@
 			{
 				"command": "hearsay.openRecordings",
 				"title": "Hearsay: Open Recordings Folder"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "hearsay.toggle",
-				"key": "ctrl+alt+v",
-				"mac": "cmd+alt+v"
-			},
-			{
-				"command": "hearsay.toggle",
-				"key": "ctrl+alt+v",
-				"mac": "cmd+alt+v",
-				"when": "scmRepository || inChatInput || commentEditorFocused",
-				"args": {
-					"focus": "input"
-				}
-			},
-			{
-				"command": "hearsay.toggle",
-				"key": "ctrl+alt+v",
-				"mac": "cmd+alt+v",
-				"when": "terminalFocus",
-				"args": {
-					"focus": "terminal"
-				}
-			},
-			{
-				"command": "hearsay.cancel",
-				"key": "escape",
-				"when": "hearsay.recording"
 			}
 		],
 		"configuration": {
@@ -245,6 +188,61 @@
 					"type": "boolean"
 				}
 			}
-		}
-	}
+		},
+		"configurationDefaults": {
+			"terminal.integrated.commandsToSkipShell": [
+				"hearsay.toggle",
+				"hearsay.cancel"
+			]
+		},
+		"keybindings": [
+			{
+				"command": "hearsay.toggle",
+				"key": "ctrl+alt+v",
+				"mac": "cmd+alt+v"
+			},
+			{
+				"command": "hearsay.toggle",
+				"key": "ctrl+alt+v",
+				"mac": "cmd+alt+v",
+				"when": "scmRepository || inChatInput || commentEditorFocused",
+				"args": {
+					"focus": "input"
+				}
+			},
+			{
+				"command": "hearsay.toggle",
+				"key": "ctrl+alt+v",
+				"mac": "cmd+alt+v",
+				"when": "terminalFocus",
+				"args": {
+					"focus": "terminal"
+				}
+			},
+			{
+				"command": "hearsay.cancel",
+				"key": "escape",
+				"when": "hearsay.recording"
+			}
+		]
+	},
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"dependencies": {
+		"remeda": "^2.54.1",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@repo/hearsay-core": "workspace:*",
+		"@repo/vscode-utils": "workspace:*",
+		"@types/vscode": "^1.107.0",
+		"@vscode/vsce": "^4.0.0"
+	},
+	"engines": {
+		"vscode": "^1.107.0"
+	},
+	"extensionKind": [
+		"ui"
+	]
 }

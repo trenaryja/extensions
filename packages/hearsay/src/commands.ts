@@ -1,6 +1,6 @@
-import * as R from 'remeda'
-import { defineCommands } from '@repo/vscode-utils/registry'
 import { CATALOG, importSuperwhisper, megabytes, NATIVE_BINARY, SUPERWHISPER_SETTINGS } from '@repo/hearsay-core'
+import { defineCommands } from '@repo/vscode-utils/registry'
+import * as R from 'remeda'
 import { CANCEL, TOGGLE } from './ids'
 import { recordingsDir } from './paths'
 
@@ -119,7 +119,7 @@ export const commands = defineCommands([
 			await vscode.workspace.fs.createDirectory(dir)
 			const newest = (await vscode.workspace.fs.readDirectory(dir))
 				.map(([name]) => name)
-				.sort()
+				.toSorted()
 				.at(-1)
 			// Revealing the folder only selects it in its parent, so point at a recording inside it — the same
 			// trick VS Code's own "Open Logs Folder" uses. `revealFileInOS` is Finder, Explorer and xdg-open.
