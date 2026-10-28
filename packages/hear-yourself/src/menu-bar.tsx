@@ -23,6 +23,11 @@ const menuTooltip = (running?: Running) => {
 	return running.waitingFor ? 'Paused, waiting for devices' : 'Hearing yourself'
 }
 
+const deviceOptions = (names: readonly string[]) => [
+	{ title: 'System Default' },
+	...names.map((name) => ({ title: name, value: name })),
+]
+
 const Controls = ({ running, act }: { running?: Running; act: Act }) => {
 	if (!running)
 		return <MenuBarExtra.Item title='Start Monitoring' icon={Icon.Play} onAction={act(start, 'Could not start')} />
@@ -89,11 +94,6 @@ export default function Command() {
 			</MenuBarExtra.Submenu>
 		)
 	}
-
-	const deviceOptions = (names: readonly string[]) => [
-		{ title: 'System Default' },
-		...names.map((name) => ({ title: name, value: name })),
-	]
 
 	return (
 		<MenuBarExtra icon={menuIcon(running)} tooltip={menuTooltip(running)} isLoading={isLoading}>

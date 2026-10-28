@@ -1,7 +1,7 @@
+import { environment, LocalStorage } from '@raycast/api'
 import { spawn } from 'node:child_process'
 import { chmodSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { environment, LocalStorage } from '@raycast/api'
 import * as R from 'remeda'
 import { z } from 'zod'
 
@@ -64,7 +64,7 @@ const run = <Reply>(reply: z.ZodType<Reply>, args: readonly string[]) =>
 		child.stderr.on('data', (data: Buffer) => (stderr += data.toString()))
 		child.on('error', reject)
 		child.on('close', (code) => {
-			if (code !== 0) return reject(new Error(stderr.trim() || `hear-yourself-core exited with ${code}`))
+			if (code !== 0) return void reject(new Error(stderr.trim() || `hear-yourself-core exited with ${code}`))
 			try {
 				resolve(parseReply(reply, args, stdout))
 			} catch (error) {
