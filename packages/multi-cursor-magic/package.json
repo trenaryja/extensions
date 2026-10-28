@@ -1,54 +1,8 @@
 {
 	"name": "multi-cursor-magic",
 	"displayName": "Multi-Cursor Magic",
-	"description": "Multi-Cursor Magic VSCode Extension",
 	"version": "0.0.4",
-	"publisher": "trenaryja",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/trenaryja/extensions.git",
-		"directory": "packages/multi-cursor-magic"
-	},
-	"bugs": {
-		"url": "https://github.com/trenaryja/extensions/issues"
-	},
-	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/multi-cursor-magic",
-	"icon": "images/icon.png",
-	"main": "./dist/extension.js",
-	"browser": "./dist/web/extension.js",
-	"scripts": {
-		"build": "bun ./scripts/build.ts",
-		"build:analyze": "bun ./scripts/build.ts --analyze",
-		"dev": "bun ./scripts/build.ts --watch",
-		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
-		"check": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
-		"contribute": "bun ./scripts/contribute.ts",
-		"contribute:check": "bun ./scripts/contribute.ts --check",
-		"vsce:login": "vsce login trenaryja",
-		"vsce:package": "vsce package --no-dependencies",
-		"vsce:publish": "vsce publish --no-dependencies",
-		"vscode:prepublish": "bun run build"
-	},
-	"dependencies": {
-		"@trenaryja/ui": "0.0.1-36",
-		"chroma-js": "^3.2.0",
-		"date-fns": "^4.1.0",
-		"remeda": "^2.32.0"
-	},
-	"devDependencies": {
-		"@repo/vscode-utils": "workspace:*",
-		"@types/chroma-js": "^3.1.2",
-		"@types/vscode": "^1.107.0",
-		"@vscode/vsce": "^3.7.1",
-		"esbuild": "^0.27.2"
-	},
-	"activationEvents": [
-		"onStartupFinished"
-	],
-	"engines": {
-		"vscode": "^1.107.0"
-	},
+	"description": "Multi-Cursor Magic VSCode Extension",
 	"categories": [
 		"Formatters",
 		"Other"
@@ -64,7 +18,31 @@
 		"eval",
 		"productivity"
 	],
-	"changelog": true,
+	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/multi-cursor-magic",
+	"bugs": {
+		"url": "https://github.com/trenaryja/extensions/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/extensions.git",
+		"directory": "packages/multi-cursor-magic"
+	},
+	"license": "MIT",
+	"publisher": "trenaryja",
+	"main": "./dist/extension.js",
+	"browser": "./dist/web/extension.js",
+	"scripts": {
+		"build": "bun ./scripts/build.ts",
+		"build:analyze": "bun ./scripts/build.ts --analyze",
+		"chk": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"contribute": "bun ./scripts/contribute.ts",
+		"contribute:check": "bun ./scripts/contribute.ts --check",
+		"dev": "bun ./scripts/build.ts --watch",
+		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"vsce:login": "vsce login trenaryja",
+		"vsce:package": "bun run build && vsce package --no-dependencies",
+		"vsce:publish": "bun run build && vsce publish --no-dependencies"
+	},
 	"contributes": {
 		"commands": [
 			{
@@ -100,5 +78,25 @@
 				"title": "Multi-Cursor Magic: Format Colors"
 			}
 		]
-	}
+	},
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"dependencies": {
+		"@trenaryja/ui": "0.0.1-37",
+		"chroma-js": "^3.2.0",
+		"date-fns": "^4.4.0",
+		"remeda": "^2.54.1"
+	},
+	"devDependencies": {
+		"@repo/vscode-utils": "workspace:*",
+		"@types/chroma-js": "^3.1.3",
+		"@types/vscode": "^1.107.0",
+		"@vscode/vsce": "^4.0.0"
+	},
+	"engines": {
+		"vscode": "^1.107.0"
+	},
+	"icon": "images/icon.png",
+	"changelog": true
 }

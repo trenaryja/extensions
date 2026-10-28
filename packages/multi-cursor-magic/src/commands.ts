@@ -85,7 +85,7 @@ export const commands = defineCommands([
 			type: 'quick-pick',
 			parseFn: (selection: string) => {
 				const num = Number(selection)
-				return isNaN(num) ? null : num
+				return Number.isNaN(num) ? null : num
 			},
 			parseError: 'One or more selections could not be parsed as a number.',
 			prompt: 'Select a number format',

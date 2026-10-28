@@ -43,22 +43,21 @@ export const createCommand =
 				'Select Valid',
 			)
 
-			if (choice === 'Select Valid' || choice === 'Select Invalid') {
+			if (choice === 'Select Valid' || choice === 'Select Invalid')
 				editor.selections = editor.selections.filter((_, i) => {
 					const valid = parsedSelections[i] !== null
 					return choice === 'Select Valid' ? valid : !valid
 				})
-			}
 
 			return
 		}
 
 		const replaceSelections = (replacer: (parsedSelection: TParsed) => string) => {
 			editor.edit((editBuilder) => {
-				editor.selections.forEach((selection, index) => {
+				for (const [index, selection] of editor.selections.entries()) {
 					const parsed = parsedSelections[index]
 					if (parsed) editBuilder.replace(selection, replacer(parsed))
-				})
+				}
 			})
 		}
 
@@ -66,16 +65,10 @@ export const createCommand =
 			const quickPickItem = await vscode.window.showQuickPick(command.quickPickItems, { placeHolder: command.prompt })
 			if (!quickPickItem) return
 			replaceSelections((parsed) => command.transform(parsed, parsedSelections, quickPickItem).toString())
-		}
-
-		if (command.type === 'input') {
+		} else if (command.type === 'input') {
 			const input = await vscode.window.showInputBox({ prompt: command.prompt })
 			replaceSelections((parsed) => command.transform(parsed, parsedSelections, input).toString())
-		}
-
-		if (command.type === 'direct') {
-			replaceSelections((parsed) => command.transform(parsed, parsedSelections).toString())
-		}
+		} else replaceSelections((parsed) => command.transform(parsed, parsedSelections).toString())
 	}
 
 export const parseMonth = (input: string) => {
@@ -90,7 +83,9 @@ export const parseMonth = (input: string) => {
 }
 
 export const getMonthExample = (formatStr: string) =>
-	[...Array(12).keys()].map((x) => format(new Date(2000, x), formatStr)).join(', ')
+	Array.from({ length: 12 }, (_, index) => index)
+		.map((x) => format(new Date(2000, x), formatStr))
+		.join(', ')
 
 export const parseDayOfWeek = (input: string) => {
 	const now = new Date()
@@ -104,7 +99,9 @@ export const parseDayOfWeek = (input: string) => {
 }
 
 export const getDayOfWeekExample = (formatStr: string) =>
-	[...Array(7).keys()].map((x) => format(new Date(2000, 0, 2 + x), formatStr)).join(', ')
+	Array.from({ length: 7 }, (_, index) => index)
+		.map((x) => format(new Date(2000, 0, 2 + x), formatStr))
+		.join(', ')
 
 export const parseUsState = (input: string) => {
 	const normalizedInput = input.toLowerCase()
