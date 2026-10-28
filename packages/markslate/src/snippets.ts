@@ -1,7 +1,7 @@
 // Data for the insert commands. No `vscode` import — safe for the contributes codegen to load.
 
 // The webview places the caret wherever this marker appears in inserted text.
-export const CURSOR = String.fromCharCode(0)
+export const CURSOR = String.fromCodePoint(0)
 
 // Curated languages for the Insert Code Block picker (Shiki supports far more; these are the common ones).
 export const CODE_LANGUAGES = [

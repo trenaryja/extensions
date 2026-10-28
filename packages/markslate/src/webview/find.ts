@@ -13,8 +13,8 @@ import {
 	setSearchQuery,
 } from '@codemirror/search'
 import { Prec } from '@codemirror/state'
-import { EditorView, keymap } from '@codemirror/view'
 import type { Panel, ViewUpdate } from '@codemirror/view'
+import { EditorView, keymap } from '@codemirror/view'
 import { countMatches } from './searchMatches'
 import { HEADING_FONT_SIZES } from './theme'
 
@@ -123,13 +123,13 @@ function createFindPanel(view: EditorView): Panel {
 	const refresh = () => {
 		const query = getSearchQuery(view.state)
 		const { total, current } = countMatches(view.state, query)
-		count.textContent = !query.search
-			? ''
-			: total === 0
+		count.textContent = query.search
+			? total === 0
 				? 'No results'
 				: current
 					? `${current} of ${total}`
 					: `${total} found`
+			: ''
 		// cycle: findBox holds the flag buttons, whose clicks call commit, which calls refresh
 		findBox.classList.toggle('md-find-invalid', !!query.search && !query.valid)
 	}
@@ -143,8 +143,8 @@ function createFindPanel(view: EditorView): Panel {
 			regexp: regexpFlag.on,
 			literal: !regexpFlag.on,
 		})
-		if (!next.eq(getSearchQuery(view.state))) view.dispatch({ effects: setSearchQuery.of(next) })
-		else refresh()
+		if (next.eq(getSearchQuery(view.state))) refresh()
+		else view.dispatch({ effects: setSearchQuery.of(next) })
 	}
 
 	const findBox = box(findInput, caseFlag.button, wordFlag.button, regexpFlag.button)
@@ -159,10 +159,10 @@ function createFindPanel(view: EditorView): Panel {
 			event.preventDefault()
 			;(event.shiftKey ? onShiftEnter : onEnter)()
 		}
-		if (event.key === 'Escape') {
-			event.preventDefault()
-			close()
-		}
+		if (event.key !== 'Escape') return
+
+		event.preventDefault()
+		close()
 	}
 
 	findInput.addEventListener('keydown', (event) =>

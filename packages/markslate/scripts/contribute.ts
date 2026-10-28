@@ -1,5 +1,5 @@
-import { fileURLToPath } from 'node:url'
 import { syncContributes } from '@repo/vscode-utils/contribute'
+import { fileURLToPath } from 'node:url'
 import { configSchema } from '../src/config.schema'
 import { commands, customEditors, walkthroughs } from '../src/contributes'
 

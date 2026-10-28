@@ -1,8 +1,8 @@
 import { StateEffect } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { ViewPlugin } from '@codemirror/view'
-import { bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
 import type { BundledLanguage } from 'shiki'
+import { bundledLanguages, bundledThemes, createHighlighterCore } from 'shiki'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import { defineWidget } from '../lib/widget'
 
@@ -47,7 +47,7 @@ void highlighterPromise.then((hl) => {
 })
 
 // Effect the tree renderer listens for to rebuild when Shiki state changes; and the hook to wire the refresh.
-export const refresh = StateEffect.define<null>()
+export const refresh = StateEffect.define()
 
 export const setCodeRefresh = (fn: (() => void) | null) => {
 	requestRefresh = fn
@@ -71,7 +71,7 @@ const styleFor = (token: ShikiToken) => {
 	return parts.join(';')
 }
 
-const isBundledLanguage = (lang: string): lang is BundledLanguage => lang in bundledLanguages
+const isBundledLanguage = (lang: string): lang is BundledLanguage => Object.hasOwn(bundledLanguages, lang)
 
 // Tokenize a block's code with Shiki. Returns null (and kicks off an async language load + refresh) until the
 // highlighter and language are ready; results are cached by lang+theme+code. Offsets are absolute into `code`.
@@ -138,8 +138,6 @@ export function setShikiTheme(theme: Record<string, unknown> | null) {
 	requestRefresh?.()
 }
 
-// ---------- Copy / delete tools ----------
-
 export const toolButton = (label: string, title: string, onClick: () => void) => {
 	const button = document.createElement('button')
 	button.type = 'button'
@@ -155,19 +153,19 @@ export const toolButton = (label: string, title: string, onClick: () => void) =>
 	return button
 }
 
+const flash = (button: HTMLElement, label: string, message: string) => {
+	button.textContent = message
+	setTimeout(() => (button.textContent = label), 1500)
+}
+
 // A clipboard write rejects when permission is denied or the webview isn't a secure context, and the button
 // is the only surface a widget has to say so — report both outcomes on it.
 export const copyButton = (label: string, title: string, getText: () => string) => {
 	const button = toolButton(label, title, () => {
-		const flash = (message: string) => {
-			button.textContent = message
-			setTimeout(() => (button.textContent = label), 1500)
-		}
-
-		navigator.clipboard.writeText(getText()).then(
-			() => flash('Copied!'),
-			() => flash('Copy failed'),
-		)
+		navigator.clipboard
+			.writeText(getText())
+			.then(() => flash(button, label, 'Copied!'))
+			.catch(() => flash(button, label, 'Copy failed'))
 	})
 	return button
 }
@@ -188,8 +186,6 @@ export const toolsWidget = defineWidget<{ code: string; from: number; to: number
 	},
 })
 
-// ---------- Hover-to-reveal tools ----------
-
 // The tools live on the opening fence line, but a code block is many flat sibling lines with no container, so
 // CSS can't reveal them on hover of the whole block. Tag the block's `.md-cb-open` line with `md-cb-hovered`
 // while the pointer is anywhere over that block; the CSS shows the tools when that class is present.
@@ -205,7 +201,7 @@ export const codeHoverTools = ViewPlugin.fromClass(
 		}
 		onOver = (event: Event) => {
 			const line = event.target instanceof Element ? event.target.closest<HTMLElement>('.cm-line') : null
-			if (!line?.classList.contains('md-cb')) return this.setHovered(null)
+			if (!line?.classList.contains('md-cb')) return void this.setHovered(null)
 			// Walk back to the block's opening fence line (where the tools live).
 			let open: Element | null = line
 			while (open?.classList.contains('md-cb') && !open.classList.contains('md-cb-open'))

@@ -28,9 +28,9 @@ const parseJsonc = (text: string) => {
 	} catch {
 		try {
 			const stripped = text
-				.replace(/\/\*[\s\S]*?\*\//g, '')
-				.replace(/(^|[^:])\/\/.*$/gm, '$1')
-				.replace(/,(\s*[}\]])/g, '$1')
+				.replaceAll(/\/\*[\s\S]*?\*\//g, '')
+				.replaceAll(/(^|[^:])\/\/.*$/gm, '$1')
+				.replaceAll(/,(\s*[}\]])/g, '$1')
 			return ThemeJson.safeParse(JSON.parse(stripped)).data ?? null
 		} catch {
 			return null
@@ -56,7 +56,7 @@ const resolveIncludes = async (uri: vscode.Uri, theme: ThemeJson, depth = 0): Pr
 	return {
 		...resolvedBase,
 		...theme,
-		colors: { ...(resolvedBase.colors ?? {}), ...(theme.colors ?? {}) },
+		colors: { ...resolvedBase.colors, ...theme.colors },
 		tokenColors: [...(resolvedBase.tokenColors ?? []), ...(theme.tokenColors ?? [])],
 	}
 }
@@ -92,12 +92,11 @@ const resolveByLabel = async (label: string): Promise<ThemeJson | null> => {
 export const resolveShikiThemeByName = async (name: string): Promise<ThemeJson | null> => {
 	const configName = vscode.workspace.getConfiguration('workbench').get<string>('colorTheme') ?? ''
 
-	for (const candidate of [name, configName]) {
+	for (const candidate of [name, configName])
 		if (candidate) {
 			const resolved = await resolveByLabel(candidate)
 			if (resolved) return resolved
 		}
-	}
 
 	return null
 }

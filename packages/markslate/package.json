@@ -1,71 +1,8 @@
 {
 	"name": "markslate",
 	"displayName": "MarkSlate",
-	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
 	"version": "0.0.2",
-	"publisher": "trenaryja",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/trenaryja/extensions.git",
-		"directory": "packages/markslate"
-	},
-	"bugs": {
-		"url": "https://github.com/trenaryja/extensions/issues"
-	},
-	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/markslate",
-	"icon": "assets/icon.png",
-	"galleryBanner": {
-		"color": "#0c0a09",
-		"theme": "dark"
-	},
-	"changelog": true,
-	"main": "./dist/extension.js",
-	"browser": "./dist/web/extension.js",
-	"scripts": {
-		"build": "bun ./scripts/build.ts",
-		"dev": "bun ./scripts/build.ts --watch",
-		"contribute": "bun ./scripts/contribute.ts",
-		"contribute:check": "bun ./scripts/contribute.ts --check",
-		"harness": "bun run harness/screenshot.ts",
-		"icon": "bun scripts/icon.ts",
-		"record": "bun harness/record.ts",
-		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
-		"check": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
-		"test": "bun test",
-		"vsce:login": "vsce login trenaryja",
-		"vsce:package": "vsce package --no-dependencies",
-		"vsce:publish": "vsce publish --no-dependencies",
-		"vscode:prepublish": "bun run build"
-	},
-	"dependencies": {
-		"@codemirror/commands": "^6.8.1",
-		"@codemirror/lang-markdown": "^6.3.2",
-		"@codemirror/language": "^6.11.1",
-		"@codemirror/language-data": "^6.5.1",
-		"@codemirror/search": "^6.7.1",
-		"@codemirror/state": "^6.5.2",
-		"@codemirror/view": "^6.38.1",
-		"mathjax-full": "^3.2.2",
-		"mermaid": "^11.16.0",
-		"prettier": "^3.8.3",
-		"shiki": "^4.2.0",
-		"zod": "^4.4.3"
-	},
-	"devDependencies": {
-		"@repo/vscode-utils": "workspace:*",
-		"@tailwindcss/cli": "^4.3.3",
-		"@types/vscode": "^1.100.0",
-		"@vscode/codicons": "^0.0.45",
-		"@vscode/vsce": "^3.7.1",
-		"daisyui": "^5.6.18",
-		"esbuild": "^0.27.2",
-		"playwright-core": "^1.61.1",
-		"tailwindcss": "^4.3.3"
-	},
-	"engines": {
-		"vscode": "^1.100.0"
-	},
+	"description": "A beautiful live-preview markdown editor for VS Code — write without ever leaving your editor.",
 	"categories": [
 		"Formatters",
 		"Visualization",
@@ -83,36 +20,34 @@
 		"mermaid",
 		"notes"
 	],
-	"activationEvents": [],
+	"homepage": "https://github.com/trenaryja/extensions/tree/main/packages/markslate",
+	"bugs": {
+		"url": "https://github.com/trenaryja/extensions/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trenaryja/extensions.git",
+		"directory": "packages/markslate"
+	},
+	"license": "MIT",
+	"publisher": "trenaryja",
+	"main": "./dist/extension.js",
+	"browser": "./dist/web/extension.js",
+	"scripts": {
+		"build": "bun ./scripts/build.ts",
+		"chk": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"contribute": "bun ./scripts/contribute.ts",
+		"contribute:check": "bun ./scripts/contribute.ts --check",
+		"dev": "bun ./scripts/build.ts --watch",
+		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"harness": "bun run harness/screenshot.ts",
+		"icon": "bun scripts/icon.ts",
+		"record": "bun harness/record.ts",
+		"vsce:login": "vsce login trenaryja",
+		"vsce:package": "bun run build && vsce package --no-dependencies",
+		"vsce:publish": "bun run build && vsce publish --no-dependencies"
+	},
 	"contributes": {
-		"walkthroughs": [
-			{
-				"id": "markslate.gettingStarted",
-				"title": "Get Started with MarkSlate",
-				"description": "A live markdown editor that treats your notes like a craft.",
-				"steps": [
-					{
-						"id": "playground",
-						"title": "Open the playground",
-						"description": "MarkSlate renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:markslate.openPlayground)",
-						"media": {
-							"markdown": "assets/walkthrough/playground.md"
-						},
-						"completionEvents": [
-							"onCommand:markslate.openPlayground"
-						]
-					},
-					{
-						"id": "editing",
-						"title": "It's your markdown editor now",
-						"description": "MarkSlate is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).",
-						"media": {
-							"markdown": "assets/walkthrough/editing.md"
-						}
-					}
-				]
-			}
-		],
 		"commands": [
 			{
 				"command": "markslate.toggle",
@@ -140,49 +75,6 @@
 				"title": "Open Playground",
 				"category": "MarkSlate",
 				"icon": "$(rocket)"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "markslate.toggle",
-				"key": "ctrl+shift+m",
-				"mac": "cmd+shift+m",
-				"when": "resourceExtname == .md"
-			}
-		],
-		"menus": {
-			"editor/title": [
-				{
-					"command": "markslate.toggle",
-					"group": "navigation",
-					"when": "resourceExtname == .md"
-				}
-			],
-			"commandPalette": [
-				{
-					"command": "markslate.insertCodeBlock",
-					"when": "resourceExtname == .md"
-				},
-				{
-					"command": "markslate.insertCallout",
-					"when": "resourceExtname == .md"
-				},
-				{
-					"command": "markslate.insertMermaid",
-					"when": "resourceExtname == .md"
-				}
-			]
-		},
-		"customEditors": [
-			{
-				"viewType": "markslate.editor",
-				"displayName": "MarkSlate",
-				"selector": [
-					{
-						"filenamePattern": "*.md"
-					}
-				],
-				"priority": "default"
 			}
 		],
 		"configuration": {
@@ -901,6 +793,111 @@
 					"type": "boolean"
 				}
 			}
-		}
-	}
+		},
+		"customEditors": [
+			{
+				"viewType": "markslate.editor",
+				"displayName": "MarkSlate",
+				"selector": [
+					{
+						"filenamePattern": "*.md"
+					}
+				],
+				"priority": "default"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "markslate.toggle",
+				"key": "ctrl+shift+m",
+				"mac": "cmd+shift+m",
+				"when": "resourceExtname == .md"
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "markslate.toggle",
+					"group": "navigation",
+					"when": "resourceExtname == .md"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "markslate.insertCodeBlock",
+					"when": "resourceExtname == .md"
+				},
+				{
+					"command": "markslate.insertCallout",
+					"when": "resourceExtname == .md"
+				},
+				{
+					"command": "markslate.insertMermaid",
+					"when": "resourceExtname == .md"
+				}
+			]
+		},
+		"walkthroughs": [
+			{
+				"id": "markslate.gettingStarted",
+				"title": "Get Started with MarkSlate",
+				"description": "A live markdown editor that treats your notes like a craft.",
+				"steps": [
+					{
+						"id": "playground",
+						"title": "Open the playground",
+						"description": "MarkSlate renders markdown live and in place — tables, callouts, math, and diagrams, all editable. Open the playground to try it hands-on.\n[Open Playground](command:markslate.openPlayground)",
+						"media": {
+							"markdown": "assets/walkthrough/playground.md"
+						},
+						"completionEvents": [
+							"onCommand:markslate.openPlayground"
+						]
+					},
+					{
+						"id": "editing",
+						"title": "It's your markdown editor now",
+						"description": "MarkSlate is the default editor for every `.md` file — just open one. Toggle to raw text anytime with ⌘⇧M (Ctrl+Shift+M).",
+						"media": {
+							"markdown": "assets/walkthrough/editing.md"
+						}
+					}
+				]
+			}
+		]
+	},
+	"activationEvents": [],
+	"dependencies": {
+		"@codemirror/commands": "^6.11.1",
+		"@codemirror/lang-markdown": "^6.5.2",
+		"@codemirror/language": "^6.13.1",
+		"@codemirror/language-data": "^6.5.1",
+		"@codemirror/search": "^6.7.2",
+		"@codemirror/state": "^6.7.6",
+		"@codemirror/view": "^6.43.15",
+		"mathjax-full": "^3.2.2",
+		"mermaid": "^12.2.0",
+		"prettier": "^3.9.10",
+		"shiki": "^4.5.0",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@repo/vscode-utils": "workspace:*",
+		"@tailwindcss/cli": "^4.3.3",
+		"@types/vscode": "^1.100.0",
+		"@vscode/codicons": "^0.0.46-24",
+		"@vscode/vsce": "^4.0.0",
+		"daisyui": "^5.7.50",
+		"playwright-core": "^1.64.1",
+		"tailwindcss": "^4.3.3"
+	},
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"icon": "assets/icon.png",
+	"galleryBanner": {
+		"color": "#0c0a09",
+		"theme": "dark"
+	},
+	"changelog": true
 }

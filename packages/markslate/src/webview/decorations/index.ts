@@ -1,13 +1,13 @@
 import type { Extension } from '@codemirror/state'
-import { inlineDecorationsPlugin } from './inline'
 import { blocksPlugin } from './blocks'
-import { codeHoverTools } from './codeblocks'
-import { treeBlocksPlugin } from './treeBlocks'
-import { tablesPlugin } from './tables'
 import { calloutsPlugin } from './callouts'
-import { createMermaidPlugin } from './mermaid'
-import type { MermaidRenderMode } from './mermaid'
+import { codeHoverTools } from './codeblocks'
+import { inlineDecorationsPlugin } from './inline'
 import { mathPlugin } from './math'
+import type { MermaidRenderMode } from './mermaid'
+import { createMermaidPlugin } from './mermaid'
+import { tablesPlugin } from './tables'
+import { treeBlocksPlugin } from './treeBlocks'
 
 export function createDecorationExtensions(getMode: () => MermaidRenderMode): Extension[] {
 	return [

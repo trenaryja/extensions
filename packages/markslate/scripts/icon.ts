@@ -1,7 +1,7 @@
+import { withPage } from '@repo/vscode-utils/headless'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { withPage } from '@repo/vscode-utils/headless'
 
 // The M§ seal — the complete anatomy. Unit M = the cap height of the M; every dimension is a ratio
 // of M. Rebuildable from this comment alone:
@@ -29,6 +29,9 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 
 	await page.evaluate(async () => {
 		await document.fonts.ready
+		const canvas = document.createElement('canvas')
+		const ctx = canvas.getContext('2d')
+		if (!ctx) throw new Error('canvas has no 2d context')
 		const M = 44
 		const VIEW = 128
 		const C = VIEW / 2
@@ -41,9 +44,6 @@ await withPage({ width: 600, height: 600 }, async (page) => {
 			950: 'oklch(14.7% 0.004 49.25)',
 		}
 
-		const canvas = document.createElement('canvas')
-		const ctx = canvas.getContext('2d')
-		if (!ctx) throw new Error('canvas has no 2d context')
 		const SAMPLE = 100
 
 		const measure = (glyph: string) => {

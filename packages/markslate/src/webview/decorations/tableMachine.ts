@@ -59,29 +59,26 @@ const topLeft = (anchor: Cell, focus: Cell): Cell => ({
 // Arrow motion: up/down can step off the top (above the header) or bottom (below the last row); left/right
 // clamp within the row (leaving horizontally isn't a thing — you exit vertically or with Esc).
 function step(cell: Cell, dir: Dir, dims: Dims): Cell | 'top' | 'bottom' {
-	const maxRow = dims.rows - 1
 	if (dir === 'up') return cell.row <= HEADER_ROW ? 'top' : { row: cell.row - 1, col: cell.col }
-	if (dir === 'down') return cell.row >= maxRow ? 'bottom' : { row: cell.row + 1, col: cell.col }
+	if (dir === 'down') return cell.row >= dims.rows - 1 ? 'bottom' : { row: cell.row + 1, col: cell.col }
 	if (dir === 'left') return { row: cell.row, col: Math.max(0, cell.col - 1) }
 	return { row: cell.row, col: Math.min(dims.cols - 1, cell.col + 1) }
 }
 
 // Enter/Tab motion additionally wraps across rows before exiting at the far ends.
 function commitStep(cell: Cell, dir: Dir, dims: Dims): Cell | 'top' | 'bottom' {
-	const maxRow = dims.rows - 1
-	const maxCol = dims.cols - 1
 	if (dir === 'down' || dir === 'up') return step(cell, dir, dims)
 	if (dir === 'right')
-		return cell.col < maxCol
+		return cell.col < dims.cols - 1
 			? { row: cell.row, col: cell.col + 1 }
-			: cell.row >= maxRow
+			: cell.row >= dims.rows - 1
 				? 'bottom'
 				: { row: cell.row + 1, col: 0 }
 	return cell.col > 0
 		? { row: cell.row, col: cell.col - 1 }
 		: cell.row <= HEADER_ROW
 			? 'top'
-			: { row: cell.row - 1, col: maxCol }
+			: { row: cell.row - 1, col: dims.cols - 1 }
 }
 
 const select = (cell: Cell): Result => ({
@@ -105,9 +102,7 @@ function reduceDocument(state: GridState, event: GridEvent, dims: Dims): Result 
 		const cell: Cell =
 			event.corner === 'top-left'
 				? { row: HEADER_ROW, col: 0 }
-				: event.corner === 'bottom-left'
-					? { row: bottom, col: 0 }
-					: { row: bottom, col: dims.cols - 1 } // bottom-right
+				: { row: bottom, col: event.corner === 'bottom-left' ? 0 : dims.cols - 1 } // bottom-right
 		return select(cell)
 	}
 	if (event.t === 'click') return select(event.cell)

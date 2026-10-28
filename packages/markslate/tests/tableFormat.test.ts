@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { formatterProfile } from '../src/webview/decorations/tableFormat'
-import { parseRow, parseTable, serialize } from '../src/webview/decorations/tables'
+import { parseRow, parseTable, serialize } from '../src/webview/decorations/tableModel'
 
 type Align = 'left' | 'center' | 'right' | null
 
@@ -14,13 +14,13 @@ const parse = (source: string) => {
 
 describe('escaped-pipe round-trip', () => {
 	test('parseRow keeps an escaped pipe inside its cell and unescapes it', () => {
-		expect(parseRow('| a \\| b | c |')).toEqual(['a | b', 'c'])
+		expect(parseRow(String.raw`| a \| b | c |`)).toEqual(['a | b', 'c'])
 	})
 	test('parseRow still splits on unescaped pipes', () => {
 		expect(parseRow('| a | b | c |')).toEqual(['a', 'b', 'c'])
 	})
 	test('serialize escapes a literal pipe in cell content', () => {
-		expect(serialize(model(['h'], [null], [['a | b']]))).toContain('a \\| b')
+		expect(serialize(model(['h'], [null], [['a | b']]))).toContain(String.raw`a \| b`)
 	})
 	test('parse → serialize → parse preserves a pipe-bearing cell (no data loss)', () => {
 		const source = serialize(model(['k', 'v'], [null, null], [['x', 'a | b']]))
@@ -28,7 +28,7 @@ describe('escaped-pipe round-trip', () => {
 	})
 	test('an escaped backslash before a pipe still splits the column', () => {
 		// `\\` is a literal backslash, so the following `|` is a real separator.
-		expect(parseRow('| a \\\\ | b |')).toEqual(['a \\\\', 'b'])
+		expect(parseRow(String.raw`| a \\ | b |`)).toEqual(['a \\\\', 'b'])
 	})
 })
 

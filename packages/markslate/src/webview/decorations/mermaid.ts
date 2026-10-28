@@ -1,7 +1,7 @@
-import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
 import type { EditorState } from '@codemirror/state'
-import { Decoration, EditorView } from '@codemirror/view'
+import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet } from '@codemirror/view'
+import { Decoration, EditorView } from '@codemirror/view'
 import mermaid from 'mermaid'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
@@ -9,7 +9,7 @@ import { docOrSelectionChanged, selectionTouches } from './active'
 export type MermaidRenderMode = 'inline' | 'below' | 'disabled'
 
 // Dispatched when the VS Code theme changes so the field rebuilds and diagrams re-render with new colors.
-const mermaidRefresh = StateEffect.define<null>()
+const mermaidRefresh = StateEffect.define()
 
 // Bridge the active VS Code theme into mermaid's `base` theme — the same idea as the Shiki bridge for code
 // blocks, but sourced from the `--vscode-*` CSS variables VS Code injects into the webview (no host round-trip
@@ -154,9 +154,7 @@ function findMermaidBlocks(state: EditorState): MermaidBlock[] {
 		} else if (text === '```') {
 			blocks.push({ startLine: blockStart, endLine: lineNum, code: codeLines.join('\n') })
 			blockStart = -1
-		} else {
-			codeLines.push(text)
-		}
+		} else codeLines.push(text)
 	}
 
 	return blocks

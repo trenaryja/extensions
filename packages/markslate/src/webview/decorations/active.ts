@@ -1,5 +1,5 @@
-import { Facet } from '@codemirror/state'
 import type { EditorState, Transaction } from '@codemirror/state'
+import { Facet } from '@codemirror/state'
 
 export type SourceRange = { from: number; to: number }
 

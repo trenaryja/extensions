@@ -29,8 +29,6 @@ const register = (nodeNames: string[], renderer: NodeRenderer) => {
 
 const hide = Decoration.replace({})
 
-// ---------- Widgets ----------
-
 const bulletWidget = defineWidget<null>({
 	eq: () => true,
 	toDOM: () => {
@@ -53,8 +51,6 @@ const checkboxWidget = defineWidget<{ checked: boolean }>({
 		return checkbox
 	},
 })
-
-// ---------- Renderers ----------
 
 const HEADING_CLASS: Record<number, string> = { 1: 'md-h1', 2: 'md-h2', 3: 'md-h3', 4: 'md-h4', 5: 'md-h5', 6: 'md-h6' }
 
@@ -139,8 +135,6 @@ register(['FencedCode'], (node, { state, add }) => {
 		add(docFrom, docFrom + token.length, Decoration.mark({ attributes: { style: token.style } }))
 	}
 })
-
-// ---------- Plugin ----------
 
 function buildTreeDecorations(view: EditorView): DecorationSet {
 	const ranges: { from: number; to: number; deco: Decoration }[] = []

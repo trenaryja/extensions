@@ -1,9 +1,9 @@
+import { extensionConfig, runBuilds, webExtensionConfig, webviewConfig } from '@repo/vscode-utils/build'
 import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { extensionConfig, runBuilds, webExtensionConfig, webviewConfig } from '@repo/vscode-utils/build'
 
 const watch = process.argv.includes('--watch')
 const mode = watch ? 'development' : 'production'
@@ -15,7 +15,7 @@ const codiconDir = join(dirname(createRequire(import.meta.url).resolve('@vscode/
 const codiconFont = readFileSync(join(codiconDir, 'codicon.ttf')).toString('base64')
 const codiconCss = readFileSync(join(codiconDir, 'codicon.css'), 'utf8').replace(
 	/url\("\.\/codicon\.ttf[^"]*"\)/,
-	`url(data:font/ttf;base64,${codiconFont})`,
+	() => `url(data:font/ttf;base64,${codiconFont})`,
 )
 writeFileSync(join(pkgRoot, 'dist/codicon.css'), codiconCss)
 
@@ -24,9 +24,4 @@ const cssArgs = ['@tailwindcss/cli', '-i', 'src/webview/styles.css', '-o', 'dist
 if (watch) spawn('bunx', [...cssArgs, '--watch'], { cwd: pkgRoot, stdio: 'inherit' })
 else execFileSync('bunx', [...cssArgs, '--minify'], { cwd: pkgRoot, stdio: 'inherit' })
 
-runBuilds([extensionConfig({ mode }), webExtensionConfig({ mode }), webviewConfig({ mode })], { watch }).catch(
-	(error: unknown) => {
-		console.error(error)
-		process.exit(1)
-	},
-)
+await runBuilds([extensionConfig({ mode }), webExtensionConfig({ mode }), webviewConfig({ mode })], { watch })

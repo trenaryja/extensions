@@ -39,7 +39,7 @@ function addEmphasis(add: AddRange, view: EditorView, node: MarkdownNode) {
 	if (!spec) return
 	const marks = node.getChildren(spec.mark)
 	const first = marks[0]
-	const last = marks[marks.length - 1]
+	const last = marks.at(-1)
 	add(first ? first.to : node.from, last ? last.from : node.to, styleFor(spec.cls))
 	if (!isActive(view, node.from, node.to)) for (const mark of marks) add(mark.from, mark.to, hide)
 }
@@ -62,10 +62,10 @@ function addLink(add: AddRange, view: EditorView, node: MarkdownNode) {
 	if (!open || !closeText) return
 	add(open.to, closeText.from, linkMark(view.state.sliceDoc(urlNode.from, urlNode.to)))
 
-	if (!isActive(view, node.from, node.to)) {
-		add(open.from, open.to, hide) // [
-		add(closeText.from, node.to, hide) // ](url)
-	}
+	if (isActive(view, node.from, node.to)) return
+
+	add(open.from, open.to, hide) // [
+	add(closeText.from, node.to, hide) // ](url)
 }
 
 // Style just the URL of an image like a link (visible only while editing — otherwise the blocks plugin
@@ -87,20 +87,18 @@ function buildInline(view: EditorView): DecorationSet {
 
 	const tree = syntaxTree(view.state)
 
-	for (const visible of view.visibleRanges) {
+	for (const visible of view.visibleRanges)
 		tree.iterate({
 			from: visible.from,
 			to: visible.to,
 			enter: (node) => {
 				if (inRawSource(rawRanges, node.from, node.to)) return false
-				if (node.name in INLINE) addEmphasis(add, view, node.node)
+				if (Object.hasOwn(INLINE, node.name)) addEmphasis(add, view, node.node)
 				else if (node.name === 'URL') addAutolink(add, view, node.node)
 				else if (node.name === 'Link') addLink(add, view, node.node)
 				else if (node.name === 'Image') addImageUrl(add, view, node.node)
-				return undefined
 			},
 		})
-	}
 
 	const { doc } = view.state
 
@@ -117,10 +115,10 @@ function buildInline(view: EditorView): DecorationSet {
 				const to = from + match[0].length
 				add(from + 2, to - 2, styleFor('md-strikethrough'))
 
-				if (!isActive(view, from, to)) {
-					add(from, from + 2, hide)
-					add(to - 2, to, hide)
-				}
+				if (isActive(view, from, to)) continue
+
+				add(from, from + 2, hide)
+				add(to - 2, to, hide)
 			}
 		}
 	}

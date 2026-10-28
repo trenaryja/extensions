@@ -1,7 +1,7 @@
-import { RangeSetBuilder, StateField } from '@codemirror/state'
 import type { EditorState, Line } from '@codemirror/state'
-import { Decoration, EditorView } from '@codemirror/view'
+import { RangeSetBuilder, StateField } from '@codemirror/state'
 import type { DecorationSet } from '@codemirror/view'
+import { Decoration, EditorView } from '@codemirror/view'
 import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js'
 import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
@@ -33,7 +33,7 @@ const renderMath = (latex: string, display: boolean) => {
 
 	try {
 		const node: unknown = mathDocument.convert(latex, { display })
-		if (!(node instanceof LiteElement)) throw new Error('MathJax rendered no element')
+		if (!(node instanceof LiteElement)) throw new TypeError('MathJax rendered no element')
 		svg = adaptor.innerHTML(node)
 	} catch (error) {
 		svg = `<span class="md-math-error">${error instanceof Error ? error.message : String(error)}</span>`
@@ -58,10 +58,8 @@ const exportSvg = (latex: string) => {
 		exportColor === 'theme'
 			? getComputedStyle(document.body).getPropertyValue('--vscode-editor-foreground').trim() || '#1a1a1a'
 			: exportColor
-	return svg.replaceAll('currentColor', color)
+	return svg.replaceAll('currentColor', () => color)
 }
-
-// --- Widgets ---
 
 const editable = (event: Event) => event.type !== 'mousedown'
 
@@ -94,13 +92,10 @@ const blockMathWidget = defineWidget<{ latex: string }>({
 	},
 })
 
-// --- Parsing helpers ---
-
 // Inline `$…$`, currency-safe: opening `$` not escaped / not part of `$$`, no space just inside, closing `$`
 // not followed by a digit. `\.` allows escaped chars inside.
 const INLINE_MATH_RE = /(?<![\\$])\$(?!\s)((?:[^$\\]|\\.)+)(?<!\s)\$(?!\d)/g
 const FENCE_MATH_RE = /^```(?:latex|math|tex)\s*$/i
-const FENCE_RE = /^```/
 
 // Parse a `$$…$$` block starting at `startNum`; returns the end line and inner LaTeX, or null.
 function parseBlockDollar(doc: EditorState['doc'], startNum: number) {
@@ -132,15 +127,14 @@ function parseFenceMath(doc: EditorState['doc'], startNum: number) {
 
 	for (let next = startNum + 1; next <= doc.lines; next++) {
 		const { text } = doc.line(next)
-		if (FENCE_RE.test(text)) return { endNum: next, latex: body.join('\n').trim() }
+		if (text.startsWith('```')) return { endNum: next, latex: body.join('\n').trim() }
 		body.push(text)
 	}
 
 	return null
 }
 
-// Last line of the front matter (opening `---` on line 1 through its closing `---`), or 0 when there is none.
-// An unclosed opener swallows the rest of the document, matching how CodeMirror's markdown parser reads it.
+/** an unclosed opener swallows the rest of the document, as CodeMirror's markdown parser reads it */
 function frontMatterEnd(doc: EditorState['doc']) {
 	if (!/^---\s*$/.test(doc.line(1).text)) return 0
 
@@ -160,8 +154,6 @@ function addInlineMath(builder: RangeSetBuilder<Decoration>, state: EditorState,
 			builder.add(from, to, Decoration.replace({ widget: inlineMathWidget({ latex }) }))
 	}
 }
-
-// --- Builder ---
 
 function buildMathDecorations(state: EditorState): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>()
@@ -183,7 +175,7 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 		const { text } = line
 
 		// Fences: `math`/`latex`/`tex` render as block math; other fences are code — skip their contents.
-		if (FENCE_RE.test(text)) {
+		if (text.startsWith('```')) {
 			const fence = !inCodeBlock && FENCE_MATH_RE.test(text) ? parseFenceMath(doc, lineNum) : null
 
 			if (fence) {
@@ -202,7 +194,7 @@ function buildMathDecorations(state: EditorState): DecorationSet {
 		}
 
 		// Block `$$…$$` (own line).
-		if (text.trim().startsWith('$$')) {
+		if (text.trimStart().startsWith('$$')) {
 			const block = parseBlockDollar(doc, lineNum)
 
 			if (block) {

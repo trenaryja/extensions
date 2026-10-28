@@ -1,11 +1,9 @@
-import { RangeSetBuilder } from '@codemirror/state'
 import type { Line } from '@codemirror/state'
-import { Decoration, ViewPlugin } from '@codemirror/view'
+import { RangeSetBuilder } from '@codemirror/state'
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
+import { Decoration, ViewPlugin } from '@codemirror/view'
 import { defineWidget } from '../lib/widget'
 import { selectionTouches } from './active'
-
-// ---------- Widgets ----------
 
 // Let a mousedown through so clicking the widget places the cursor and reveals the raw source to edit.
 const editable = (event: Event) => event.type !== 'mousedown'
@@ -31,8 +29,6 @@ const imageWidget = defineWidget<{ alt: string; src: string }>({
 		return img
 	},
 })
-
-// ---------- Types ----------
 
 type LineEntry = { kind: 'line'; from: number; deco: Decoration }
 
@@ -116,15 +112,13 @@ function emitEntries(entries: Entry[]): DecorationSet {
 
 	let lastMarkTo = -1
 
-	for (const entry of entries) {
-		if (entry.kind === 'line') {
-			builder.add(entry.from, entry.from, entry.deco)
-		} else {
+	for (const entry of entries)
+		if (entry.kind === 'line') builder.add(entry.from, entry.from, entry.deco)
+		else {
 			if (entry.from < lastMarkTo) continue
 			builder.add(entry.from, entry.to, entry.deco)
 			lastMarkTo = entry.to
 		}
-	}
 
 	return builder.finish()
 }

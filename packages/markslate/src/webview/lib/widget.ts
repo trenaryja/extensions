@@ -1,5 +1,5 @@
-import { WidgetType } from '@codemirror/view'
 import type { EditorView } from '@codemirror/view'
+import { WidgetType } from '@codemirror/view'
 
 type WidgetSpec<T> = {
 	/** Whether two widget values are equal — lets CodeMirror reuse the DOM instead of re-rendering. */
@@ -31,7 +31,7 @@ export const defineWidget = <T>(spec: WidgetSpec<T>) => {
 		}
 
 		override ignoreEvent(event: Event) {
-			return spec.ignoreEvent ? spec.ignoreEvent(event) : true
+			return spec.ignoreEvent?.(event) ?? true
 		}
 	}
 	return (value: T) => new FunctionalWidget(value)

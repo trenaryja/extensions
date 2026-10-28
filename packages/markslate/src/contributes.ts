@@ -1,6 +1,6 @@
 import { defineCommands } from '@repo/vscode-utils/registry'
-import { CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
 import type { CalloutConfig } from './callouts.data'
+import { CALLOUT_PRIMARIES, resolveCallout } from './callouts.data'
 import { EDITOR_VIEW_TYPE } from './ids'
 import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 
@@ -62,7 +62,7 @@ export const commands = defineCommands([
 			const { activeTab } = vscode.window.tabGroups.activeTabGroup
 			const input = activeTab?.input
 			const uri = input instanceof vscode.TabInputText || input instanceof vscode.TabInputCustom ? input.uri : undefined
-			if (!uri || !uri.path.endsWith('.md')) return
+			if (!uri?.path.endsWith('.md')) return
 
 			const next = (modeMap.get(uri.toString()) ?? 'preview') === 'preview' ? 'raw' : 'preview'
 			modeMap.set(uri.toString(), next)

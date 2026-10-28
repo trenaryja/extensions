@@ -101,7 +101,7 @@ const resolveEditor = (
 
 		if (msg.type === 'webviewError') {
 			vscode.window.showErrorMessage(`MarkSlate (webview): ${msg.message}`)
-			return console.error('[MarkSlate] Webview error:', msg.message, msg.stack)
+			return void console.error('[MarkSlate] Webview error:', msg.message, msg.stack)
 		}
 
 		if (/^https?:\/\//i.test(msg.url)) return vscode.env.openExternal(vscode.Uri.parse(msg.url))

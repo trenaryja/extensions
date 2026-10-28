@@ -1,9 +1,9 @@
-import { StateEffect, StateField } from '@codemirror/state'
 import type { EditorState, Line } from '@codemirror/state'
-import { Decoration, EditorView } from '@codemirror/view'
+import { StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet } from '@codemirror/view'
-import { resolveCallout } from '../../callouts.data'
+import { Decoration, EditorView } from '@codemirror/view'
 import type { CalloutConfig } from '../../callouts.data'
+import { resolveCallout } from '../../callouts.data'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
 
@@ -22,7 +22,7 @@ const quoteDepth = (text: string) => /^(?:\s*>)+/.exec(text)?.[0].match(/>/g)?.l
 // Settings pushed from the webview.
 let userCallouts: CalloutConfig = {}
 let showDefaultTitle = true
-const refresh = StateEffect.define<null>()
+const refresh = StateEffect.define()
 
 /** Apply the user's callout settings and rebuild — called from the webview when settings arrive/change. */
 export function applyCallouts(view: EditorView, config: CalloutConfig, defaultTitle: boolean) {
@@ -102,8 +102,8 @@ function nestedBackground(inside: Callout[]) {
 		const tint = `color-mix(in srgb, ${color} 7%, transparent)`
 		layers.push(
 			`linear-gradient(90deg,transparent ${x},${border} ${x},${border} calc(${x} + 1.5px),transparent calc(${x} + 1.5px))`,
+			`linear-gradient(90deg,transparent ${x},${tint} ${x})`,
 		)
-		layers.push(`linear-gradient(90deg,transparent ${x},${tint} ${x})`)
 	}
 
 	return layers.join(',')
@@ -128,7 +128,7 @@ function findCallouts(doc: EditorState['doc']) {
 		const { text } = doc.line(n)
 		const depth = quoteDepth(text)
 
-		while (stack.length && (stack[stack.length - 1]?.depth ?? 0) > depth) {
+		while (stack.length && (stack.at(-1)?.depth ?? 0) > depth) {
 			const top = stack.pop()
 			if (top) top.to = n - 1
 		}
@@ -140,22 +140,21 @@ function findCallouts(doc: EditorState['doc']) {
 
 		const header = CALLOUT_HEADER_RE.exec(text)
 
-		if (header && depth === stack.length + 1) {
-			const type = (header[2] ?? '').toLowerCase()
-			const { icon, color } = resolveCallout(userCallouts, type)
-			const callout: Callout = {
-				type,
-				color,
-				icon,
-				depth,
-				from: n,
-				to: doc.lines,
-				title: header[4] ?? '',
-				marker: header[3] ?? '',
-			}
-			stack.push(callout)
-			callouts.push(callout)
+		if (!header || depth !== stack.length + 1) continue
+		const type = (header[2] ?? '').toLowerCase()
+		const { icon, color } = resolveCallout(userCallouts, type)
+		const callout: Callout = {
+			type,
+			color,
+			icon,
+			depth,
+			from: n,
+			to: doc.lines,
+			title: header[4] ?? '',
+			marker: header[3] ?? '',
 		}
+		stack.push(callout)
+		callouts.push(callout)
 	}
 
 	closeTo(doc.lines)
@@ -215,13 +214,15 @@ function renderHeaderLine(add: AddRange, line: Line, header: Callout) {
 function buildCalloutDecorations(state: EditorState): DecorationSet {
 	const { doc } = state
 	const ranges: { from: number; to: number; deco: Decoration }[] = []
-	const add = (from: number, to: number, deco: Decoration) => ranges.push({ from, to, deco })
+	const add = (from: number, to: number, deco: Decoration) => {
+		ranges.push({ from, to, deco })
+	}
 	const callouts = findCallouts(doc)
 	markCollapsed(state, callouts)
 
 	// Render each line with the stack of callouts it sits inside.
 	for (let n = 1; n <= doc.lines; n++) {
-		const inside = callouts.filter((c) => c.from <= n && n <= c.to).sort((a, b) => a.depth - b.depth)
+		const inside = callouts.filter((c) => c.from <= n && n <= c.to).toSorted((a, b) => a.depth - b.depth)
 		if (!inside.length) continue
 		// Skip lines hidden inside a collapsed callout's content (a block replace covers them).
 		if (inside.some((c) => c.collapsed && n > c.from)) continue

@@ -1,7 +1,7 @@
+import { withPage } from '@repo/vscode-utils/headless'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { withPage } from '@repo/vscode-utils/headless'
 
 // Render a markdown file through the real webview bundle in headless Chromium and screenshot it — so the
 // editor's visuals (decorations, scroll, callouts, code, math) can be verified without opening VS Code.
@@ -21,7 +21,7 @@ await withPage({ width: 900, height: 1000, deviceScaleFactor: 2 }, async (page) 
 		Object.assign(window, { HARNESS_CONTENT: markdown })
 	}, content)
 	await page.goto(`file://${join(here, 'index.html')}`)
-	await page.waitForSelector('.cm-content', { timeout: 15000 })
+	await page.waitForSelector('.cm-content', { timeout: 15_000 })
 	await page.waitForTimeout(1500) // let Shiki / mermaid / math finish rendering
 
 	mkdirSync(dirname(outputPng), { recursive: true })

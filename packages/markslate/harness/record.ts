@@ -1,6 +1,6 @@
+import { recordGif } from '@repo/vscode-utils/headless'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { recordGif } from '@repo/vscode-utils/headless'
 import type { Locator, Page } from 'playwright-core'
 
 // Record marketplace demo GIFs by driving the real webview bundle in headless Chromium.
@@ -31,7 +31,7 @@ const load = async (page: Page, doc: string) => {
 		Object.assign(window, { HARNESS_CONTENT: markdown })
 	}, doc)
 	await page.goto(`file://${join(here, 'index.html')}`)
-	await page.waitForSelector('.cm-content', { timeout: 15000 })
+	await page.waitForSelector('.cm-content', { timeout: 15_000 })
 	await page.waitForTimeout(1200)
 	mouseAt = { ...PARK }
 	await page.mouse.move(PARK.x, PARK.y)
@@ -46,8 +46,6 @@ const line = async (page: Page, text: string) => {
 
 const setTheme = (page: Page, kind: 'light' | 'dark') =>
 	page.evaluate((theme) => window.dispatchEvent(new CustomEvent('harness:theme', { detail: theme })), kind)
-
-// ---------- Eased mouse choreography ----------
 
 const CENTER: Anchor = { x: 0.5, y: 0.5 }
 const OFF_CENTER: Anchor = { x: 0.5, y: 0.55 }
@@ -127,11 +125,9 @@ const dragTo = async (page: Page, from: Locator, to: Locator) => {
 /** Retire the cursor out of the content area so the result is unobstructed. */
 const park = async (page: Page) => glide(page, PARK, { duration: 550, arc: 0.1 })
 
-// ---------- Scenarios ----------
-
 type Scenario = { name: string; doc: string; run: (page: Page) => Promise<void> }
 
-const FIND_DOC = `# Field Notes
+const FIND_DOC = String.raw`# Field Notes
 
 ## Tables
 
@@ -145,7 +141,7 @@ Every table is rewritten exactly the way Prettier would print it.
 
 ## Math
 
-Inline math like $e^{i\\pi} + 1 = 0$ renders as you type, and every
+Inline math like $e^{i\pi} + 1 = 0$ renders as you type, and every
 block equation ships with a copy button. Tables, callouts, and math
 all stay plain markdown on disk — no separate table format, ever.
 `
@@ -344,7 +340,7 @@ const SCENARIOS: Scenario[] = [
 			await page.keyboard.press('Meta+ArrowDown')
 			await page.waitForTimeout(600)
 			await line(page, '$$')
-			await line(page, 'e^{i\\pi} + 1 = 0')
+			await line(page, String.raw`e^{i\pi} + 1 = 0`)
 			await line(page, '$$')
 			await page.keyboard.press('Enter')
 			await page.waitForTimeout(1300)

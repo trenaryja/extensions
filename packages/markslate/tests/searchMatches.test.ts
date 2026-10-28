@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
 import { SearchQuery } from '@codemirror/search'
 import { EditorState } from '@codemirror/state'
+import { describe, expect, test } from 'bun:test'
 import { countMatches } from '../src/webview/searchMatches'
 
 const state = (doc: string, anchor = 0, head = anchor) => EditorState.create({ doc, selection: { anchor, head } })

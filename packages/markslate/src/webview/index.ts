@@ -1,20 +1,20 @@
-import { EditorState } from '@codemirror/state'
-import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { languages } from '@codemirror/language-data'
 import { syntaxTree } from '@codemirror/language'
-import { markSlateTheme } from './theme'
-import { markSlateFind, openFind } from './find'
-import { createDecorationExtensions } from './decorations/index'
-import { setShikiTheme } from './decorations/codeblocks'
-import { applyCallouts } from './decorations/callouts'
-import { setMathExportColor } from './decorations/math'
-import { setFormatTablesOnEdit } from './decorations/tables'
-import { CURSOR } from '../snippets'
+import { languages } from '@codemirror/language-data'
+import { EditorState } from '@codemirror/state'
+import { EditorView, keymap } from '@codemirror/view'
 import type { CalloutConfig } from '../callouts.data'
-import { refreshMermaidTheme } from './decorations/mermaid'
+import { CURSOR } from '../snippets'
+import { applyCallouts } from './decorations/callouts'
+import { setShikiTheme } from './decorations/codeblocks'
+import { createDecorationExtensions } from './decorations/index'
+import { setMathExportColor } from './decorations/math'
 import type { MermaidRenderMode } from './decorations/mermaid'
+import { refreshMermaidTheme } from './decorations/mermaid'
+import { setFormatTablesOnEdit } from './decorations/tables'
+import { markSlateFind, openFind } from './find'
+import { markSlateTheme } from './theme'
 
 declare function acquireVsCodeApi(): {
 	postMessage: (msg: unknown) => void
@@ -36,7 +36,7 @@ window.addEventListener('blur', () => document.documentElement.classList.remove(
 
 // Mod+F anywhere in the webview opens find — even when focus is outside CodeMirror (e.g. the table grid).
 window.addEventListener('keydown', (event) => {
-	if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.key.toLowerCase() !== 'f') return
+	if ((!event.metaKey && !event.ctrlKey) || event.shiftKey || event.key.toLowerCase() !== 'f') return
 	if (!view) return
 	event.preventDefault()
 	openFind(view, event.altKey)
@@ -192,10 +192,10 @@ function insertSnippet(text: string) {
 	const atLineStart = from === 0 || view.state.doc.sliceString(from - 1, from) === '\n'
 	const raw = (atLineStart ? '' : '\n') + text
 	const marker = raw.indexOf(CURSOR)
-	const snippet = marker >= 0 ? raw.replace(CURSOR, '') : raw
+	const snippet = marker === -1 ? raw : raw.replace(CURSOR, '')
 	view.dispatch({
 		changes: { from, to, insert: snippet },
-		selection: { anchor: from + (marker >= 0 ? marker : snippet.length) },
+		selection: { anchor: from + (marker === -1 ? snippet.length : marker) },
 	})
 	view.focus()
 }
