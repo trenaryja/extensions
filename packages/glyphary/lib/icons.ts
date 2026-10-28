@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname } from 'node:path'
-import * as R from 'remeda'
 import { IconsManifest } from 'react-icons/lib'
+import * as R from 'remeda'
 import { z } from 'zod'
 
 type IconTree = { tag: string; attr: Record<string, string>; child: IconTree[] }
@@ -36,7 +36,7 @@ const camelAttributes = new Set([
 ])
 
 const kebab = (name: string) =>
-	camelAttributes.has(name) ? name : name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+	camelAttributes.has(name) ? name : name.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
 
 const renderNode = ({ tag, attr, child }: IconTree): string => {
 	const attributes = R.entries(attr)
@@ -56,8 +56,8 @@ const drawableName = (set: string, exportName: string) => {
 	const prefix = set.replace(/\d+$/, '')
 	const words = exportName
 		.slice(prefix.length)
-		.replace(/([a-z0-9])([A-Z])|([a-zA-Z])(\d)/g, '$1$3_$2$4')
-		.replace(/([A-Z])([A-Z][a-z])/g, '$1_$2')
+		.replaceAll(/([a-z0-9])([A-Z])|([a-zA-Z])(\d)/g, '$1$3_$2$4')
+		.replaceAll(/([A-Z])([A-Z][a-z])/g, '$1_$2')
 		.toLowerCase()
 	return `${set}_${words}`
 }
@@ -67,13 +67,14 @@ const exportPattern = /^module\.exports\.(\w+) = function[^\n]*\n\s*return GenIc
 /** Alphabetical: react-icons ships some sets (Simple Icons) Z to A, which is how Nova's grid would list them. */
 const loadSet = (id: string) =>
 	R.sortBy(
-		[...readFileSync(`${reactIconsDir}/${id}/index.js`, 'utf8').matchAll(exportPattern)].map(
-			([, exportName = '', tree = '']) => ({
+		readFileSync(`${reactIconsDir}/${id}/index.js`, 'utf8')
+			.matchAll(exportPattern)
+			.map(([, exportName = '', tree = '']) => ({
 				set: id,
 				drawable: drawableName(id, exportName),
 				svg: renderSvg(IconTree.parse(JSON.parse(tree))),
-			}),
-		),
+			}))
+			.toArray(),
 		(icon) => icon.drawable,
 	)
 

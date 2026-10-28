@@ -2,8 +2,8 @@ import { $ } from 'bun'
 import { existsSync, readdirSync } from 'node:fs'
 import { mkdir, rm } from 'node:fs/promises'
 import * as R from 'remeda'
-import { reactIconsVersion } from './icons'
 import type { IconSet } from './icons'
+import { reactIconsVersion } from './icons'
 import { searchCatalog } from './keywords'
 import { toPng, toVectorDrawable } from './vector'
 
@@ -34,7 +34,7 @@ const sdkRoot = () => {
 const newest = (dir: string, pattern: RegExp) => {
 	const name = R.pipe(
 		readdirSync(dir).filter((entry) => pattern.test(entry)),
-		R.sortBy((entry) => entry.replace(/\d+/g, (digits) => digits.padStart(4, '0'))),
+		R.sortBy((entry) => entry.replaceAll(/\d+/g, (digits) => digits.padStart(4, '0'))),
 		R.last(),
 	)
 	if (!name) throw new Error(`Nothing matching ${pattern} in ${dir}; install it with sdkmanager`)

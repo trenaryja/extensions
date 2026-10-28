@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
 import { Resvg } from '@resvg/resvg-js'
+import { readFileSync } from 'node:fs'
 import svg2vectordrawable from 'svg2vectordrawable'
 
 /**
@@ -36,28 +36,28 @@ const fitGlyph = (svg: string) => {
 	return svg
 		.replace(
 			/viewBox="[^"]+">/,
-			`viewBox="0 0 ${side} ${side}" width="${side}" height="${side}"><g transform="translate(${dx} ${dy})">`,
+			() => `viewBox="0 0 ${side} ${side}" width="${side}" height="${side}"><g transform="translate(${dx} ${dy})">`,
 		)
-		.replace(/<\/svg>$/, '</g></svg>')
+		.replace(/<\/svg>$/, () => '</g></svg>')
 }
 
 /** aapt2 string pool limit; si_composer and si_elsevier exceed it at 3 decimals and fit at 1. */
-const maxPathLength = 32767
+const maxPathLength = 32_767
 
 const convert = async (svg: string, floatPrecision = 3): Promise<string> => {
 	const xml = await svg2vectordrawable(svg, { floatPrecision })
-	const fits = [...xml.matchAll(/pathData="([^"]*)"/g)].every(([, path = '']) => path.length <= maxPathLength)
+	const fits = xml.matchAll(/pathData="([^"]*)"/g).every(([, path = '']) => path.length <= maxPathLength)
 	if (fits) return xml
 	if (floatPrecision === 0) throw new Error('pathData exceeds the aapt2 string limit even at 0 decimals')
 	return convert(svg, floatPrecision - 1)
 }
 
 export const toVectorDrawable = async (svg: string) => {
-	const xml = await convert(fitGlyph(svg).replaceAll('currentColor', placeholder))
+	const xml = await convert(fitGlyph(svg).replaceAll('currentColor', () => placeholder))
 	return xml
-		.replace(/android:width="[^"]+"/, 'android:width="192dp"')
-		.replace(/android:height="[^"]+"/, 'android:height="192dp"')
-		.replaceAll(new RegExp(`"#(?:ff)?${placeholder.slice(1)}"`, 'gi'), '"@color/glyph"')
+		.replace(/android:width="[^"]+"/, () => 'android:width="192dp"')
+		.replace(/android:height="[^"]+"/, () => 'android:height="192dp"')
+		.replaceAll(new RegExp(`"#(?:ff)?${placeholder.slice(1)}"`, 'gi'), () => '"@color/glyph"')
 }
 
 const glyphColor = /name="glyph">([^<]+)</.exec(
@@ -67,7 +67,10 @@ const glyphColor = /name="glyph">([^<]+)</.exec(
 /** For launchers that decode drawables with BitmapFactory, which can't read vectors. */
 export const toPng = (svg: string, px: number) => {
 	if (!glyphColor) throw new Error('android/res/values/colors.xml has no glyph color')
-	return resvg(fitGlyph(svg).replaceAll('currentColor', glyphColor), { fitTo: { mode: 'width', value: px } })
+	return resvg(
+		fitGlyph(svg).replaceAll('currentColor', () => glyphColor),
+		{ fitTo: { mode: 'width', value: px } },
+	)
 		.render()
 		.asPng()
 }

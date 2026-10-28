@@ -1,20 +1,20 @@
 {
 	"name": "glyphary",
 	"version": "0.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"build": "bun cli.ts build",
-		"install-apk": "bun cli.ts install",
+		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0",
 		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0"
+		"install-apk": "bun cli.ts install"
 	},
 	"dependencies": {
 		"@resvg/resvg-js": "^2.6.2",
 		"react-icons": "5.7.0",
-		"remeda": "^2.52.0",
+		"remeda": "^2.54.1",
 		"svg2vectordrawable": "^2.9.1",
-		"zod": "^4.4.3"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@tailwindcss/cli": "^4.3.3",

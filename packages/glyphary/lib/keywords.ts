@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import * as R from 'remeda'
 import { z } from 'zod'
 import type { Catalog } from '../picker/search'
-import { byPreference, PackageJson } from './icons'
 import type { IconSet } from './icons'
+import { byPreference, PackageJson } from './icons'
 
 const LucideTags = z.record(z.string(), z.array(z.string()))
 
@@ -157,8 +157,11 @@ export const searchCatalog = async (sets: readonly IconSet[]): Promise<Catalog> 
 		const nameWords = new Set(drawable.split('_'))
 		const keywords = [...(tags ?? [])].filter((word) => !nameWords.has(word)).join(' ')
 		if (!keywords) return -1
-		if (!groupOf.has(keywords)) groupOf.set(keywords, keywordGroups.push(keywords) - 1)
-		return groupOf.get(keywords) ?? -1
+		const known = groupOf.get(keywords)
+		if (known !== undefined) return known
+		groupOf.set(keywords, keywordGroups.length)
+		keywordGroups.push(keywords)
+		return keywordGroups.length - 1
 	}
 
 	const catalogSets = byPreference(sets).map(({ id, name, icons }) => ({

@@ -16,18 +16,18 @@ const bridge = isBridge(injected) ? injected : undefined
 const cellWidth = 88
 const cellHeight = 104
 
-const element = <T extends Element = HTMLElement>(selector: string) => {
-	const found = document.querySelector<T>(selector)
-	if (!found) throw new Error(`${selector} missing from index.html`)
+const element = <T extends Element>(selector: string, type: new () => T) => {
+	const found = document.querySelector(selector)
+	if (!(found instanceof type)) throw new TypeError(`${selector} missing from index.html`)
 	return found
 }
 
-const search = element<HTMLInputElement>('#search')
-const setSelect = element<HTMLSelectElement>('#set')
-const count = element('#count')
-const grid = element('#grid')
-const toast = element('#toast')
-const toastText = element('#toast > .alert')
+const search = element('#search', HTMLInputElement)
+const setSelect = element('#set', HTMLSelectElement)
+const count = element('#count', HTMLElement)
+const grid = element('#grid', HTMLElement)
+const toast = element('#toast', HTMLElement)
+const toastText = element('#toast > .alert', HTMLElement)
 
 const catalog = Catalog.parse(await (await fetch('/icons.json')).json())
 const index = createSearch(catalog)
@@ -65,7 +65,7 @@ const cell = (position: number, columns: number, width: number) => {
 		height: `${cellHeight}px`,
 	})
 	button.innerHTML = `<img src="/icon/${drawable}" width="48" height="48" alt="" /><span class="line-clamp-2 text-[10px] break-all opacity-60">${drawable}</span>`
-	button.onclick = () => choose(drawable)
+	button.addEventListener('click', () => choose(drawable))
 	return button
 }
 

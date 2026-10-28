@@ -73,7 +73,8 @@ export const createSearch = (catalog: Catalog) => {
 		const start = names.length
 
 		for (const [position, name] of set.icons.entries()) {
-			const id = names.push(name) - 1
+			const id = names.length
+			names.push(name)
 			const subject = name.split('_').slice(1)
 			wordCounts.push(subject.length)
 			for (const word of new Set(subject)) addPosting(nameWords, word, id)
@@ -154,7 +155,7 @@ export const createSearch = (catalog: Catalog) => {
 			ids.push(id)
 		}
 
-		return ids.sort((a, b) => (total[b] ?? 0) - (total[a] ?? 0) || a - b)
+		return ids.toSorted((a, b) => (total[b] ?? 0) - (total[a] ?? 0) || a - b)
 	}
 
 	return { names, search }
