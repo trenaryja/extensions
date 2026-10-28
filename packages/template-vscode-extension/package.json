@@ -1,24 +1,17 @@
 {
 	"name": "template-vscode-extension",
 	"displayName": "Template VSCode Extension",
-	"description": "Template VSCode Extension VSCode Extension",
 	"version": "0.0.1",
+	"description": "Template VSCode Extension VSCode Extension",
 	"publisher": "trenaryja",
 	"main": "./dist/extension.js",
 	"browser": "./dist/web/extension.js",
 	"scripts": {
 		"build": "bun ./scripts/build.ts",
+		"chk": "tsc && prettier -c . && bunx eslint . --max-warnings=0",
 		"dev": "bun ./scripts/build.ts --watch",
-		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0 && bun run build",
-		"vscode:prepublish": "bun run build"
+		"fix": "prettier -w . && bunx eslint --fix ."
 	},
-	"devDependencies": {
-		"@repo/vscode-utils": "workspace:*",
-		"@types/vscode": "^1.107.0",
-		"esbuild": "^0.27.0"
-	},
-	"activationEvents": [],
 	"contributes": {
 		"commands": [
 			{
@@ -26,6 +19,11 @@
 				"title": "Hello World"
 			}
 		]
+	},
+	"activationEvents": [],
+	"devDependencies": {
+		"@repo/vscode-utils": "workspace:*",
+		"@types/vscode": "^1.107.0"
 	},
 	"engines": {
 		"vscode": "^1.107.0"
