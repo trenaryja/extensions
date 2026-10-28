@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import * as vscode from 'vscode'
+import { z } from 'zod'
 import type { CommandEntry } from './registry'
 
 export function getNonce() {

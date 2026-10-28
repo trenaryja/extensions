@@ -1,7 +1,8 @@
 import { promises as fs } from 'node:fs'
+import * as R from 'remeda'
 import { z } from 'zod'
-import { configToContributes } from './config'
 import type { ConfigSchema } from './config'
+import { configToContributes } from './config'
 import type { CommandEntry } from './registry'
 
 export type ContributeInput = {
@@ -54,7 +55,7 @@ export const syncContributes = async (
 	if (!parsed.success) throw new Error(`${packageJsonPath}: not a JSON object`)
 	const pkg = parsed.data
 	const next = buildContributes(input)
-	const drifted = JSON.stringify(pkg.contributes ?? null) !== JSON.stringify(next)
+	const drifted = !R.isDeepEqual(pkg.contributes ?? null, next)
 
 	if (check) {
 		if (drifted)

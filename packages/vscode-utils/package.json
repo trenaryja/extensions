@@ -1,8 +1,8 @@
 {
 	"name": "@repo/vscode-utils",
 	"version": "0.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
 		"./build": "./src/build.ts",
@@ -15,16 +15,17 @@
 		"src/**/*"
 	],
 	"scripts": {
-		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc && prettier -c . && bunx eslint . --max-warnings=0"
-	},
-	"devDependencies": {
-		"@types/node": "^26.1.1",
-		"@types/vscode": "^1.107.0",
-		"esbuild": "^0.27.0",
-		"playwright-core": "^1.61.1"
+		"chk": "tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"fix": "prettier -w . && bunx eslint --fix ."
 	},
 	"dependencies": {
-		"zod": "^4.4.3"
+		"remeda": "^2.55.0",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"@types/vscode": "^1.140.0",
+		"esbuild": "^0.28.2",
+		"playwright-core": "^1.64.1"
 	}
 }

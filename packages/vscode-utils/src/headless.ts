@@ -2,8 +2,8 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { chromium } from 'playwright-core'
 import type { Page } from 'playwright-core'
+import { chromium } from 'playwright-core'
 
 // Headless Chromium for extension tooling — screenshots, icon rendering, demo recording.
 // Reuses whatever Chromium `playwright install` cached (no per-project browser download).
@@ -15,8 +15,8 @@ export function findChromium() {
 	const shells = readdirSync(cache, { withFileTypes: true })
 		.filter((entry) => entry.isDirectory() && entry.name.startsWith('chromium_headless_shell-'))
 		.map((entry) => entry.name)
-		.sort()
-	const newest = shells[shells.length - 1]
+		.toSorted()
+	const newest = shells.at(-1)
 	if (!newest) throw new Error('No cached Playwright Chromium found. Run: bunx playwright install chromium')
 	const binary = readdirSync(join(cache, newest), { recursive: true })
 		.map(String)
@@ -68,7 +68,7 @@ export type RecordGifOptions = Omit<HeadlessPageOptions, 'recordVideo'> & {
 // telekinesis without one. A soft cursor follows pointer events (capture phase, so app handlers
 // can't hide it), presses shrink it and emit an expanding ripple, and modifier chords (plus
 // Tab/Escape) surface as a bottom-center keystroke pill — plain typing stays silent.
-const POINTER_OVERLAY = `(() => {
+const POINTER_OVERLAY = String.raw`(() => {
 	const ready = () => {
 		const style = document.createElement('style')
 		style.textContent =
@@ -107,18 +107,18 @@ const POINTER_OVERLAY = `(() => {
 		}, true)
 
 		const KEY_LABELS = {
-			Escape: 'esc', Tab: 'tab', Backspace: '\\u232B', Enter: '\\u21A9',
-			ArrowUp: '\\u2191', ArrowDown: '\\u2193', ArrowLeft: '\\u2190', ArrowRight: '\\u2192',
+			Escape: 'esc', Tab: 'tab', Backspace: '\u232B', Enter: '\u21A9',
+			ArrowUp: '\u2191', ArrowDown: '\u2193', ArrowLeft: '\u2190', ArrowRight: '\u2192',
 		}
 		document.addEventListener('keydown', (e) => {
 			if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift') return
 			const chorded = e.metaKey || e.ctrlKey || e.altKey
 			if (!chorded && e.key !== 'Tab' && e.key !== 'Escape') return
 			let label = ''
-			if (e.ctrlKey) label += '\\u2303'
-			if (e.altKey) label += '\\u2325'
-			if (e.shiftKey && chorded) label += '\\u21E7'
-			if (e.metaKey) label += '\\u2318'
+			if (e.ctrlKey) label += '\u2303'
+			if (e.altKey) label += '\u2325'
+			if (e.shiftKey && chorded) label += '\u21E7'
+			if (e.metaKey) label += '\u2318'
 			label += KEY_LABELS[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
 			const pill = document.createElement('div')
 			pill.textContent = label
