@@ -699,7 +699,7 @@ enum ChunkDisposition {
 /// Converts raw ring samples into 16 kHz frames across recording sessions.
 /// Ring transport stays outside to avoid conflicting borrows during drains.
 struct CaptureProcessor {
-    // ---- stream-scoped: fixed for the life of the input stream ---------- //
+    // fixed for the life of the input stream
     in_sample_rate: u32,
     vad: Option<VadConfig>,
     level_cb: Option<LevelCallback>,
@@ -710,7 +710,7 @@ struct CaptureProcessor {
     max_drain_samples: usize,
     first_chunk_logged: bool,
 
-    // ---- recording-scoped: reset by `begin_recording` ------------------- //
+    // reset by `begin_recording`
     vad_policy: VadPolicy,
     processed_samples: Vec<f32>,
     awaiting_first_captured_chunk: Option<Instant>,

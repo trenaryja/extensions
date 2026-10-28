@@ -1,19 +1,19 @@
 {
 	"name": "@repo/hearsay-core",
 	"version": "0.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"exports": {
 		".": "./lib/index.ts",
 		"./types": "./lib/types.ts"
 	},
 	"scripts": {
 		"build": "cargo build --release --manifest-path native/Cargo.toml",
-		"fix": "prettier -w . && bunx eslint --fix . && cargo fmt --manifest-path native/Cargo.toml && cargo clippy --manifest-path native/Cargo.toml --fix --allow-dirty",
-		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml"
+		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml",
+		"fix": "prettier -w . && bunx eslint --fix . && cargo fmt --manifest-path native/Cargo.toml && cargo clippy --manifest-path native/Cargo.toml --fix --allow-dirty"
 	},
 	"dependencies": {
-		"remeda": "^2.50.0",
-		"zod": "^4.4.3"
+		"remeda": "^2.54.1",
+		"zod": "^4.6.7"
 	}
 }

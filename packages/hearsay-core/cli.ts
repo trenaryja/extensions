@@ -3,11 +3,12 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { z } from 'zod'
+import type { DownloadProgress, ListenOptions } from './lib'
 import {
 	createNativeSource,
-	Dictionary,
 	createWhisperBackend,
 	DEFAULT_MODEL_ID,
+	Dictionary,
 	importSuperwhisper,
 	listModels,
 	megabytes,
@@ -18,7 +19,6 @@ import {
 	SUPERWHISPER_SETTINGS,
 	VAD_POLICIES,
 } from './lib'
-import type { DownloadProgress, ListenOptions } from './lib'
 
 const USAGE = `usage: cli.ts <verb> [--json]
   devices
@@ -79,7 +79,7 @@ const dictionary = values.dictionary === undefined ? undefined : parseDictionary
 
 const devices = async () => {
 	const found = await source.devices()
-	if (values.json) return console.log(JSON.stringify(found, null, 2))
+	if (values.json) return void console.log(JSON.stringify(found, null, 2))
 	for (const { name, isDefault } of found) console.log(`${isDefault ? '*' : ' '} ${name}`)
 }
 
@@ -98,7 +98,7 @@ const listen = async () => {
 	if (options.seconds === undefined)
 		process.stdin.once('data', (typed) => (String(typed).trim() === 'c' ? session.cancel() : session.stop()))
 
-	for await (const event of session.events) {
+	for await (const event of session.events)
 		if (event.event === 'level') {
 			if (!values.json) process.stderr.write(`\r${meter(event.bands)}`)
 		} else if (event.event === 'ready')
@@ -106,7 +106,6 @@ const listen = async () => {
 		else if (values.json) console.log(JSON.stringify(event, null, 2))
 		else if (event.event === 'cancelled') console.error('\ncancelled')
 		else console.error(`\n${event.seconds.toFixed(2)}s → ${event.wav}`)
-	}
 
 	// The `once` above resumed stdin and nothing pauses it again, so bun would never exit.
 	process.stdin.pause()
@@ -114,7 +113,7 @@ const listen = async () => {
 
 const models = async () => {
 	const found = await listModels(modelsDir)
-	if (values.json) return console.log(JSON.stringify(found, null, 2))
+	if (values.json) return void console.log(JSON.stringify(found, null, 2))
 	for (const { id, label, bytes, english, path, note } of found)
 		console.log(
 			`${path ? '●' : '○'} ${id.padEnd(2)}  ${label.padEnd(11)} ${megabytes(bytes).padStart(8)}  ${english ? 'en' : '  '}  ${note}`,
@@ -158,7 +157,7 @@ const transcribe = async () => {
 		prompt: values.prompt,
 		dictionary,
 	})
-	if (values.json) return console.log(JSON.stringify(result, null, 2))
+	if (values.json) return void console.log(JSON.stringify(result, null, 2))
 	console.error(`${result.seconds.toFixed(2)}s of audio in ${result.ms}ms (${result.loadMs}ms to load ${model})`)
 	console.log(`${result.text}${corrected(result)}`)
 }
@@ -190,7 +189,7 @@ const dictation = async () => {
 	if (seconds === undefined)
 		process.stdin.once('data', (typed) => (String(typed).trim() === 'c' ? session.cancel() : session.stop()))
 
-	for await (const event of session.events) {
+	for await (const event of session.events)
 		if (values.json) {
 			if (event.event !== 'level') console.log(JSON.stringify(event))
 		} else if (event.event === 'level') process.stderr.write(`\r${meter(event.bands)}`)
@@ -198,11 +197,10 @@ const dictation = async () => {
 		else if (event.event === 'ready')
 			console.error(seconds === undefined ? 'dictating — enter to stop, c to cancel' : 'dictating')
 		// The preview is overwritten in place, exactly as the editor's ghost text will be.
-		else if (event.event === 'partial') process.stderr.write(`\r\x1b[2K… ${event.text}`)
-		else if (event.event === 'utterance') console.log(`\r\x1b[2K${event.text}${corrected(event)}`)
+		else if (event.event === 'partial') process.stderr.write(`\r\u{1B}[2K… ${event.text}`)
+		else if (event.event === 'utterance') console.log(`\r\u{1B}[2K${event.text}${corrected(event)}`)
 		else if (event.event === 'cancelled') console.error('\ncancelled')
 		else console.error(`\n${event.seconds.toFixed(2)}s → ${event.wav}`)
-	}
 
 	// The `once` above resumed stdin and nothing pauses it again, so bun would never exit.
 	process.stdin.pause()
@@ -212,7 +210,7 @@ const dictation = async () => {
 const superwhisper = async () => {
 	const path = positionals[1] ?? SUPERWHISPER_SETTINGS
 	const result = await importSuperwhisper(binary, dictionary ?? {}, path)
-	if (values.json) return console.log(JSON.stringify(result, null, 2))
+	if (values.json) return void console.log(JSON.stringify(result, null, 2))
 	console.error(
 		`${result.words} new word(s), ${result.replacements} replacement(s), ${result.covered} left behind as covered by the vocabulary`,
 	)

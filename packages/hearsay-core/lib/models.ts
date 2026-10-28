@@ -24,7 +24,7 @@ export const CATALOG = [
 		id: 'xs',
 		label: 'Extra small',
 		file: 'ggml-tiny.en.bin',
-		bytes: 77704715,
+		bytes: 77_704_715,
 		sha256: '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f',
 		english: true,
 		note: 'Fastest. Weak on names and punctuation.',
@@ -33,7 +33,7 @@ export const CATALOG = [
 		id: 'sm',
 		label: 'Small',
 		file: 'ggml-base.en.bin',
-		bytes: 147964211,
+		bytes: 147_964_211,
 		sha256: 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002',
 		english: true,
 		note: 'Real time anywhere, even without a GPU.',
@@ -42,7 +42,7 @@ export const CATALOG = [
 		id: 'md',
 		label: 'Medium',
 		file: 'ggml-small.en-q5_1.bin',
-		bytes: 190098681,
+		bytes: 190_098_681,
 		sha256: 'bfdff4894dcb76bbf647d56263ea2a96645423f1669176f4844a1bf8e478ad30',
 		english: true,
 		note: 'The default. Good with technical words.',
@@ -51,7 +51,7 @@ export const CATALOG = [
 		id: 'lg',
 		label: 'Large',
 		file: 'ggml-large-v3-turbo-q5_0.bin',
-		bytes: 574041195,
+		bytes: 574_041_195,
 		sha256: '394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2',
 		english: false,
 		note: 'Near-best accuracy. Needs a fast machine.',
@@ -60,7 +60,7 @@ export const CATALOG = [
 		id: 'xl',
 		label: 'Extra large',
 		file: 'ggml-large-v3-turbo.bin',
-		bytes: 1624555275,
+		bytes: 1_624_555_275,
 		sha256: '1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69',
 		english: false,
 		note: 'Most accurate. Slowest and biggest.',
@@ -115,7 +115,7 @@ const download = async (entry: CatalogEntry, target: string, options: ResolveOpt
 		await pipeline(async function* hashed() {
 			for await (const chunk of body) {
 				// bun-types leaves a fetch body's chunk type as `any`.
-				if (!(chunk instanceof Uint8Array)) throw new Error(`${url} streamed a non-byte chunk`)
+				if (!(chunk instanceof Uint8Array)) throw new TypeError(`${url} streamed a non-byte chunk`)
 				hash.update(chunk)
 				received += chunk.length
 				options.onProgress?.({ received, total: entry.bytes })
@@ -130,7 +130,7 @@ const download = async (entry: CatalogEntry, target: string, options: ResolveOpt
 	await mkdir(dirname(target), { recursive: true })
 	const failures: string[] = []
 
-	for (const mirror of MIRRORS) {
+	for (const mirror of MIRRORS)
 		try {
 			await fetchInto(`${mirror}/${entry.file}`)
 			await rename(partial, target)
@@ -140,7 +140,6 @@ const download = async (entry: CatalogEntry, target: string, options: ResolveOpt
 			if (options.signal?.aborted) throw error
 			failures.push(`  ${mirror} — ${error instanceof Error ? error.message : String(error)}`)
 		}
-	}
 
 	throw new Error(
 		`could not download ${entry.file}:\n${failures.join('\n')}\n` +

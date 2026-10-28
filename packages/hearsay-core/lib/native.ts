@@ -1,8 +1,7 @@
-import { spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { z } from 'zod'
-import { DictateEvent, InputDevice, ListenEvent, Transcription } from './types'
 import type {
 	AudioSource,
 	DictateOptions,
@@ -13,6 +12,7 @@ import type {
 	TranscribeBackend,
 	TranscribeOptions,
 } from './types'
+import { DictateEvent, InputDevice, ListenEvent, Transcription } from './types'
 
 export const NATIVE_BINARY = `hearsay-native${process.platform === 'win32' ? '.exe' : ''}`
 
@@ -30,7 +30,7 @@ const start = (binary: string, args: string[]) => {
 	let stderr = ''
 	let failure: Error | undefined
 	child.on('error', (error) => (failure = error))
-	child.stderr.on('data', (chunk) => (stderr += chunk))
+	child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()))
 
 	const settled = async () => {
 		const code = await exitCode(child)
@@ -50,7 +50,7 @@ const parseOutput = <Output>(output: z.ZodType<Output>, args: string[], text: st
 const run = async <Output>(binary: string, args: string[], output: z.ZodType<Output>) => {
 	const { child, settled } = start(binary, args)
 	let stdout = ''
-	child.stdout.on('data', (chunk) => (stdout += chunk))
+	child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()))
 	await settled()
 	return parseOutput(output, args, stdout)
 }
