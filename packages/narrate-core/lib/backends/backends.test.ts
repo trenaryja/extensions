@@ -1,11 +1,11 @@
+import { describe, expect, test } from 'bun:test'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, test } from 'bun:test'
-import { BACKEND_IDS, Voice } from '../types'
-import { annotateVoices, parseVoices } from './say'
-import type { VoiceMetadata } from './say'
 import { getBackend } from '.'
+import { BACKEND_IDS, Voice } from '../types'
+import type { VoiceMetadata } from './say'
+import { annotateVoices, parseVoices } from './say'
 
 // The kokoro worker downloads and loads an 82M-parameter model, so its synthesis only runs on request.
 const live = process.env.NARRATE_LIVE === '1'

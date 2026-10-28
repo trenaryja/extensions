@@ -41,11 +41,11 @@ const parseLine = (raw: string) => {
 	}
 }
 
-const toPreview = (text: string) => text.replace(/\s+/gu, ' ').trim().slice(0, PREVIEW_LENGTH)
+const toPreview = (text: string) => text.replaceAll(/\s+/gu, ' ').trim().slice(0, PREVIEW_LENGTH)
 
 const toEntry = (raw: string): Entry | null => {
 	const line = parseLine(raw)
-	if (!line || line.type !== 'assistant' || line.isSidechain !== false) return null
+	if (line?.type !== 'assistant' || line.isSidechain !== false) return null
 	const { uuid, sessionId, cwd, timestamp } = line
 	if (!uuid || !sessionId) return null
 	const text = R.pipe(
@@ -114,7 +114,7 @@ export const listMessages = async ({
 }
 
 const findEntry = async (id: string, root: string) => {
-	const sessionId = id.split(':')[0]
+	const sessionId = id.split(':', 1)[0]
 	const files = await transcriptFiles(root)
 	const [sessionFiles, otherFiles] = R.partition(files, (filePath) => basename(filePath, '.jsonl') === sessionId)
 	for (const filePath of [...sessionFiles, ...otherFiles])

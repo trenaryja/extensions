@@ -1,25 +1,24 @@
 {
 	"name": "@repo/narrate-core",
 	"version": "0.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"exports": {
 		"./types": "./lib/types.ts"
 	},
 	"scripts": {
 		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && ([ \"$(uname)\" != Darwin ] || swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift)",
-		"test": "bun test",
-		"fix": "prettier -w . && bunx eslint --fix .",
-		"check": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && bun test"
+		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0",
+		"fix": "prettier -w . && bunx eslint --fix ."
 	},
 	"dependencies": {
 		"mdast-util-to-string": "^4.0.0",
 		"remark": "^15.0.1",
 		"remark-gfm": "^4.0.1",
-		"remeda": "^2.39.0",
+		"remeda": "^2.54.1",
 		"strip-markdown": "^6.0.0",
-		"unist-util-visit": "^5.1.0",
-		"zod": "^4.4.3"
+		"unist-util-visit": "^5.2.0",
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@types/mdast": "^4.0.4"

@@ -19,10 +19,10 @@ beforeEach(() => {
 	mkdirSync(paths.audio, { recursive: true })
 })
 
-const write = (name: string, kilobytes: number, ageSeconds: number) => {
+const write = (name: string, ageSeconds: number) => {
 	const wavPath = join(paths.audio, `${name}.wav`)
 	const sidecarPath = join(paths.audio, `${name}.json`)
-	writeFileSync(wavPath, Buffer.alloc(kilobytes * KB))
+	writeFileSync(wavPath, Buffer.alloc(10 * KB))
 	writeFileSync(sidecarPath, '{"duration":1,"words":[]}')
 	const when = new Date(Date.now() - ageSeconds * 1000)
 	for (const path of [wavPath, sidecarPath]) utimesSync(path, when, when)
@@ -30,9 +30,9 @@ const write = (name: string, kilobytes: number, ageSeconds: number) => {
 }
 
 test('keeps the newest wavs up to the limit and drops the rest with their sidecars', async () => {
-	const newest = write('newest', 10, 1)
-	const middle = write('middle', 10, 60)
-	const oldest = write('oldest', 10, 120)
+	const newest = write('newest', 1)
+	const middle = write('middle', 60)
+	const oldest = write('oldest', 120)
 
 	const { removed } = await pruneAudioCache(21 * KB)
 
@@ -44,7 +44,7 @@ test('keeps the newest wavs up to the limit and drops the rest with their sideca
 })
 
 test('a zero limit disables pruning', async () => {
-	const { wavPath } = write('kept', 10, 1)
+	const { wavPath } = write('kept', 1)
 	expect(await pruneAudioCache(0)).toEqual({ removed: 0, bytes: 0 })
 	expect(existsSync(wavPath)).toBe(true)
 })

@@ -90,7 +90,7 @@ const SHORTCUT_KEY_SOUNDS: Record<string, string> = {
 	'↘': 'end',
 }
 
-const characterClass = (characters: string[]) => `[${R.join(characters, '').replace(/[\]\\^-]/g, String.raw`\$&`)}]`
+const characterClass = (characters: string[]) => `[${R.join(characters, '').replaceAll(/[\]\\^-]/g, String.raw`\$&`)}]`
 
 const SYMBOLS = new RegExp(characterClass(R.keys(SYMBOL_SOUNDS)), 'g')
 const SHORTCUT_KEYS = new RegExp(`(?<=[${MODIFIER_SYMBOLS}])${characterClass(R.keys(SHORTCUT_KEY_SOUNDS))}`, 'g')
@@ -105,7 +105,7 @@ const COMMIT_SHA = /(?<![#\-/.\w])(?:[\da-f]{7,12}|[\da-f]{40})(?![\w-])(?!\.[\d
 const COMMIT_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 // The noun already names the sha, so the replacement swallows it rather than saying it twice.
 const SHA_NOUN_PHRASE = String.raw`(?:(?:that|the|this)\s+)?(?:(?:commits?|hash(?:es)?|revisions?|shas?)\s+){1,2}`
-const NAMED_COMMIT_SHA = new RegExp(String.raw`(${SHA_NOUN_PHRASE})?${COMMIT_SHA.source}`, 'gi')
+const NAMED_COMMIT_SHA = new RegExp(`(${SHA_NOUN_PHRASE})?${COMMIT_SHA.source}`, 'gi')
 
 const LONG_FLAG = /(?<![\w-])--([a-z\d]+(?:-[a-z\d]+)*)(?![\w-])/g
 // A lone dash is mostly prose, so a short flag has to earn the match: nothing wordlike before it,
@@ -120,20 +120,20 @@ const capitalizeLike = (prefix: string, spoken: string) =>
 	/^[A-Z]/.test(prefix) ? spoken.charAt(0).toUpperCase() + spoken.slice(1) : spoken
 
 // Invisible on screen and inside tokens, so it has to go before anything matches on word shape.
-const stripInvisible = (message: string) => message.replace(/\u{fe0e}|\u{fe0f}|\u{200d}|\p{Emoji_Modifier}/gu, '')
+const stripInvisible = (message: string) => message.replaceAll(/[\u{FE0E}\u{FE0F}\u{200D}\p{Emoji_Modifier}]/gu, '')
 
 const spokenDomain = (host: string) => host.replace(/^www\./, '').replaceAll('.', ' dot ')
 
 const spokenUrl = (url: string) => {
 	const address = url.replace(/^https?:\/\//, '')
-	const [location = ''] = address.split(/[?#]/)
+	const [location = ''] = address.split(/[?#]/, 1)
 	const [host = '', ...segments] = R.pipe(location.split('/'), R.filter(R.isTruthy))
 	const isLong = address.length > location.length || segments.length > 1
 	return isLong ? `a link to ${spokenDomain(host)}` : spokenDomain(host)
 }
 
 const speakUrls = (message: string) =>
-	message.replace(URL_PATTERN, (match) => {
+	message.replaceAll(URL_PATTERN, (match) => {
 		const [trailingPunctuation = ''] = /[.,;:!?)]+$/.exec(match) ?? []
 		return spokenUrl(match.slice(0, match.length - trailingPunctuation.length)) + trailingPunctuation
 	})
@@ -162,7 +162,7 @@ const spokenPath = (path: string) => {
 	const lastDot = basename.lastIndexOf('.')
 	if (lastDot <= 0) return null
 	const extension = basename.slice(lastDot + 1).toLowerCase()
-	if (!path.includes('/') && !(extension in EXTENSION_SOUNDS)) return null
+	if (!path.includes('/') && !Object.hasOwn(EXTENSION_SOUNDS, extension)) return null
 	const name = basename.slice(0, lastDot).replaceAll('.', ' dot ')
 	return `${name} dot ${EXTENSION_SOUNDS[extension] ?? spellOut(extension)}`
 }
@@ -176,25 +176,25 @@ const speakFileLines = (message: string) =>
 
 const speakPaths = (message: string) => message.replace(PATH, (match) => spokenPath(match) ?? match)
 
-const speakVersions = (message: string) => message.replace(/(?<![\w.])v(\d+(?:\.\d+)+)/g, 'version $1')
+const speakVersions = (message: string) => message.replaceAll(/(?<![\w.])v(\d+(?:\.\d+)+)/g, 'version $1')
 
 // Read the way a developer reads one aloud. A bare `--` is left for `speakDashes`: it is also
 // written as an em dash substitute, where "dash dash" would be worse than a pause.
 const speakFlags = (message: string) =>
 	message
-		.replace(LONG_FLAG, (_match, name: string) => `dash dash ${name.replaceAll('-', ' ')}`)
+		.replaceAll(LONG_FLAG, (_match, name: string) => `dash dash ${name.replaceAll('-', ' ')}`)
 		// Lowercased because a lone capital `A` is read as the indefinite article; losing the case beats
 		// losing the letter, which is what happened while `-R` went unmatched.
-		.replace(SHORT_FLAG, (_match, letters: string) => `dash ${spellOut(letters.toLowerCase())}`)
-		.replace(BARE_FLAG, 'dash dash')
+		.replaceAll(SHORT_FLAG, (_match, letters: string) => `dash ${spellOut(letters.toLowerCase())}`)
+		.replaceAll(BARE_FLAG, 'dash dash')
 
 const speakIdentifiers = (message: string) =>
 	message
-		.replace(/\b[a-z][a-z\d]*(?:[A-Z][a-z\d]+)+\b/g, (identifier) =>
-			identifier.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`),
+		.replaceAll(/\b[a-z][a-z\d]*(?:[A-Z][a-z\d]+)+\b/g, (identifier) =>
+			identifier.replaceAll(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`),
 		)
 		// An assignment is left spelled out: the listener may have to type `LOG_LEVEL=debug` back.
-		.replace(/\b[A-Z][A-Z\d]*(?:_[A-Z\d]+)+\b(?![^\S\n]*[:=])/g, (identifier) =>
+		.replaceAll(/\b[A-Z][A-Z\d]*(?:_[A-Z\d]+)+\b(?![^\S\n]*[:=])/g, (identifier) =>
 			identifier.toLowerCase().replaceAll('_', ' '),
 		)
 
@@ -203,32 +203,32 @@ const speakShortcutKeys = (message: string) =>
 
 const speakArrows = (message: string) =>
 	message
-		.replace(/(?<=\d[^\S\n]?)(?:->|=>|[→➡])(?=[^\S\n]?\d)/g, ' to ')
-		.replace(/->|=>|[→➡]/g, ' becomes ')
-		.replace(/←/g, ' from ')
-		.replace(/↔/g, ' to and from ')
+		.replaceAll(/(?<=\d[^\S\n]?)(?:->|=>|[→➡])(?=[^\S\n]?\d)/g, ' to ')
+		.replaceAll(/->|=>|[→➡]/g, ' becomes ')
+		.replaceAll('←', ' from ')
+		.replaceAll('↔', ' to and from ')
 
 const speakDashes = (message: string) =>
 	message
-		.replace(/(?<=\d[^\S\n]?)–(?=[^\S\n]?\d)/g, ' to ')
-		.replace(/\s*[—–](?=\s*(?:\n|$))/g, '.')
-		.replace(/\s*[—–]\s*/g, ', ')
+		.replaceAll(/(?<=\d[^\S\n]?)–(?=[^\S\n]?\d)/g, ' to ')
+		.replaceAll(/\s*[—–](?=\s*(?:\n|$))/g, '.')
+		.replaceAll(/\s*[—–]\s*/g, ', ')
 
 const speakSymbols = (message: string) =>
 	message
-		.replace(/(?<=\d[^\S\n]?)×(?=[^\S\n]?\d)/g, ' by ')
-		.replace(/(?<=\d[^\S\n]?)×/g, ' times ')
-		.replace(/×/g, '')
+		.replaceAll(/(?<=\d[^\S\n]?)×(?=[^\S\n]?\d)/g, ' by ')
+		.replaceAll(/(?<=\d[^\S\n]?)×/g, ' times ')
+		.replaceAll('×', '')
 		.replace(SYMBOLS, (symbol) => ` ${SYMBOL_SOUNDS[symbol] ?? ''} `)
 
-const dropRemainingEmoji = (message: string) => message.replace(/\p{Extended_Pictographic}/gu, '')
+const dropRemainingEmoji = (message: string) => message.replaceAll(/\p{Extended_Pictographic}/gu, '')
 
 const tidy = (message: string) =>
 	R.pipe(
 		message
-			.replace(/[^\S\n]+/g, ' ')
-			.replace(/ ([,.;:!?])/g, '$1')
-			.replace(/([,.;:!?]) ?,/g, '$1')
+			.replaceAll(/[^\S\n]+/g, ' ')
+			.replaceAll(/ ([,.;:!?])/g, '$1')
+			.replaceAll(/([,.;:!?]) ?,/g, '$1')
 			.split('\n'),
 		R.map((line) => line.trim()),
 		R.filter(R.isTruthy),

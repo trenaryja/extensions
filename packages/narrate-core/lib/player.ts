@@ -7,7 +7,7 @@ const readPid = async () => {
 	const file = Bun.file(paths.pid)
 	if (!(await file.exists())) return null
 	const pid = Number((await file.text()).trim())
-	return Number.isInteger(pid) && pid > 0 ? pid : null
+	return Number.isSafeInteger(pid) && pid > 0 ? pid : null
 }
 
 // `ps -o comm=` prints the executable path, so compare the basename.

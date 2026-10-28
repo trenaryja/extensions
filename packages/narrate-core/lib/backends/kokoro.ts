@@ -6,9 +6,12 @@ import { z } from 'zod'
 import workerScript from '../../worker/kokoro_worker.py' with { type: 'text' }
 import workerProject from '../../worker/pyproject.toml' with { type: 'text' }
 import { ensureStateDirs, paths } from '../state'
-import { Synthesis, WorkerStatus } from '../types'
 import type { SpeechBackend, Voice, VoiceGender } from '../types'
+import { Synthesis, WorkerStatus } from '../types'
 import { cachePath, readCachedSynthesis, writeCachedSynthesis } from './shared'
+
+// bun-types types every `.toml` import as parsed data, whatever its `with { type: 'text' }` says.
+if (typeof workerProject !== 'string') throw new TypeError('worker/pyproject.toml was bundled as data, not text')
 
 // Voice ids are <language><gender>_<name>, so the first two letters carry the locale and the gender.
 const LOCALE_BY_PREFIX: Record<string, string> = {
@@ -82,9 +85,6 @@ const toVoice = (id: string): Voice => ({
 })
 
 const WORKER_SCRIPT = 'kokoro_worker.py'
-
-// bun-types types every `.toml` import as parsed data, whatever its `with { type: 'text' }` says.
-if (typeof workerProject !== 'string') throw new Error('worker/pyproject.toml was bundled as data, not text')
 
 // The compiled binary carries the worker as text: it has to reach disk before uv can run it, and a
 // stale copy on disk would keep running yesterday's protocol.

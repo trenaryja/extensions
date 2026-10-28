@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { SUMMARIZER_IDS } from '../types'
 import { getSummarizer } from '.'
+import { SUMMARIZER_IDS } from '../types'
 import { buildPrompt } from './prompt'
 
 const SAMPLE = `The build script walks every entry in build.json and compiles it to a single binary in ~/.local/bin. TypeScript targets go through \`bun build --compile\`, Go targets through \`go build\` with a tag per variant, and the Rust target through \`cargo build --release\`. Each language is skipped, with a warning, when its toolchain is missing.

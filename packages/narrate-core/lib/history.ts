@@ -1,8 +1,8 @@
 import { appendFile } from 'node:fs/promises'
 import * as R from 'remeda'
 import { paths, writeAtomic } from './state'
-import { HistoryEntry } from './types'
 import type { PlaybackState } from './types'
+import { HistoryEntry } from './types'
 
 const DEFAULT_LIMIT_ENTRIES = 200
 

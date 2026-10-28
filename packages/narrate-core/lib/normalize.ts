@@ -1,4 +1,4 @@
-import type { Code, Heading, Link, List, Paragraph, Root, RootContent, Table, TableCell } from 'mdast'
+import type { Code, Heading, Link, List, Nodes, Paragraph, Root, RootContent, Table } from 'mdast'
 import { toString } from 'mdast-util-to-string'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
@@ -52,11 +52,18 @@ const speakCell = (header: string | undefined, value: string) => {
 	return sentence(header ? `${header}: ${value}` : value)
 }
 
-const tableRowSentences = ({ children: [headerRow, ...bodyRows] }: Table) => {
+const tableRowSentences = ({ children }: Table) => {
+	const [headerRow, ...bodyRows] = children
 	const headers = R.map(headerRow?.children ?? [], (cell) => toString(cell).trim())
-	const spokenCell = (cell: TableCell, index: number) => speakCell(headers[index], toString(cell).trim())
 	return R.map(bodyRows, (row) =>
-		asParagraph(R.pipe(row.children, R.map(spokenCell), R.filter(R.isTruthy), R.join(' '))),
+		asParagraph(
+			R.pipe(
+				row.children,
+				R.map((cell, index) => speakCell(headers[index], toString(cell).trim())),
+				R.filter(R.isTruthy),
+				R.join(' '),
+			),
+		),
 	)
 }
 
@@ -73,18 +80,17 @@ const isBareUrl = (link: Link) => {
 
 // Runs before strip-markdown so links and images inside table cells and list items are
 // already spoken text by the time those handlers flatten them with `toString`.
-const speakInlineTargets = () => (tree: Root) => {
-	visit(tree, (node) => {
-		if (node.type === 'image' || node.type === 'imageReference')
-			Object.assign(node, { type: 'text', value: 'an image' })
-		if (node.type === 'link')
-			Object.assign(node, { type: 'text', value: isBareUrl(node) ? node.url : toString(node), children: [] })
-	})
+const speakTarget = (node: Nodes) => {
+	if (node.type === 'image' || node.type === 'imageReference') Object.assign(node, { type: 'text', value: 'an image' })
+	else if (node.type === 'link')
+		Object.assign(node, { type: 'text', value: isBareUrl(node) ? node.url : toString(node), children: [] })
 }
+
+const speakTargets = (tree: Root) => visit(tree, speakTarget)
 
 const processor = remark()
 	.use(remarkGfm)
-	.use(speakInlineTargets)
+	.use(() => speakTargets)
 	.use(stripMarkdown, {
 		remove: [
 			['code', (node: Code) => asParagraph(codeSentence(node))],
@@ -99,7 +105,7 @@ const processor = remark()
 export const normalize = (markdown: string) =>
 	R.pipe(
 		processor.runSync(processor.parse(redactSecrets(markdown))).children,
-		R.map((child) => toString(child).replace(/\s+/g, ' ').trim()),
+		R.map((child) => toString(child).replaceAll(/\s+/g, ' ').trim()),
 		R.filter(R.isTruthy),
 		R.join('\n'),
 		pronounce,

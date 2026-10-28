@@ -10,7 +10,7 @@ const CLOSERS = new Set(["'", '’', '"', '”', '»', ')', ']', '}'])
 const ABBREVIATIONS = new Set(['dr', 'etc', 'inc', 'jr', 'ltd', 'mr', 'mrs', 'ms', 'prof', 'sr', 'st', 'vs'])
 
 const WHITESPACE = /\s/
-const SENTENCE_OPENER = /["'(0-9A-[‘“]/
+const SENTENCE_OPENER = /["'(0-9A-Z[‘“]/
 const TRAILING_WORD = /[.a-z]+$/i
 const CLAUSE_BREAK = /([,:;])\s+|\s+[-–—]\s+/g
 
@@ -59,7 +59,7 @@ const splitSentences = (line: string) => {
 // `stop` ends the current chunk, `resume` starts the next one; the gap between them
 // is whitespace plus, for dashes, the dash itself — silence either way once spoken.
 const clauseBreaks = (text: string) =>
-	R.map([...text.matchAll(CLAUSE_BREAK)], (match) => ({
+	R.map(text.matchAll(CLAUSE_BREAK).toArray(), (match) => ({
 		stop: match[1] ? match.index + 1 : match.index,
 		resume: match.index + match[0].length,
 	}))

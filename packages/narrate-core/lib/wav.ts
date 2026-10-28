@@ -13,7 +13,7 @@ const bytesPerSecond = (format: WavFormat) => format.sampleRate * frameBytes(for
 
 export const wavSeconds = ({ format, data }: Wav) => data.length / bytesPerSecond(format)
 
-const chunkId = (bytes: Uint8Array, at: number) => String.fromCharCode(...bytes.subarray(at, at + 4))
+const chunkId = (bytes: Uint8Array, at: number) => String.fromCodePoint(...bytes.subarray(at, at + 4))
 
 // A RIFF header is 12 bytes, then [4-byte id][4-byte size] chunks: `fmt ` carries the channel count,
 // sample rate and bit depth, `data` the payload. Both live well inside the first 64 KB of any wav.
@@ -31,8 +31,7 @@ const readHeader = (bytes: Uint8Array) => {
 				sampleRate: view.getUint32(offset + 12, true),
 				bitsPerSample: view.getUint16(offset + 22, true),
 			}
-
-		if (id === 'data') {
+		else if (id === 'data') {
 			if (!format) throw new Error('wav data chunk arrived before its fmt chunk')
 			return { format, dataOffset: offset + 8, dataSize: size }
 		}
@@ -60,7 +59,7 @@ export const encodeWav = ({ format, data }: Wav) => {
 	const view = new DataView(bytes.buffer)
 
 	const tag = (at: number, text: string) => {
-		for (let i = 0; i < text.length; i++) view.setUint8(at + i, text.charCodeAt(i))
+		for (let i = 0; i < text.length; i++) view.setUint8(at + i, text.codePointAt(i) ?? 0)
 	}
 
 	tag(0, 'RIFF')

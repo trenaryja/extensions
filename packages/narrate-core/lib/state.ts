@@ -2,8 +2,8 @@ import { mkdirSync } from 'node:fs'
 import { readFile, rename } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { PlaybackState } from './types'
 import type { SeekTarget } from './types'
+import { PlaybackState } from './types'
 
 const ROOT = process.env.NARRATE_STATE_DIR ?? join(homedir(), '.local', 'state', 'narrate')
 

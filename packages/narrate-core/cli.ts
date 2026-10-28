@@ -2,6 +2,7 @@
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as R from 'remeda'
+import type { BackendId, Origin, PlaybackState, SeekTarget, WorkerStatus } from './lib'
 import {
 	BACKEND_IDS,
 	chunk,
@@ -31,7 +32,6 @@ import {
 	transcriptSource,
 	workerStatus,
 } from './lib'
-import type { BackendId, Origin, PlaybackState, SeekTarget, WorkerStatus } from './lib'
 
 const SOURCE_FLAGS = {
 	message: 'string',
@@ -159,11 +159,11 @@ const play = async (args: string[]) => {
 
 	if (!flags.foreground) {
 		const started = await detach(narration)
-		return emit(flags.json, started, () => `${started.pid}  ${started.sentenceTotal} sentences  ${started.label}`)
+		return void emit(flags.json, started, () => `${started.pid}  ${started.sentenceTotal} sentences  ${started.label}`)
 	}
 
 	const state = await runNarration(narration)
-	return emit(flags.json, state, () => describeState(state))
+	return void emit(flags.json, state, () => describeState(state))
 }
 
 const stop = async (args: string[]) => {
@@ -207,8 +207,8 @@ const resume = async (args: string[]) => {
 const status = async (args: string[]) => {
 	const { flags } = parseFlags(args, { json: 'boolean' })
 	const state = await readState()
-	if (!state || isStale(state)) return emit(flags.json, { phase: 'idle' }, () => 'idle')
-	return emit(flags.json, state, () => describeState(state))
+	if (!state || isStale(state)) return void emit(flags.json, { phase: 'idle' }, () => 'idle')
+	return void emit(flags.json, state, () => describeState(state))
 }
 
 const seekTarget = (seconds: number | undefined, index: string | undefined): SeekTarget => {
@@ -218,7 +218,7 @@ const seekTarget = (seconds: number | undefined, index: string | undefined): See
 	}
 
 	const sentence = Number(index)
-	if (!Number.isInteger(sentence) || sentence < 0)
+	if (!Number.isSafeInteger(sentence) || sentence < 0)
 		throw new Error('seek needs a sentence index or a time: narrate seek <index> | narrate seek --time <seconds>')
 	return { sentence }
 }
@@ -259,10 +259,11 @@ const summarize = async (args: string[]) => {
 
 	const source = await readSource(flags)
 	const summary = await summarizer.summarize(source.text, NEVER_ABORTED)
-	if (!flags.play) return emit(flags.json, { summarizer: summarizer.id, label: source.label, summary }, () => summary)
+	if (!flags.play)
+		return void emit(flags.json, { summarizer: summarizer.id, label: source.label, summary }, () => summary)
 
 	const playback = await detach({ ...source, ...speechOptions(flags), text: normalize(summary), startIndex: 0 })
-	return emit(flags.json, { summarizer: summarizer.id, label: source.label, summary, playback }, () => summary)
+	return void emit(flags.json, { summarizer: summarizer.id, label: source.label, summary, playback }, () => summary)
 }
 
 const voices = async (args: string[]) => {
@@ -287,13 +288,13 @@ const worker = async (args: string[]) => {
 
 	if (action === 'stop') {
 		const stopped = await stopWorker()
-		return emit(flags.json, { stopped }, () => (stopped ? 'stopping' : 'not running'))
+		return void emit(flags.json, { stopped }, () => (stopped ? 'stopping' : 'not running'))
 	}
 	if (action !== 'status') throw new Error('worker takes status or stop: narrate worker <status|stop>')
 
 	const workerState = await workerStatus()
-	if (!workerState) return emit(flags.json, { running: false }, () => 'not running')
-	return emit(flags.json, { running: true, ...workerState }, () => describeWorker(workerState))
+	if (!workerState) return void emit(flags.json, { running: false }, () => 'not running')
+	return void emit(flags.json, { running: true, ...workerState }, () => describeWorker(workerState))
 }
 
 const printNormalized = async (args: string[]) => {
@@ -439,7 +440,7 @@ const COMMANDS = {
 
 type Command = keyof typeof COMMANDS
 
-const isCommand = (value: string): value is Command => value in COMMANDS
+const isCommand = (value: string): value is Command => Object.hasOwn(COMMANDS, value)
 
 const overview = () =>
 	[

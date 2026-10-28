@@ -20,7 +20,7 @@ const coerce = (kind: Exclude<FlagKind, 'boolean'>, name: string, raw: string | 
 	if (raw === undefined) throw new Error(`--${name} requires a value`)
 	if (kind === 'string') return raw
 	const value = Number(raw)
-	if (!Number.isFinite(value)) throw new Error(`--${name} expects a number, got: ${raw}`)
+	if (!Number.isFinite(value)) throw new TypeError(`--${name} expects a number, got: ${raw}`)
 	return value
 }
 

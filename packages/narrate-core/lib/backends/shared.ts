@@ -3,8 +3,8 @@ import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod'
 import { ensureStateDirs, paths } from '../state'
-import { Synthesis } from '../types'
 import type { BackendId, SpeechBackend } from '../types'
+import { Synthesis } from '../types'
 import { wavDuration } from '../wav'
 
 type CommandBuilder = (text: string, voiceId: string, outputPath: string) => string[]
@@ -44,7 +44,7 @@ const wavSynthesis = async (wavPath: string) => ({ wavPath, duration: await wavD
 // The wav alone can't say which word is being heard when, so backends with timestamps park them here.
 export const readCachedSynthesis = async (wavPath: string): Promise<Synthesis | null> => {
 	const wav = Bun.file(wavPath)
-	if (!((await wav.exists()) && wav.size > 0)) return null
+	if (!(await wav.exists()) || !(wav.size > 0)) return null
 	const path = sidecarPath(wavPath)
 	const sidecar = Bun.file(path)
 	if (!(await sidecar.exists())) return null

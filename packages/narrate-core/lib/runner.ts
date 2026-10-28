@@ -7,8 +7,8 @@ import { chunk } from './chunk'
 import { appendHistory, pruneHistory } from './history'
 import { playWav } from './player'
 import { ensureStateDirs, paths, readState, requestStop, writeState } from './state'
-import { isLivePhase, SeekTarget } from './types'
 import type { BackendId, Chunk, Origin, PlaybackState, SpeechBackend } from './types'
+import { isLivePhase, SeekTarget } from './types'
 import type { Wav, WavFormat } from './wav'
 import { concatWav, readWav, silentWav, sliceWav, wavSeconds, writeWav } from './wav'
 
@@ -267,7 +267,7 @@ type CursorOptions = { state: PlaybackState; chunks: Chunk[]; firstSentence: num
 const createCursors = ({ state, chunks, firstSentence }: CursorOptions) => {
 	const sentenceAt = (position: number) => {
 		const index = R.findLastIndex(state.sentences, (sentence) => sentence.start >= 0 && sentence.start <= position)
-		return index < 0 ? firstSentence : index
+		return index === -1 ? firstSentence : index
 	}
 
 	const toCursor = (target: SeekTarget): Cursor => {
@@ -332,10 +332,10 @@ const createPlayer = ({ state, controller, play, segments, chunks, cursors }: Pl
 				await publishPosition(cursors.cursorPosition(cursor))
 			}
 
-			if (control.type === 'rate') {
-				state.speed = control.speed
-				await writeState(state)
-			}
+			if (control.type !== 'rate') continue
+
+			state.speed = control.speed
+			await writeState(state)
 		}
 	}
 

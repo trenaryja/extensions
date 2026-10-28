@@ -137,13 +137,13 @@ test('sentence times run cumulatively through a paragraph and on into the next',
 
 	closeTo(spans(state), [
 		[0, 0.4],
-		[0.4, 1.0],
-		[1.0, 1.2],
+		[0.4, 1],
+		[1, 1.2],
 		[1.2, 1.7],
-		[1.7, 2.0],
+		[1.7, 2],
 	])
-	expect(state.duration).toBeCloseTo(2.0, 6)
-	expect(state.position).toBeCloseTo(2.0, 6)
+	expect(state.duration).toBeCloseTo(2, 6)
+	expect(state.position).toBeCloseTo(2, 6)
 	expect(state.sentenceIndex).toBe(4)
 	expect(state.words.map((word) => word.text)).toEqual(SENTENCES.map((_, index) => `word${index}`))
 	// Every fake word covers its whole sentence, so the word map has to land on the sentence map.
