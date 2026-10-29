@@ -46,7 +46,7 @@ const toPreview = (text: string) => text.replaceAll(/\s+/gu, ' ').trim().slice(0
 const toEntry = (raw: string): Entry | null => {
 	const line = parseLine(raw)
 	if (line?.type !== 'assistant' || line.isSidechain !== false) return null
-	const { uuid, sessionId, cwd, timestamp } = line
+	const { uuid, sessionId, cwd = '', timestamp = '' } = line
 	if (!uuid || !sessionId) return null
 	const text = R.pipe(
 		line.message?.content ?? [],
@@ -58,8 +58,8 @@ const toEntry = (raw: string): Entry | null => {
 	const message = {
 		id: `${sessionId}:${uuid}`,
 		sessionId,
-		cwd: cwd ?? '',
-		timestamp: timestamp ?? '',
+		cwd,
+		timestamp,
 		preview: toPreview(text),
 	}
 	return { message, text }

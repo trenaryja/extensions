@@ -36,9 +36,8 @@ const fakeBackend = (failing?: string): SpeechBackend => ({
 	},
 })
 
-type Played = { name: string; speed: number; seconds: number; position: number }
-
 const fakePlayer = (onPlay: (index: number) => void = () => undefined) => {
+	type Played = { name: string; speed: number; seconds: number; position: number }
 	const played: Played[] = []
 
 	const play = async (path: string, speed: number) => {
