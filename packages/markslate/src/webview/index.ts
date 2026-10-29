@@ -12,7 +12,7 @@ import { createDecorationExtensions } from './decorations/index'
 import { setMathExportColor } from './decorations/math'
 import type { MermaidRenderMode } from './decorations/mermaid'
 import { refreshMermaidTheme } from './decorations/mermaid'
-import { setFormatTablesOnEdit } from './decorations/tables'
+import { readGridState, setFormatTablesOnEdit } from './decorations/tables'
 import { markSlateFind, openFind } from './find'
 import { markSlateTheme } from './theme'
 
@@ -92,11 +92,10 @@ function getMermaidMode(): MermaidRenderMode {
 	return currentSettings.mermaidRenderMode
 }
 
-// SyntaxNode type derived from syntaxTree so we don't need a direct @lezer/common dependency.
-type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
-
 // Walk up from a document position to the enclosing Link/Image (or bare autolink URL) and return its URL.
 function linkUrlAt(editorView: EditorView, pos: number): string | null {
+	// SyntaxNode type derived from syntaxTree so we don't need a direct @lezer/common dependency.
+	type MarkdownNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
 	let node: MarkdownNode | null = syntaxTree(editorView.state).resolveInner(pos, 0)
 
 	while (node) {
@@ -207,7 +206,8 @@ function createInitialEditor(content: string) {
 		view = createEditor(content)
 		view.focus()
 		// Harness-only: expose the view so the headless driver can assert caret/selection state.
-		if ('HARNESS_CONTENT' in window) Object.assign(window, { __mdView: view })
+		// Harness-only: `__gridState` asserts grid transitions.
+		if ('HARNESS_CONTENT' in window) Object.assign(window, { __mdView: view, __gridState: readGridState })
 	} catch (error) {
 		const container = document.getElementById('editor')
 

@@ -8,8 +8,6 @@ import { CODE_LANGUAGES, CURSOR, MERMAID_EXAMPLES } from './snippets'
 const insert = async (text: string) => (await import('./editorProvider')).insertIntoActiveEditor(text)
 const PALETTE_MD = [{ id: 'commandPalette' as const, when: 'resourceExtname == .md' }]
 
-type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
-
 /** Static `contributes.customEditors` entry, fed to the codegen alongside the command registry. */
 export const customEditors = [
 	{
@@ -88,6 +86,7 @@ export const commands = defineCommands([
 		category: 'MarkSlate',
 		menus: PALETTE_MD,
 		handler: async ({ vscode }) => {
+			type CalloutPickItem = import('vscode').QuickPickItem & { type: string }
 			const config = vscode.workspace.getConfiguration().get<CalloutConfig>('markslate.callouts') ?? {}
 			const types = [...new Set([...CALLOUT_PRIMARIES, ...Object.keys(config)])].filter((t) => t !== 'default')
 			const items: CalloutPickItem[] = types.map((type) => {

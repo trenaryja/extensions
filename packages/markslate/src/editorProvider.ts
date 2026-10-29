@@ -4,13 +4,6 @@ import { getConfig } from './config'
 import { EDITOR_VIEW_TYPE } from './ids'
 import { resolveShikiThemeByName } from './shikiTheme'
 
-type WebviewMessage =
-	| { type: 'ready' }
-	| { type: 'edit'; content: string }
-	| { type: 'navigate'; url: string }
-	| { type: 'webviewError'; message: string; stack: string }
-	| { type: 'requestShikiTheme'; name: string }
-
 const readSettings = () => ({
 	mermaidRenderMode: getConfig('markslate.mermaidRenderMode'),
 	callouts: getConfig('markslate.callouts'),
@@ -60,6 +53,12 @@ const resolveEditor = (
 	document: vscode.TextDocument,
 	webviewPanel: vscode.WebviewPanel,
 ) => {
+	type WebviewMessage =
+		| { type: 'ready' }
+		| { type: 'edit'; content: string }
+		| { type: 'navigate'; url: string }
+		| { type: 'webviewError'; message: string; stack: string }
+		| { type: 'requestShikiTheme'; name: string }
 	const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri)
 	webviewPanel.webview.options = {
 		enableScripts: true,

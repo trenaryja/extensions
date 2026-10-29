@@ -403,6 +403,4 @@ export const tablesPlugin = [
 	),
 ]
 
-// Harness-only: expose the interaction state so the headless driver can assert grid transitions.
-if (typeof window !== 'undefined' && 'HARNESS_CONTENT' in window)
-	Object.assign(window, { __gridState: () => ({ ...session.gridState, from: session.activeFrom }) })
+export const readGridState = () => ({ ...session.gridState, from: session.activeFrom })
