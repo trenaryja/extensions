@@ -27,11 +27,11 @@
 	"main": "./dist/extension.js",
 	"scripts": {
 		"build": "bun ./scripts/build.ts",
-		"chk": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"chk": "tren chk && bun run contribute:check",
 		"contribute": "bun ./scripts/contribute.ts",
 		"contribute:check": "bun ./scripts/contribute.ts --check",
 		"dev": "bun ./scripts/build.ts --watch",
-		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"fix": "tren fix && bun run contribute",
 		"vsce:login": "vsce login trenaryja",
 		"vsce:package": "bun run build && vsce package --no-dependencies",
 		"vsce:publish": "bun run build && vsce publish --no-dependencies"
@@ -230,14 +230,14 @@
 		"onStartupFinished"
 	],
 	"dependencies": {
-		"remeda": "^2.54.1",
+		"remeda": "^2.57.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@repo/hearsay-core": "workspace:*",
 		"@repo/vscode-utils": "workspace:*",
 		"@types/vscode": "^1.107.0",
-		"@vscode/vsce": "^4.0.0"
+		"@vscode/vsce": "^4.1.0"
 	},
 	"engines": {
 		"vscode": "^1.107.0"
