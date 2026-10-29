@@ -8,14 +8,14 @@
 	},
 	"scripts": {
 		"build": "bun build --compile --minify --outfile ../narrate/assets/narrate cli.ts && ([ \"$(uname)\" != Darwin ] || swiftc -O -o ../narrate/assets/voice-metadata helper/voice_metadata.swift)",
-		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0",
-		"fix": "prettier -w . && bunx eslint --fix ."
+		"chk": "tren chk",
+		"fix": "tren fix"
 	},
 	"dependencies": {
 		"mdast-util-to-string": "^4.0.0",
 		"remark": "^15.0.1",
 		"remark-gfm": "^4.0.1",
-		"remeda": "^2.54.1",
+		"remeda": "^2.57.0",
 		"strip-markdown": "^6.0.0",
 		"unist-util-visit": "^5.2.0",
 		"zod": "^4.6.7"
