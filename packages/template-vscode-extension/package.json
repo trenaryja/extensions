@@ -8,9 +8,9 @@
 	"browser": "./dist/web/extension.js",
 	"scripts": {
 		"build": "bun ./scripts/build.ts",
-		"chk": "tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"chk": "tren chk",
 		"dev": "bun ./scripts/build.ts --watch",
-		"fix": "prettier -w . && bunx eslint --fix ."
+		"fix": "tren fix"
 	},
 	"contributes": {
 		"commands": [
