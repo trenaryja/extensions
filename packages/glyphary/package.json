@@ -5,14 +5,14 @@
 	"type": "module",
 	"scripts": {
 		"build": "bun cli.ts build",
-		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0",
-		"fix": "prettier -w . && bunx eslint --fix .",
+		"chk": "tren chk",
+		"fix": "tren fix",
 		"install-apk": "bun cli.ts install"
 	},
 	"dependencies": {
 		"@resvg/resvg-js": "^2.6.2",
-		"react-icons": "5.7.0",
-		"remeda": "^2.54.1",
+		"react-icons": "^5.7.0",
+		"remeda": "^2.57.0",
 		"svg2vectordrawable": "^2.9.1",
 		"zod": "^4.6.7"
 	},
