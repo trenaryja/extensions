@@ -21,7 +21,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@resvg/resvg-js": "^2.6.2",
-        "react-icons": "5.7.0",
+        "react-icons": "^5.7.0",
         "remeda": "^2.57.0",
         "svg2vectordrawable": "^2.9.1",
         "zod": "^4.6.7",
@@ -104,7 +104,7 @@
       "name": "multi-cursor-magic",
       "version": "0.0.4",
       "dependencies": {
-        "@trenaryja/ui": "0.0.1-37",
+        "@trenaryja/ui": "^0.0.1-37",
         "chroma-js": "^3.2.0",
         "date-fns": "^4.4.0",
         "remeda": "^2.57.0",
