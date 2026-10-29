@@ -35,11 +35,11 @@
 	"browser": "./dist/web/extension.js",
 	"scripts": {
 		"build": "bun ./scripts/build.ts",
-		"chk": "bun run contribute:check && tsc && prettier -c . && bunx eslint . --max-warnings=0",
+		"chk": "tren chk && bun run contribute:check",
 		"contribute": "bun ./scripts/contribute.ts",
 		"contribute:check": "bun ./scripts/contribute.ts --check",
 		"dev": "bun ./scripts/build.ts --watch",
-		"fix": "bun run contribute && prettier -w . && bunx eslint --fix .",
+		"fix": "tren fix && bun run contribute",
 		"harness": "bun run harness/screenshot.ts",
 		"icon": "bun scripts/icon.ts",
 		"record": "bun harness/record.ts",
@@ -886,7 +886,7 @@
 		"@tailwindcss/cli": "^4.3.3",
 		"@types/vscode": "^1.100.0",
 		"@vscode/codicons": "^0.0.46-24",
-		"@vscode/vsce": "^4.0.0",
+		"@vscode/vsce": "^4.1.0",
 		"daisyui": "^5.7.50",
 		"playwright-core": "^1.64.1",
 		"tailwindcss": "^4.3.3"
