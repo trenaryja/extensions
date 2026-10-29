@@ -36,7 +36,7 @@ export const createCommand =
 
 		const parsedSelections = editor.selections.map((selection) => command.parseFn(editor.document.getText(selection)))
 
-		if (parsedSelections.some((selection) => selection === null)) {
+		if (parsedSelections.includes(null)) {
 			const choice = await vscode.window.showErrorMessage(
 				command.parseError ?? 'Unable to parse one or more selection',
 				'Select Invalid',
