@@ -15,16 +15,16 @@
 		"src/**/*"
 	],
 	"scripts": {
-		"chk": "tsc && prettier -c . && bunx eslint . --max-warnings=0",
-		"fix": "prettier -w . && bunx eslint --fix ."
+		"chk": "tren chk",
+		"fix": "tren fix"
 	},
 	"dependencies": {
-		"remeda": "^2.55.0",
+		"remeda": "^2.57.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
-		"@types/node": "^26.6.5",
-		"@types/vscode": "^1.140.0",
+		"@types/node": "^26.6.6",
+		"@types/vscode": "^1.144.0",
 		"esbuild": "^0.28.2",
 		"playwright-core": "^1.64.1"
 	}
