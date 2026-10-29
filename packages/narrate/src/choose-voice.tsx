@@ -39,8 +39,8 @@ const languageName = (tag: string) => {
 }
 
 const systemLanguage = () => {
-	const [locale] = new Intl.DateTimeFormat().resolvedOptions().locale.split('-u-', 1)
-	return (locale ?? 'en-US').toLowerCase()
+	const [locale = 'en-US'] = new Intl.DateTimeFormat().resolvedOptions().locale.split('-u-', 1)
+	return locale.toLowerCase()
 }
 
 const languagesOf = (voices: Voice[]) =>
