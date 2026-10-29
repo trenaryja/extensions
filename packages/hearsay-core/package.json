@@ -9,11 +9,11 @@
 	},
 	"scripts": {
 		"build": "cargo build --release --manifest-path native/Cargo.toml",
-		"chk": "tsc --noEmit && prettier -c . && bunx eslint . --max-warnings=0 && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml",
-		"fix": "prettier -w . && bunx eslint --fix . && cargo fmt --manifest-path native/Cargo.toml && cargo clippy --manifest-path native/Cargo.toml --fix --allow-dirty"
+		"chk": "tren chk && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml",
+		"fix": "tren fix && cargo fmt --manifest-path native/Cargo.toml && cargo clippy --manifest-path native/Cargo.toml --fix --allow-dirty"
 	},
 	"dependencies": {
-		"remeda": "^2.54.1",
+		"remeda": "^2.57.0",
 		"zod": "^4.6.7"
 	}
 }
