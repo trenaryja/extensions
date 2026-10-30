@@ -24,8 +24,7 @@
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
-		"@repo/hear-yourself-core": "workspace:*",
-		"@types/react": "19.3.0"
+		"@repo/hear-yourself-core": "workspace:*"
 	},
 	"icon": "extension-icon.png",
 	"commands": [

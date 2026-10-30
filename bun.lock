@@ -43,7 +43,6 @@
       },
       "devDependencies": {
         "@repo/hear-yourself-core": "workspace:*",
-        "@types/react": "19.3.0",
       },
     },
     "packages/hear-yourself-core": {
@@ -127,7 +126,6 @@
       },
       "devDependencies": {
         "@repo/narrate-core": "workspace:*",
-        "@types/react": "19.3.0",
         "react": "^19.3.1",
       },
     },
