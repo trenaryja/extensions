@@ -1,5 +1,5 @@
-// GENERATED from @vscode/codicons 0.0.45 — do not edit by hand.
-// Regenerate when bumping @vscode/codicons (extracts every `.codicon-<name>` class from its shipped CSS).
+// GENERATED from @vscode/codicons — do not edit by hand.
+// Regenerate when bumping it (extracts every `.codicon-<name>` class from its shipped CSS).
 // Fed into the callouts config schema so settings.json offers `$(name)` autocomplete for icons.
 
 const NAMES = `
