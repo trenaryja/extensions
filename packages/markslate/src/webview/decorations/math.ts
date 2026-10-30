@@ -2,23 +2,24 @@ import type { EditorState, Line } from '@codemirror/state'
 import { RangeSetBuilder, StateField } from '@codemirror/state'
 import type { DecorationSet } from '@codemirror/view'
 import { Decoration, EditorView } from '@codemirror/view'
-import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js'
-import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
-import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
-import { TeX } from 'mathjax-full/js/input/tex.js'
-import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
-import { mathjax } from 'mathjax-full/js/mathjax.js'
-import { SVG } from 'mathjax-full/js/output/svg.js'
+import { LiteElement } from '@mathjax/src/js/adaptors/lite/Element.js'
+import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js'
+import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js'
+import { TeX } from '@mathjax/src/js/input/tex.js'
+import { mathjax } from '@mathjax/src/js/mathjax.js'
+import { SVG } from '@mathjax/src/js/output/svg.js'
 import { defineWidget } from '../lib/widget'
 import { docOrSelectionChanged, selectionTouches } from './active'
 import { copyButton } from './codeblocks'
+import './fontRanges'
+import { allTexPackages } from './texPackages'
 
 // MathJax → SVG, headless via liteAdaptor (works in the CSP webview, renders synchronously). `fontCache:
 // local` makes each SVG self-contained (its own glyph <defs>), so any equation is directly copyable/exportable.
 const adaptor = liteAdaptor()
 RegisterHTMLHandler(adaptor)
 const mathDocument = mathjax.document('', {
-	InputJax: new TeX({ packages: AllPackages }),
+	InputJax: new TeX({ packages: allTexPackages }),
 	OutputJax: new SVG({ fontCache: 'local' }),
 })
 
