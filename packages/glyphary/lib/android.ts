@@ -52,11 +52,10 @@ const toolchain = () => {
 	}
 }
 
-const signingEnv = () => {
+/** the release key; without it the APK builds unsigned, which proves the build but Android won't install */
+export const signingKey = () => {
 	const { GLYPHARY_KEYSTORE: keystore, GLYPHARY_KEYSTORE_PASSWORD: password } = process.env
-	if (!keystore || !password)
-		throw new Error('Set GLYPHARY_KEYSTORE (base64 PKCS12) and GLYPHARY_KEYSTORE_PASSWORD; both live in Infisical')
-	return { keystore, password }
+	return keystore && password ? { keystore, password } : undefined
 }
 
 /**
@@ -122,7 +121,7 @@ const writeResources = async (sets: readonly IconSet[]) => {
 export const buildApk = async (sets: readonly IconSet[]) => {
 	const tools = toolchain()
 	const { androidJar, targetSdk, buildTools } = tools
-	const { keystore, password } = signingEnv()
+	const key = signingKey()
 	await writeResources(sets)
 	await Promise.all([buildPicker(sets), compileJava(tools)])
 	await $`${buildTools}/aapt2 compile --dir ${buildDir}/res -o ${buildDir}/compiled.zip`
@@ -130,10 +129,12 @@ export const buildApk = async (sets: readonly IconSet[]) => {
 	await $`${buildTools}/aapt2 link -o ${buildDir}/unaligned.apk -I ${androidJar} --manifest ${packageDir}/android/AndroidManifest.xml -A ${buildDir}/assets --min-sdk-version ${minSdk} --target-sdk-version ${targetSdk} --version-code ${versionCode()} --version-name ${reactIconsVersion} ${buildDir}/compiled.zip ${buildDir}/static.zip`
 	await $`zip -j ${buildDir}/unaligned.apk ${buildDir}/classes.dex`.quiet()
 	await $`${buildTools}/zipalign -p -f 4 ${buildDir}/unaligned.apk ${apkPath}`
-	await Bun.write(`${buildDir}/release.p12`, Buffer.from(keystore, 'base64'))
-	await $`${buildTools}/apksigner sign --ks ${buildDir}/release.p12 --ks-pass env:GLYPHARY_KEYSTORE_PASSWORD ${apkPath}`.env(
-		{ ...process.env, GLYPHARY_KEYSTORE_PASSWORD: password },
-	)
-	await rm(`${buildDir}/release.p12`)
-	return { apkPath, targetSdk, versionCode: versionCode(), versionName: reactIconsVersion }
+	if (key) {
+		await Bun.write(`${buildDir}/release.p12`, Buffer.from(key.keystore, 'base64'))
+		await $`${buildTools}/apksigner sign --ks ${buildDir}/release.p12 --ks-pass env:GLYPHARY_KEYSTORE_PASSWORD ${apkPath}`.env(
+			{ ...process.env, GLYPHARY_KEYSTORE_PASSWORD: key.password },
+		)
+		await rm(`${buildDir}/release.p12`)
+	}
+	return { apkPath, targetSdk, versionCode: versionCode(), versionName: reactIconsVersion, signed: Boolean(key) }
 }
