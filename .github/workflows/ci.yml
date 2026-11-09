@@ -6,3 +6,5 @@ on:
 jobs:
   ci:
     uses: trenaryja/config/.github/workflows/ci.yml@main
+    with:
+      apt-packages: libasound2-dev # cpal links ALSA on Linux (hearsay-core, hear-yourself-core)

@@ -1,0 +1,10 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			// Turbo's strict env mode hides unlisted variables from the build; the keystore pair decides signed vs unsigned, so it keys the cache.
+			"env": ["ANDROID_HOME", "GLYPHARY_KEYSTORE", "GLYPHARY_KEYSTORE_PASSWORD"]
+		}
+	}
+}
