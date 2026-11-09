@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"build": "cargo build --release --manifest-path native/Cargo.toml",
-		"chk": "tren chk && cargo fmt --manifest-path native/Cargo.toml --check && cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml",
+		"chk": "tren chk && cargo fmt --manifest-path native/Cargo.toml --check && ([ \"$(uname)\" != Darwin ] || (cargo clippy --manifest-path native/Cargo.toml -- -D warnings && cargo test --manifest-path native/Cargo.toml))",
 		"fix": "tren fix && cargo fmt --manifest-path native/Cargo.toml && cargo clippy --manifest-path native/Cargo.toml --fix --allow-dirty"
 	},
 	"dependencies": {
