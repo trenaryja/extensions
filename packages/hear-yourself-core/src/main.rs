@@ -36,6 +36,11 @@ fn running_state() -> Option<Value> {
 	is_alive(pid_of(&state)?).then_some(state)
 }
 
+/// Refreshes the menu bar, which otherwise shows its last render until clicked.
+fn notify(url: &str) {
+	let _ = Command::new("/usr/bin/open").args(["-g", url]).status();
+}
+
 fn status() -> Value {
 	running_state().unwrap_or_else(|| json!({ "running": false }))
 }
@@ -110,6 +115,7 @@ fn stop() -> Value {
 	while is_alive(pid) && Instant::now() < deadline {
 		sleep(Duration::from_millis(10));
 	}
+	// No notify: a menu bar launch while the clicked menu unloads is dropped, so the menu action refreshes it after a wait.
 	let _ = fs::remove_file(state_dir().join("state.json"));
 	json!({ "stopped": true })
 }
@@ -128,15 +134,23 @@ fn run(args: &[String]) -> Result<Value, String> {
 	let dir = state_dir();
 	// Also fired at launch, so Raycast's one-time link approval appears as the user presses Start, not mid-unplug.
 	let mut changed = true;
-	loop {
+	let failure = loop {
 		// Written whole then renamed: a status poll must never read half a file.
-		fs::write(dir.join("state.tmp"), session.snapshot().to_string()).map_err(message)?;
-		fs::rename(dir.join("state.tmp"), dir.join("state.json")).map_err(message)?;
+		let written = fs::write(dir.join("state.tmp"), session.snapshot().to_string())
+			.and_then(|()| fs::rename(dir.join("state.tmp"), dir.join("state.json")));
+		if let Err(error) = written {
+			break message(error);
+		}
 		if changed && let Some(url) = &notify_url {
-			let _ = Command::new("/usr/bin/open").args(["-g", url]).status();
+			notify(url);
 		}
 		changed = session.tick(Duration::from_secs(1));
+	};
+	let _ = fs::remove_file(dir.join("state.json"));
+	if let Some(url) = &notify_url {
+		notify(url);
 	}
+	Err(failure)
 }
 
 fn main() -> ExitCode {

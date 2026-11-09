@@ -12,8 +12,6 @@ use serde_json::{Value, json};
 
 use crate::message;
 
-const SAMPLE_RATE: u32 = 48_000;
-
 pub struct Options {
 	pub input: Option<String>,
 	pub output: Option<String>,
@@ -33,6 +31,8 @@ struct Monitor {
 	_streams: [Stream; 2],
 	lost: Receiver<()>,
 	out_channels: usize,
+	input_rate: u32,
+	output_rate: u32,
 }
 
 /// Stays on the devices resolved at start: following macOS to its next default could route the mic into speakers.
@@ -74,13 +74,16 @@ impl Monitor {
 		let host = cpal::default_host();
 		let input = find(host.input_devices().map_err(message)?, input)?;
 		let output = find(host.output_devices().map_err(message)?, output)?;
-		let in_channels = input.default_input_config().map_err(message)?.channels();
-		let out_channels = output.default_output_config().map_err(message)?.channels();
-		let config = |channels| StreamConfig {
-			channels,
-			sample_rate: SAMPLE_RATE,
+		// Each device runs at its current format: opening at any other rate would change it system-wide.
+		let current = |config: cpal::SupportedStreamConfig| StreamConfig {
+			channels: config.channels(),
+			sample_rate: config.sample_rate(),
 			buffer_size: BufferSize::Fixed(options.blocksize),
 		};
+		let in_config = current(input.default_input_config().map_err(message)?);
+		let out_config = current(output.default_output_config().map_err(message)?);
+		let (in_channels, out_channels) = (in_config.channels, out_config.channels);
+		let (input_rate, output_rate) = (in_config.sample_rate, out_config.sample_rate);
 		let (lost_sender, lost) = mpsc::channel();
 		let on_error = |label: &'static str| {
 			let lost_sender = lost_sender.clone();
@@ -97,22 +100,33 @@ impl Monitor {
 		};
 
 		let cushion = options.blocksize as usize * usize::from(out_channels);
-		let (mut producer, mut consumer) = HeapRb::<f32>::new(cushion * 4).split();
+		// Bluetooth outputs ignore the requested blocksize (QC35 pulls 256 frames); the backlog trim, not capacity, bounds latency.
+		let (mut producer, mut consumer) = HeapRb::<f32>::new(output_rate as usize * usize::from(out_channels)).split();
 		producer.push_slice(&vec![0.0; cushion]);
 
 		let input_meters = Arc::clone(meters);
 		let volume = options.volume;
+		let step = f64::from(input_rate) / f64::from(output_rate);
+		// Linear interpolation between consecutive input samples; at equal rates it emits each sample unchanged.
+		let (mut phase, mut previous) = (0.0_f64, 0.0_f32);
 		let input_stream = input
 			.build_input_stream(
-				config(in_channels),
+				in_config,
 				move |data: &[f32], _: &InputCallbackInfo| {
 					let mut peak = 0.0_f32;
 					let mut dropped = false;
 					for frame in data.chunks(usize::from(in_channels)) {
 						peak = peak.max(frame[0].abs());
-						for _ in 0..out_channels {
-							dropped |= producer.try_push(frame[0] * volume).is_err();
+						let sample = frame[0] * volume;
+						while phase < 1.0 {
+							let interpolated = previous + (sample - previous) * phase as f32;
+							for _ in 0..out_channels {
+								dropped |= producer.try_push(interpolated).is_err();
+							}
+							phase += step;
 						}
+						phase -= 1.0;
+						previous = sample;
 					}
 					input_meters.peak.fetch_max(peak.to_bits(), Relaxed);
 					if dropped {
@@ -127,7 +141,7 @@ impl Monitor {
 		let output_meters = Arc::clone(meters);
 		let output_stream = output
 			.build_output_stream(
-				config(out_channels),
+				out_config,
 				move |data: &mut [f32], _: &OutputCallbackInfo| {
 					// Whatever sits past one cushion is latency: startup backlog, or the input clock running fast.
 					let backlog = consumer.occupied_len().saturating_sub(data.len() + cushion);
@@ -152,6 +166,8 @@ impl Monitor {
 			_streams: [input_stream, output_stream],
 			lost,
 			out_channels: usize::from(out_channels),
+			input_rate,
+			output_rate,
 		})
 	}
 }
@@ -239,14 +255,15 @@ impl Session {
 		let peak = f32::from_bits(self.meters.peak.swap(0, Relaxed));
 		let buffered_ms = self.monitor.as_ref().map(|monitor| {
 			let frames = self.meters.buffered.load(Relaxed) / monitor.out_channels;
-			frames as f64 * 1000.0 / f64::from(SAMPLE_RATE)
+			frames as f64 * 1000.0 / f64::from(monitor.output_rate)
 		});
 		json!({
 			"running": true,
 			"pid": std::process::id(),
 			"input": self.input,
 			"output": self.output,
-			"sampleRate": SAMPLE_RATE,
+			"inputRate": self.monitor.as_ref().map(|monitor| monitor.input_rate),
+			"outputRate": self.monitor.as_ref().map(|monitor| monitor.output_rate),
 			"blocksize": self.options.blocksize,
 			"volume": self.options.volume,
 			"waitingFor": self.monitor.is_none().then_some(&self.missing),
