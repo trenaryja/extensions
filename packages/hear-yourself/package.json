@@ -33,7 +33,18 @@
 			"title": "Hear Yourself",
 			"subtitle": "Menu Bar",
 			"description": "Show monitoring status, devices and latency in the menu bar.",
-			"mode": "menu-bar"
+			"mode": "menu-bar",
+			"preferences": [
+				{
+					"name": "showDiagnostics",
+					"type": "checkbox",
+					"title": "Diagnostics",
+					"label": "Show level, buffer and dropout counts",
+					"description": "Adds a Diagnostics section to the menu, for debugging audio glitches.",
+					"required": false,
+					"default": false
+				}
+			]
 		},
 		{
 			"name": "toggle-monitoring",

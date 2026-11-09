@@ -14,7 +14,10 @@ declare type Preferences = ExtensionPreferences
 
 declare namespace Preferences {
   /** Preferences accessible in the `menu-bar` command */
-  export type MenuBar = ExtensionPreferences & {}
+  export type MenuBar = ExtensionPreferences & {
+  /** Diagnostics - Adds a Diagnostics section to the menu, for debugging audio glitches. */
+  "showDiagnostics": boolean
+}
   /** Preferences accessible in the `toggle-monitoring` command */
   export type ToggleMonitoring = ExtensionPreferences & {}
 }

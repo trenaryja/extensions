@@ -1,15 +1,33 @@
-import { Color, Icon, MenuBarExtra, showToast, Toast } from '@raycast/api'
-import { usePromise } from '@raycast/utils'
+import { Color, getPreferenceValues, Icon, MenuBarExtra, showToast, Toast } from '@raycast/api'
+import { useCachedPromise } from '@raycast/utils'
 import * as R from 'remeda'
 import type { Running, Settings } from './lib/engine'
-import { choose, devices, errorMessage, restart, settings, start, status, stop } from './lib/engine'
+import {
+	choose,
+	Devices,
+	devices,
+	errorMessage,
+	refreshMenuBar,
+	restart,
+	settings,
+	start,
+	Status,
+	status,
+	stop,
+} from './lib/engine'
 
-type Act = (work: () => Promise<unknown>, failure: string) => () => void
+const act = (work: () => Promise<unknown>, failure: string) => () =>
+	void work()
+		.catch((error: unknown) => showToast({ style: Toast.Style.Failure, title: failure, message: errorMessage(error) }))
+		.finally(refreshMenuBar)
 
 const load = async () => {
 	const [state, available, chosen] = await Promise.all([status(), devices(), settings()])
 	return { state, available, chosen }
 }
+
+const isCurrent = ({ state, available }: Awaited<ReturnType<typeof load>>) =>
+	Status.safeParse(state).success && Devices.safeParse(available).success
 
 const menuIcon = (running?: Running) => {
 	if (!running) return Icon.MicrophoneDisabled
@@ -28,7 +46,7 @@ const deviceOptions = (names: readonly string[]) => [
 	...names.map((name) => ({ title: name, value: name })),
 ]
 
-const Controls = ({ running, act }: { running?: Running; act: Act }) => {
+const Controls = ({ running }: { running?: Running }) => {
 	if (!running)
 		return <MenuBarExtra.Item title='Start Monitoring' icon={Icon.Play} onAction={act(start, 'Could not start')} />
 	// One restart re-resolves both defaults, so the offers can't be taken separately.
@@ -65,15 +83,13 @@ const Diagnostics = ({ running }: { running: Running }) => (
 )
 
 export default function Command() {
-	const { data, isLoading, revalidate } = usePromise(load)
+	const { showDiagnostics } = getPreferenceValues<Preferences.MenuBar>()
+	// Cached so each launch first draws the last known state, not the stopped icon.
+	const cached = useCachedPromise(load)
+	// A cache written by an earlier build can lack fields this one reads; rendering it crashed the menu bar.
+	const data = cached.data && isCurrent(cached.data) ? cached.data : undefined
+	const { isLoading } = cached
 	const running = data?.state.running ? data.state : undefined
-
-	const act: Act = (work, failure) => () =>
-		void work()
-			.catch((error: unknown) =>
-				showToast({ style: Toast.Style.Failure, title: failure, message: errorMessage(error) }),
-			)
-			.then(() => revalidate())
 
 	const choice = <K extends keyof Settings>(
 		key: K,
@@ -98,7 +114,7 @@ export default function Command() {
 	return (
 		<MenuBarExtra icon={menuIcon(running)} tooltip={menuTooltip(running)} isLoading={isLoading}>
 			<MenuBarExtra.Section>
-				<Controls running={running} act={act} />
+				<Controls running={running} />
 			</MenuBarExtra.Section>
 			{data && (
 				<MenuBarExtra.Section>
@@ -111,12 +127,12 @@ export default function Command() {
 					)}
 					{choice(
 						'volume',
-						'Volume',
+						'Gain',
 						[0.5, 0.75, 1, 1.25, 1.5].map((gain) => ({ title: `${gain * 100}%`, value: gain })),
 					)}
 				</MenuBarExtra.Section>
 			)}
-			{running && !running.waitingFor && <Diagnostics running={running} />}
+			{showDiagnostics && running && !running.waitingFor && <Diagnostics running={running} />}
 		</MenuBarExtra>
 	)
 }

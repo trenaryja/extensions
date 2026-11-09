@@ -10,7 +10,6 @@ const Running = z.object({
 	pid: z.number(),
 	input: z.string(),
 	output: z.string(),
-	sampleRate: z.number(),
 	blocksize: z.number(),
 	volume: z.number(),
 	/** Null while audio flows; otherwise paused, listing whichever pinned devices are unplugged. */
@@ -24,10 +23,10 @@ const Running = z.object({
 })
 export type Running = z.infer<typeof Running>
 
-const Status = z.discriminatedUnion('running', [Running, z.object({ running: z.literal(false) })])
+export const Status = z.discriminatedUnion('running', [Running, z.object({ running: z.literal(false) })])
 export type Status = z.infer<typeof Status>
 
-const Devices = z.object({
+export const Devices = z.object({
 	inputs: z.array(z.string()),
 	outputs: z.array(z.string()),
 	defaultInput: z.string().nullable(),
@@ -105,5 +104,9 @@ export const choose = async <K extends keyof Settings>(key: K, value?: Settings[
 	await (value === undefined ? LocalStorage.removeItem(key) : LocalStorage.setItem(key, value))
 	if ((await status()).running) await restart()
 }
+
+/** Relaunches the menu bar, which Raycast unloads on click, dropping its redraws; a launch before it finishes unloading is dropped too: 150 ms failed every time, 250 and 300 ms passed 8/8. */
+export const refreshMenuBar = () =>
+	spawn('/bin/sh', ['-c', `sleep 0.3; open -g '${notifyUrl()}'`], { detached: true, stdio: 'ignore' }).unref()
 
 export const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
