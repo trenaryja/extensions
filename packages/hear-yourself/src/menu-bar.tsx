@@ -1,4 +1,15 @@
-import { Color, getPreferenceValues, Icon, MenuBarExtra, showToast, Toast } from '@raycast/api'
+import {
+	Cache,
+	Color,
+	environment,
+	getPreferenceValues,
+	Icon,
+	LaunchType,
+	MenuBarExtra,
+	openCommandPreferences,
+	showToast,
+	Toast,
+} from '@raycast/api'
 import { useCachedPromise } from '@raycast/utils'
 import * as R from 'remeda'
 import type { Running, Settings } from './lib/engine'
@@ -15,6 +26,9 @@ import {
 	status,
 	stop,
 } from './lib/engine'
+
+const cache = new Cache()
+const HIDDEN_KEY = 'hidden'
 
 const act = (work: () => Promise<unknown>, failure: string) => () =>
 	void work()
@@ -82,7 +96,7 @@ const Diagnostics = ({ running }: { running: Running }) => (
 	</MenuBarExtra.Section>
 )
 
-export default function Command() {
+const Menu = () => {
 	const { showDiagnostics } = getPreferenceValues<Preferences.MenuBar>()
 	// Cached so each launch first draws the last known state, not the stopped icon.
 	const cached = useCachedPromise(load)
@@ -133,6 +147,29 @@ export default function Command() {
 				</MenuBarExtra.Section>
 			)}
 			{showDiagnostics && running && !running.waitingFor && <Diagnostics running={running} />}
+			<MenuBarExtra.Section>
+				<MenuBarExtra.Item
+					title='Settings…'
+					icon={Icon.Gear}
+					shortcut={{ modifiers: ['cmd'], key: ',' }}
+					onAction={() => void openCommandPreferences()}
+				/>
+				<MenuBarExtra.Item
+					title='Hide from Menu Bar'
+					icon={Icon.EyeDisabled}
+					tooltip='Run Hear Yourself from Raycast to show it again'
+					onAction={() => {
+						cache.set(HIDDEN_KEY, 'true')
+						refreshMenuBar()
+					}}
+				/>
+			</MenuBarExtra.Section>
 		</MenuBarExtra>
 	)
+}
+
+export default function Command() {
+	// A hidden item can't be clicked, so a user launch can only come from Raycast's search: that's the way back.
+	if (environment.launchType === LaunchType.UserInitiated) cache.remove(HIDDEN_KEY)
+	return cache.has(HIDDEN_KEY) ? null : <Menu />
 }
